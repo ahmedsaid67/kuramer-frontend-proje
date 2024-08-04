@@ -9,10 +9,7 @@ const cardStyle = {
   minHeight: 300,
   border: '1px solid #ccc',
   borderRadius: 4,
-  '@media (max-width: 768px)': {
-    maxWidth: 300,
-    minWidth: 300,
-  },
+  
 };
 
 const mediaStyle = {
@@ -22,7 +19,6 @@ const mediaStyle = {
 
 const titleStyle = {
   fontSize: '14px', // Font boyutunu küçült
-  fontFamily: 'sans-serif',
   fontWeight: 550,
   color: '#343434',
   overflow: 'hidden',
@@ -46,11 +42,14 @@ const contentStyle = {
 };
 
 
-const ArastirmaCard = ({ data, handleDownloadPDF }) => {
+const ArastirmaCard = ({ data,path }) => {
   
 
   // Usage
-  const linkTo = `/faaliyetler/arastirma/${data.slug}`;
+  const partFirst=path.split('?')[0]
+  const partSecond=path.split('tab=')[1]?.split('&')[0] 
+  const url =`${partFirst}/${partSecond}`
+  const linkTo = `${url}/${data.slug}`;
 
   return (
     <Card sx={cardStyle}>

@@ -19,7 +19,6 @@ const mediaStyle = {
 
 const titleStyle = {
   fontSize: '14px', // Font boyutunu küçült
-  fontFamily: 'sans-serif',
   fontWeight: 550,
   color: '#343434',
   overflow: 'hidden',
@@ -36,7 +35,6 @@ const titleStyle = {
 
 const dateStyle = {
   fontSize: '15px', // Font boyutunu küçült
-  fontFamily: 'sans-serif',
   color: '#343434',
   display: 'flex',
   overflow: 'hidden',
@@ -50,7 +48,6 @@ const dateStyle = {
 
 const authorStyle = {
   fontSize: '15px', // Font boyutunu küçült
-  fontFamily: 'sans-serif',
   color: '#343434',
   display: 'flex',
   alignItems: 'center',
@@ -95,7 +92,7 @@ const buttonStyle = {
 
 };
 
-const KonferansCard = ({ data, handleDownloadPDF }) => {
+const KonferansCard = ({ data, path }) => {
 
   const formatDateWithoutTimeZone = (dateString) => {
     const options = { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' };
@@ -103,7 +100,10 @@ const KonferansCard = ({ data, handleDownloadPDF }) => {
     return new Intl.DateTimeFormat('tr-TR', options).format(date);
   };
   
-  const linkTo = `/faaliyetler/egitim/${data.slug}`;
+  const partFirst=path.split('?')[0]
+  const partSecond=path.split('tab=')[1]?.split('&')[0] 
+  const url =`${partFirst}/${partSecond}`
+  const linkTo = `${url}/${data.slug}`;
 
   return (
     <Card sx={cardStyle}>

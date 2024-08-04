@@ -1,7 +1,7 @@
 // pages/kitapserileri.js
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import styles from '../styles/KitapSerileri.module.css';
+import styles from '../styles/CardSlider.module.css';
 
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
@@ -13,6 +13,7 @@ import Slider from 'react-slick';
 import { API_ROUTES } from '../utils/constants';
 import Image from 'next/image';
 import Link from 'next/link';
+import { FaArrowLeft, FaArrowRight } from 'react-icons/fa'; 
 
 const convertToUrlFriendly = (text) => {
   if (text && typeof text === 'string') {
@@ -29,7 +30,7 @@ const CustomPrevArrow = (props) => {
   const { onClick } = props;
   return (
     <div className={styles.customPrevArrow} onClick={onClick}>
-      <FontAwesomeIcon icon={faChevronLeft} />
+      <FaArrowLeft />
     </div>
   );
 };
@@ -38,12 +39,12 @@ const CustomNextArrow = (props) => {
   const { onClick } = props;
   return (
     <div className={styles.customNextArrow} onClick={onClick}>
-       <FontAwesomeIcon icon={faChevronRight} />
+      <FaArrowRight />
     </div>
   );
 };
 
-export default function CardSlider({id,kitapId }) {
+export default function CardSlider({id,kitapId,path}) {
 
 
   const [kitapSerileri, setKitapSerileri] = useState([]);
@@ -112,10 +113,10 @@ export default function CardSlider({id,kitapId }) {
               <Slider {...settings}>
                 {kitapSerileri.map((seri) => (
                   <div key={seri.id} className={styles.card}>
-                    <Link href={`/yayinlar/kitaplar/${seri.slug}`}>
+                    <Link href={`/${path}/${seri.slug}`}>
                       <Image src={seri.kapak_fotografi} alt={seri.ad} width={240} height={352} className={styles.cardImage} loading="eager" />
                     </Link>
-                    <Link href={`/yayinlar/kitaplar/${seri.slug}`}>
+                    <Link href={`/${path}/${seri.slug}`}>
                       <p className={styles.cardText}>{seri.ad}</p>
                     </Link>
                   </div>

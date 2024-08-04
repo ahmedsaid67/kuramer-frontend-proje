@@ -13,18 +13,8 @@ import { Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import { useRouter } from 'next/router';
 import { useSelector } from 'react-redux';
 import {API_ROUTES} from "../../../utils/constants"
+import {TextEditor} from '../../../compenent/Editor';
 
-
-const StyledTableCell = styled(TableCell)({
-    fontWeight: 'bold',
-    backgroundColor: '#f5f5f5',
-  });
-  
-  const StyledTableRow = styled(TableRow)({
-    '&:hover': {
-      backgroundColor: 'rgba(0, 0, 0, 0.04)',
-    },
-  });
 
 export default function Mushaflar() {
     const [data, setData] = useState([]);
@@ -36,6 +26,8 @@ export default function Mushaflar() {
       soyad: '',
       unvan:'',
       img: null,
+      icerik: '',
+      order:"",
       durum: true
     });
     const [selectedRows, setSelectedRows] = useState({});
@@ -50,10 +42,14 @@ export default function Mushaflar() {
     const [personelTuru, setPersonelTuru] = useState([]);
     const [selectedTuru, setSelectedTuru] = useState("");
     const [isSaving, setIsSaving] = useState(false);
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [selectedIds, setSelectedIds] = useState([]);
+
+    const [warningDialogOpen, setWarningDialogOpen] = useState(false);
+
 
     const user = useSelector((state) => state.user);
     const router = useRouter();
-    
 
 
 
@@ -132,6 +128,8 @@ export default function Mushaflar() {
             soyad: '',
             unvan:'',
             img: null,
+            icerik: '',
+            order:"",
             durum: true
         }); // newItem durumunu sıfırla
         setUyariMesajiEkle("");
@@ -142,6 +140,8 @@ export default function Mushaflar() {
       const handleOpen = (item) => {
         setSelectedItem(item);
         setOpen(true);
+
+        //console.log("item:",item)
 
 
         if(item.personel_turu){
@@ -154,12 +154,21 @@ export default function Mushaflar() {
         setUyariMesaji("");
         setSelectedTuru("")
       };
+
+
+      // özgecmiş alanı silindikten sonra "<p></p> çıktıyı verdiğinden hala dolu sayılabiliyor bu functıon onu kırpacaktır."
+
+      const cleanContent = (content) => {
+        // If content is only empty paragraphs or whitespace, return an empty string
+        const cleaned = content.replace(/<p[^>]*><\/p>/g, '').trim();
+        return cleaned === '' ? '' : content;
+      };
     
     
     
       const handleSave = (editedItem,turId) => {
   
-        if (!editedItem.ad || !editedItem.soyad || !turId ) {
+        if (!editedItem.ad || !editedItem.soyad || !turId || !editedItem.order ) {
           setUyariMesaji("Lütfen tüm alanları doldurunuz.");
           return;
         }
@@ -170,28 +179,36 @@ export default function Mushaflar() {
         // Kapak fotoğrafı için orijinal dosyayı kullan
         if (editedItem["img_file"] && editedItem["img"]) {
           formData.append('img', editedItem["img_file"]);
+        }else if (editedItem["img"]){
+          formData.append("img_data", true);
         }
-        
 
-
+        formData.append("icerik", cleanContent(editedItem["icerik"]));
 
         formData.append("durum", editedItem["durum"]);
         formData.append("ad", editedItem["ad"]);
         formData.append("soyad", editedItem["soyad"]);
         formData.append("unvan", editedItem["unvan"]);
         formData.append("personel_turu_id", turId);
+        formData.append("order", editedItem["order"]);
 
-        // PDF dosyası
+
+    
         
         
         setIsSaving(true);
-        axios.put(API_ROUTES.PERSONELLER_DETAIL.replace("id",editedItem.id), formData)
-          .then(response => {
-            const updatedData = data.map(item => item.id === editedItem.id ? response.data : item);
-            setData(updatedData);
+        axios.put(API_ROUTES.PERSONELLER_DETAIL.replace("id", editedItem.id), formData)
+        .then(response => {
+            // Güncelleme başarılı olduktan sonra tüm listeyi yeniden çek
+            return axios.get(API_ROUTES.PERSONELLER_PAGINATIONS.replace("currentPage", currentPage));
+        })
+        .then(response => {
+            // Yeniden çekilen liste ile state'i güncelle
+            setData(response.data.results);
+            setTotalPages(Math.ceil(response.data.count / 10)); // Eğer sayfa sayısı güncellenmesi gerekiyorsa
             handleClose();
-            setSaveError("");  // Hata mesajını temizle
-          })
+            setSaveError("");
+        })
           .catch(error => {
             console.error('Güncelleme sırasında hata oluştu:', error);
             setSaveError("Veri güncellenirken bir hata oluştu. Lütfen tekrar deneyiniz.");  // Hata mesajını ayarla
@@ -206,7 +223,7 @@ export default function Mushaflar() {
     
       const handleAddNewItem = (turId) => {
 
-        if (!newItem.ad || !newItem.soyad  || !turId ) {
+        if (!newItem.ad || !newItem.soyad  || !turId || !newItem.order ) {
           setUyariMesajiEkle("Lütfen tüm alanları doldurunuz.");
           return;
         }
@@ -216,12 +233,15 @@ export default function Mushaflar() {
 
         if (newItem["img_file"]) {
             formData.append('img', newItem["img_file"]);
-          }
+        }
+
+        formData.append("icerik", cleanContent(newItem["icerik"]));
         formData.append("durum", newItem["durum"]);
         formData.append("ad", newItem["ad"]);
         formData.append("soyad", newItem["soyad"]);
         formData.append("unvan", newItem["unvan"]);
         formData.append("personel_turu_id", turId);
+        formData.append("order", newItem["order"]);
         
         setIsSaving(true); 
         axios.post(API_ROUTES.PERSONELLER, formData)
@@ -232,12 +252,9 @@ export default function Mushaflar() {
           .then(response => {
             setData(response.data.results);
             setTotalPages(Math.ceil(response.data.count / 10));
-      
-            
-            
+
             handleCloseAddDialog();
 
-            
           })
           .catch(error => {
             console.error('Yeni veri eklerken hata oluştu:', error);
@@ -265,41 +282,74 @@ export default function Mushaflar() {
           setSelectedRows({});
         }
     };
-    const handleDeleteSelected = () => {
+
+    const handleCloseWarningDialog = () => {
+      setWarningDialogOpen(false);
+    };
+
+
+    const handleOpenDeleteConfirm = () => {
+      const ids = Object.keys(selectedRows).filter(id => selectedRows[id]);
+      if (ids.length === 0) {
+        // Hiçbir öğe seçilmemişse uyarı diyalogunu aç
+        setWarningDialogOpen(true);
+      } else {
+        // Seçili öğeler varsa onay penceresini aç
+        setSelectedIds(ids);
+        setDeleteConfirmOpen(true);
+      }
+    };
+  
+    const handleCloseDeleteConfirm = () => {
+      setDeleteConfirmOpen(false);
+    };
+
+
+   
+
+    const handleConfirmDelete = () => {
       setDeleteError('');
-      const selectedIds = Object.keys(selectedRows).filter(id => selectedRows[id]);
-    
       axios.post(API_ROUTES.PERSONELLER_DELETE, { ids: selectedIds })
-        .then(() => axios.get(API_ROUTES.PERSONELLER))
-        .then(response => {
+        .then(() => {
+          return axios.get(API_ROUTES.PERSONELLER);
+        })
+        .then((response) => {
           const newTotalCount = response.data.count;
           const newTotalPages = Math.ceil(newTotalCount / 10);
           setTotalPages(newTotalPages);
     
           let updatedPage = currentPage;
-          if (currentPage > newTotalPages) {
-            updatedPage = Math.max(newTotalPages, 1); // Eğer yeni toplam sayfa sayısı 0 ise, 1'e ayarla
-          } else if (currentPage === newTotalPages && response.data.results.length === 0 && currentPage > 1) {
-            updatedPage = currentPage - 1; // Son sayfada veri kalmadıysa bir önceki sayfaya git
+          if (newTotalPages < currentPage) {
+            updatedPage = newTotalPages;
           }
     
-          setCurrentPage(updatedPage);
-    
-          if (updatedPage !== currentPage) {
-            return axios.get(API_ROUTES.PERSONELLER_PAGINATIONS.replace("currentPage",updatedPage))
+          if (newTotalPages === 0) {
+            setCurrentPage(1);
+            setData([]);
+            setSelectedRows({});
+            setDeleteConfirmOpen(false);
           } else {
-            return response;
+            setCurrentPage(updatedPage);
+            return axios.get(API_ROUTES.PERSONELLER_PAGINATIONS.replace('currentPage', updatedPage));
           }
         })
-        .then(response => {
-          setData(response.data.results);
+        .then((response) => {
+          if (response) {
+            setData(response.data.results);
+          }
           setSelectedRows({});
+          setDeleteConfirmOpen(false);
         })
-        .catch(error => {
+        .catch((error) => {
           console.error('Toplu silme işlemi sırasında hata oluştu:', error);
           setDeleteError('Veriler silinirken bir hata oluştu. Lütfen tekrar deneyin.');
+          setDeleteConfirmOpen(false);
         });
     };
+
+
+  
+    
     
     
     if (isLoading) {
@@ -323,49 +373,14 @@ export default function Mushaflar() {
     
 
     const handleFileChange = (event, fieldName) => {
-        const file = event.target.files[0];
-      
-        if (file) {
+      const file = event.target.files[0];
+    
+      if (file) {
 
-          // file binary bir veri base64 ile metin tabanlı dosya haline getiriyoruz bu sayede
-          // fronten tarafında bu dosyayı sunma imkanı buluyoruz.
-          // binary dosya doğrudan backende gönderilebilir. oradan kaydedilip apiden çekildiğinde
-          // veri tarayıcı yolu ile geldiğinden binary olsa da gösterimi mümkün.
-          // bu tantana js nin çalışma prensiplerinden ötürüdür.
-          // biz burada dosyayı evvele hemen backende atmadan ön yüzde göstermek istediğimizden
-          // base64 e çeviririz.
-          if (fieldName === "img") {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-              setSelectedItem((prevItem) => ({
-                ...prevItem,
-                [fieldName]: e.target.result,
-                [fieldName + '_file']: file,
-              }));
-            };
-            reader.readAsDataURL(file);
-            event.target.value = '';
-
-          } 
-                }
-    };
-
-      const handleRemoveImage = (fieldName) => {
-        setSelectedItem((prevItem) => ({
-          ...prevItem,
-          [fieldName]: null,
-        }));
-      
-
-      };
-
-
-      const handleFileChangeEkle = (event, fieldName) => {
-        const file = event.target.files[0];
         if (fieldName === "img") {
           const reader = new FileReader();
           reader.onload = (e) => {
-            setNewItem((prevItem) => ({
+            setSelectedItem((prevItem) => ({
               ...prevItem,
               [fieldName]: e.target.result,
               [fieldName + '_file']: file,
@@ -374,21 +389,66 @@ export default function Mushaflar() {
           reader.readAsDataURL(file);
           event.target.value = '';
 
-        } 
-      };
+        } else {
+
+              
+
+              setSelectedItem((prevItem) => ({
+                  ...prevItem,
+                  [fieldName]: file,
+              }));
+
+              event.target.value = '';
+
+        }
+              }
+  };
+
+    const handleRemoveImage = (fieldName) => {
+      setSelectedItem((prevItem) => ({
+        ...prevItem,
+        [fieldName]: null,
+      }));
     
-      const handleRemoveImageEkle = (fieldName) => {
-        setNewItem(prevItem => ({
-          ...prevItem,
-          [fieldName]: null
-        }));
-      };
+
+    };
+
+
+    const handleFileChangeEkle = (event, fieldName) => {
+      const file = event.target.files[0];
+      if (fieldName === "img") {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setNewItem((prevItem) => ({
+            ...prevItem,
+            [fieldName]: e.target.result,
+            [fieldName + '_file']: file,
+          }));
+        };
+        reader.readAsDataURL(file);
+        event.target.value = '';
+
+      } else {
+        setNewItem((prevItem) => ({
+                ...prevItem,
+                [fieldName]: file,
+            }));
+
+            event.target.value = '';     
+      }
+    };
+  
+    const handleRemoveImageEkle = (fieldName) => {
+      setNewItem(prevItem => ({
+        ...prevItem,
+        [fieldName]: null
+      }));
+    };
+
 
       function truncateText(text, maxLength) {
         return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
       }
-
-
 
 
 
@@ -403,7 +463,7 @@ export default function Mushaflar() {
                       variant="contained"
                       size="small"
                       startIcon={<DeleteIcon />}
-                      onClick={handleDeleteSelected}
+                      onClick={handleOpenDeleteConfirm}
                       style={{ backgroundColor: "#d32f2f", color: '#fff', marginBottom: "10px", textTransform: 'none', fontSize: '0.75rem' }}
                     >
                       Sil
@@ -425,6 +485,8 @@ export default function Mushaflar() {
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Soyad</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Ünvan</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Fotoğraf</TableCell>
+                        <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Özgeçmiş</TableCell>
+                        <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Sıra Numarası</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Personel Türü</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Durum</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Detaylar</TableCell>
@@ -442,26 +504,27 @@ export default function Mushaflar() {
                           </TableCell>
                           <TableCell style={{ fontSize: '0.75rem', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             <Tooltip title={row.ad} placement="top">
-                              <span>{truncateText(row.ad, 10)}</span>
+                              <span>{truncateText(row.ad, 8)}</span>
                             </Tooltip>
                           </TableCell>
                           <TableCell style={{ fontSize: '0.75rem', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             <Tooltip title={row.soyad} placement="top">
-                              <span>{truncateText(row.soyad, 10)}</span>
+                              <span>{truncateText(row.soyad, 8)}</span>
                             </Tooltip>
                           </TableCell>
                           <TableCell style={{ fontSize: '0.75rem', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            <Tooltip title={row.unvan} placement="top">
-                              <span>{truncateText(row.unvan, 10)}</span>
-                            </Tooltip>
+                          <Tooltip title={row.unvan && row.unvan !== "null" ? row.unvan : 'Mevcut Değil'} placement="top">
+                              <span>{truncateText(row.unvan && row.unvan !== "null" ? row.unvan : 'Mevcut Değil', 8)}</span>
+                          </Tooltip>
                           </TableCell>
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.img && row.img.includes('defaultprofilephoto.jpeg') ? 'Mevcut Değil' : 'Mevcut'}</TableCell>
+                          <TableCell style={{ fontSize: '0.75rem' }}>{row.icerik ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
+                          <TableCell style={{ fontSize: '0.75rem' }}>{row.order}</TableCell>
                           <TableCell style={{ fontSize: '0.75rem', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             <Tooltip title={row.personel_turu ? row.personel_turu.name: 'Mevcut Değil'} placement="top">
-                              <span>{truncateText(row.personel_turu ? row.personel_turu.name: 'Mevcut Değil', 10)}</span>
+                              <span>{truncateText(row.personel_turu ? row.personel_turu.name: 'Mevcut Değil', 8)}</span>
                             </Tooltip>
                           </TableCell>
-
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.durum ? 'Aktif' : 'Pasif'}</TableCell>
                           <TableCell>
                             <Button
@@ -488,6 +551,7 @@ export default function Mushaflar() {
                     >
                       Ekle
                     </Button>
+
                   </div>
                   {data.length > 0 && (
                     <Pagination
@@ -532,7 +596,7 @@ export default function Mushaflar() {
 
             <TextField
                 label="Ünvan (Opsiyonel)"
-                value={selectedItem ? selectedItem.unvan : ''}
+                value={selectedItem && selectedItem.unvan !== "null" ? selectedItem.unvan : ''}
                 onChange={(e) => setSelectedItem({ ...selectedItem, unvan: e.target.value })}
                 fullWidth
                 margin="normal"
@@ -540,13 +604,13 @@ export default function Mushaflar() {
 
 
 
-            {/* fptoğtaf */}
+            {/* fotoğtaf */}
             <div style={{ textAlign: 'center', marginBottom: '20px' }}>
                 <div style={{ border: '2px dashed grey', width: '100%', height: '200px', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
                     {selectedItem && selectedItem.img ? (
                         <>
                             <Typography variant="subtitle1" style={{ marginBottom: '10px', position: 'absolute', top: 0, left: 10 }}>
-                                Fotoğraf:
+                                Fotoğraf (Opsiyonel):
                             </Typography>
                             <img
                                 src={selectedItem.img}
@@ -563,7 +627,7 @@ export default function Mushaflar() {
                         </>
                     ) : (<>
                         <Typography variant="subtitle1" style={{ marginBottom: '10px', position: 'absolute', top: 0, left: 10 }}>
-                                Fotoğraf:
+                                Fotoğraf (Opsiyonel):
                         </Typography>
                         <label htmlFor="fotografiInput">
                             <IconButton
@@ -587,6 +651,40 @@ export default function Mushaflar() {
                 />
             </div>
 
+            {/* icerik*/}
+            {selectedItem && (
+              <>
+                <Typography variant="subtitle1" style={{ marginBottom: '10px', marginTop:'10px'}}>
+                  Özgeçmiş:
+                </Typography>
+                <TextEditor selectedItem={selectedItem} setSelectedItem={setSelectedItem}/>
+              </>
+            )}
+            
+
+            <TextField
+                label="Sıra Numarası"
+                type="number"
+                value={selectedItem && selectedItem.order ? Math.max(selectedItem.order, 1) : ''}
+                onChange={(e) => {
+                    const orderValue = e.target.value;
+
+                    // Kullanıcıdan alınan değeri integer'a çevir, boşsa boş string olarak bırak
+                    const parsedOrder = orderValue === '' ? '' : parseInt(orderValue, 10);
+
+                    // Eğer sayı geçerliyse (NaN değilse) ve pozitifse, değeri ayarla
+                    if (!isNaN(parsedOrder) && parsedOrder >= 1) {
+                        setSelectedItem({ ...selectedItem, order: parsedOrder });
+                    } else if (orderValue === '') {
+                        // Kullanıcı input'u boş bıraktığında, değeri boş olarak ayarla
+                        setSelectedItem({ ...selectedItem, order: '' });
+                    }
+                }}
+                fullWidth
+                margin="normal"
+                inputProps={{ min: "1" }} // Negatif değerlerin ve sıfırın girilmesini engelle
+            />
+
             
 
             <FormControl fullWidth margin='normal'>
@@ -603,7 +701,7 @@ export default function Mushaflar() {
                 </Select>
             </FormControl>
 
-            <FormControlLabel control={<Checkbox checked={selectedItem ? selectedItem.durum : false} onChange={(e) => setSelectedItem({ ...selectedItem, durum: e.target.checked })} />} label="Durum" />
+            <FormControlLabel control={<Checkbox checked={selectedItem ? selectedItem.durum : false} onChange={(e) => setSelectedItem({ ...selectedItem, durum: e.target.checked })} />} label="Aktif" />
           </DialogContent>
           {saveError && <p style={{ color: 'red', marginLeft: '25px' }}>{saveError}</p>}
           {uyariMesaji && <p style={{ color: 'red', marginLeft: '25px' }}>{uyariMesaji}</p>}
@@ -614,9 +712,6 @@ export default function Mushaflar() {
               </Button>
           </DialogActions>
       </Dialog>
-     
-      
-      
 
 
       <Dialog open={openAddDialog} onClose={handleCloseAddDialog} fullWidth maxWidth="sm">
@@ -660,7 +755,7 @@ export default function Mushaflar() {
           {!newItem.img ? (
             <>
              <Typography variant="subtitle1" style={{ marginBottom: '10px', position: 'absolute', top: 0, left: 10 }}>
-               Fotoğraf:
+               Fotoğraf (Opsiyonel):
              </Typography>
             <label htmlFor="fotografiInput">
               <IconButton
@@ -674,7 +769,7 @@ export default function Mushaflar() {
           ) : (
             <>
                 <Typography variant="subtitle1" style={{ marginBottom: '10px', position: 'absolute', top: 0, left: 10 }}>
-                    Fotoğraf:
+                    Fotoğraf (Opsiyonel):
                 </Typography>
                 
                     <img
@@ -701,6 +796,40 @@ export default function Mushaflar() {
           style={{ display: 'none' }}
           onChange={(e) => handleFileChangeEkle(e, "img")}
         />
+      {/* icerik */}
+
+      {newItem && (
+              <>
+                <Typography variant="subtitle1" style={{ marginBottom: '10px', marginTop:'10px'}}>
+                  Özgeçmiş:
+                </Typography>
+                <TextEditor selectedItem={newItem} setSelectedItem={setNewItem}/>
+              </>
+            )}
+      
+
+        <TextField
+            label="Sıra numarası"
+            type="number"
+            value={newItem.order}
+            onChange={(e) => {
+                // Kullanıcıdan alınan değeri tam sayıya dönüştür
+                const sayfaSayisi = parseInt(e.target.value, 10);
+                // Eğer sayı geçerliyse (NaN değilse) veya boş bir stringse, değeri ayarla
+                if (!isNaN(sayfaSayisi) && sayfaSayisi >= 1) {
+                    setNewItem({ ...newItem, order: sayfaSayisi });
+                } else if (e.target.value === '') {
+                    setNewItem({ ...newItem, order: '' });
+                }
+            }}
+            fullWidth
+            margin="normal"
+            inputProps={{ min: "1" }} // Negatif değerlerin ve sıfırın girilmesini engelle
+        />
+
+
+
+
 
             <FormControl fullWidth margin='normal'>
                 <InputLabel style={{ marginBottom: '8px', marginTop: '-10px' }}>Personel Türü</InputLabel>
@@ -718,9 +847,11 @@ export default function Mushaflar() {
 
 
 
+
+
         <FormControlLabel
           control={<Checkbox checked={newItem.durum || false} onChange={(e) => setNewItem({ ...newItem, durum: e.target.checked })} />}
-          label="Durum"
+          label="Aktif"
         />
       </DialogContent>
      
@@ -734,6 +865,56 @@ export default function Mushaflar() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={handleCloseDeleteConfirm}
+      >
+        <DialogTitle>Silme Onayı</DialogTitle>
+        <DialogContent>
+          <Typography>Seçili öğeleri silmek istediğinizden emin misiniz?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteConfirm} color="primary">
+            İPTAL
+          </Button>
+          <Button onClick={handleConfirmDelete} color="primary" autoFocus>
+            SİL
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={warningDialogOpen}
+        onClose={handleCloseWarningDialog}
+      >
+        <DialogTitle>Uyarı</DialogTitle>
+        <DialogContent>
+          <Typography>Silmek için önce bir öğe seçmelisiniz.</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseWarningDialog} color="primary">
+            Tamam
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={warningDialogOpen}
+        onClose={handleCloseWarningDialog}
+      >
+        <DialogTitle>Uyarı</DialogTitle>
+        <DialogContent>
+          <Typography>Silmek için önce bir öğe seçmelisiniz.</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseWarningDialog} color="primary">
+            Tamam
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+
     </>
 
         </>

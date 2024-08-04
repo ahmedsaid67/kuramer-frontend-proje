@@ -1,207 +1,138 @@
-
-/* Genel Stiller */
 .mainContainer {
+  display: flex;
+  margin-bottom: 3rem;
+  
+}
+
+.leftContainer {
+  width: 20%;
+  color: #fff;
+  padding: 20px;
+  padding-top: 30px;
+
+}
+
+.rightContainer {
+  width: 80%;
+  padding: 20px;
+  padding-top: 30px;
+}
+
+
+.cardContainer {
+  display: flex;  /* Kartları yatay olarak düzenle */
+  flex-wrap: wrap; /* Kartlar sığmadığında alt satıra geç */
+  gap: 30px; /* Kartlar arasındaki boşluk */
+}
+
+
+
+/* Card ve "Devamını Gör" Butonu Stilleri (Sağ Taraf) */
+
+.verticalTabs {
+  width: 100%;
+  background-color: white;
+}
+
+.verticalTabsContent {
+  width: 100%;
+  
+}
+
+
+
+
+
+.paginationContainer {
+  margin-top: 40px;
+  margin-bottom: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.errorMessage {
+  color: #D8000C; /* Hata metninin rengi, daha yumuşak bir kırmızı tonu */
+  font-size: 18px; /* Metin boyutu */
+  text-align: center; /* Metni ortala */
+  padding: 20px; /* İç boşluk */
+  border: 1px solid #FFBABA; /* Daha yumuşak bir kırmızı çerçeve */
+  border-radius: 8px; /* Köşeleri daha fazla yuvarlat */
+  margin: 60px auto; /* Üst ve alttan 20px boşluk, sağ ve solda otomatik merkezleme */
+  background-color: #FFD2D2; /* Daha açık bir arka plan rengi, hata mesajını yumuşatır */
+  max-width: 80%; /* Maksimum genişlik */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Hafif bir gölge ekleyerek derinlik hissi verir */
+  transition: all 0.3s ease; /* Pürüzsüz bir geçiş efekti ekler */
+}
+
+.errorMessage:hover {
+  transform: translateY(-2px); /* Fare ile üzerine gelindiğinde yukarı doğru hafif bir hareket */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Gölgeyi artırır ve daha belirgin hale getirir */
+}
+
+.loaderMain {  /* sonradan üretildi */
+  display: flex;
+  justify-content: center; /* Loader'ı yatay olarak ortala */
+  align-items: center; /* Loader'ı dikey olarak ortala */
+  height: 100vh; /* Loader'ın yüksekliğini viewport yüksekliğine eşitle */
+}
+
+.loader {
+  display: flex;
+  justify-content: center; /* Loader'ı yatay olarak ortala */
+  align-items: center; /* Loader'ı dikey olarak ortala */
+  height: 40vh; /* Loader'ın yüksekliğini viewport yüksekliğine eşitle */
+}
+
+
+.noDataMessage {
+  text-align: center; /* Metni ortalar */
+  padding: 20px; /* Çevresine dolgu ekler */
+  font-size: 18px; /* Metin boyutunu ayarlar */
+  background-color: #2e5077; /* Arka plan rengi */
+  color: white;
+  border-radius: 8px; /* Kenar yuvarlaklığını ayarlar */
+  margin: 60px auto; /* Üst ve alttan boşluk bırakır ve yatayda ortalar */
+  max-width: 80%; /* Maksimum genişliği sınırlar */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Kutu gölgesi ekler */
+  border: 1px solid #1e3c5a; /* Kenarlık ekler */
+  transition: all 0.3s ease; /* Geçiş efekti ekler */
+}
+
+.noDataMessage:hover {
+  transform: scale(1.02); /* Fare ile üzerine gelindiğinde büyütme efekti */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Gölgeyi artırır */
+}
+
+/* Medya Sorguları */
+@media screen and (max-width: 1100px) {
+
+  .mainContainer {
     display: flex;
-    margin-bottom: 3rem;
+    flex-direction: column;
   }
-  
+
+
   .leftContainer {
-    width: 20%;
-    color: #fff;
-    padding: 20px;
-  }
-  
-  .rightContainer {
-    width: 80%;
-  }
-  
-  /* Banner ve Başlık Stilleri */
-  .bannerImage {
-    position: relative;
     width: 100%;
-    height: 50vh;
-    overflow: hidden;
-    z-index: 1;
-    text-align: center;
-    background-color: #333;
+    text-align: center; /* Banner fotoğrafının altındaki içeriği ortala */
+    padding: 10px 20px 0 20px;  /* sonradan eklendi */
   }
-  
-  .titleContainer {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 80%;
-    z-index: 2;
+
+  .rightContainer {
+    width: 100%;
+    padding-top: 40px;
   }
-  
-  .titleContainer h1 {
-    font-size: 3rem;
-    margin: 0;
-    color: black;
-  }
-  
-  /* Card ve "Devamını Gör" Butonu Stilleri (Sağ Taraf) */
-  
-  
+
   .verticalTabs {
     width: 100%;
-    background-color: white;
   }
-  
-  .tab {
-    border-bottom: 1px solid #ccc; /* Ince çizgi */
-  }
-  
-  .tabLabel {
-    color: black;
-    font-weight: bold;
-    font-size: 14px;
-  }
-  
-  .tabSelected {
-    color: darkslategray; /* Aktif olduğunda daha koyu renk */
-  }
-  
-  .verticalTabsContent {
-    width: 100%;
-    padding: 20px;
-  }
-  
+
   .cardContainer {
-    padding: 10px;
-    display: flex;  /* Kartları yatay olarak düzenle */
-    flex-wrap: wrap; /* Kartlar sığmadığında alt satıra geç */
-    gap: 30px; /* Kartlar arasındaki boşluk */
-  }
-
-  .errorMessage {
-    color: #ff0000; /* Kırmızı metin rengi */
-    font-size: 18px; /* Metin boyutu */
-    text-align: center; /* Metni ortala */
-    padding: 20px; /* İç boşluk */
-    border: 1px solid #ff0000; /* Kırmızı çerçeve */
-    border-radius: 5px; /* Köşeleri yuvarlat */
-    margin: 20px auto; /* Üst ve alttan 20px boşluk, sağ ve solda otomatik merkezleme */
-    background-color: #ffcccc; /* Arka plan rengi */
-    max-width: 600px; /* Maksimum genişlik */
-  }
-  
-  .infoMessage {
-    color: white; /* Kırmızı metin rengi */
-    font-size: 18px; /* Metin boyutu */
-    text-align: center; /* Metni ortala */
-    padding: 20px; /* İç boşluk */
-    border: 1px solid #2e5077; /* Kırmızı çerçeve */
-    border-radius: 5px; /* Köşeleri yuvarlat */
-    margin: 20px auto; /* Üst ve alttan 20px boşluk, sağ ve solda otomatik merkezleme */
-    background-color: #2e5077;/* Arka plan rengi */
-    max-width: 600px; /* Maksimum genişlik */
-  }
-  
-  .paginationContainer {
-    margin-top: 40px;
-    margin-bottom: 40px;
-    display: flex;
     justify-content: center;
-    align-items: center;
   }
-  
-  .loader {
-    display: flex;
-    justify-content: center; /* Loader'ı yatay olarak ortala */
-    align-items: center; /* Loader'ı dikey olarak ortala */
-    height: 50vh; /* Loader'ın yüksekliğini viewport yüksekliğine eşitle */
-  }
-  
-  .noDataMessage {
-    text-align: center; /* Metni ortalar */
-    padding: 20px; /* Çevresine dolgu ekler */
-    font-size: 18px; /* Metin boyutunu ayarlar */
-    background-color: #2e5077; /* Arka plan rengi */
-    color: white;
-    border-radius: 8px; /* Kenar yuvarlaklığını ayarlar */
-    margin: 20px auto; /* Üst ve alttan boşluk bırakır ve yatayda ortalar */
-    max-width: 80%; /* Maksimum genişliği sınırlar */
-  }
-  
-  /* Medya Sorguları */
-  @media screen and (max-width: 1100px) {
-    .bannerImage {
-      height: 40vh;
-    }
-  
-  
-    .mainContainer {
-      display: flex;
-      flex-direction: column;
-    }
-  
-    .titleContainer {
-      width: 70%;
-    }
-  
-    .titleContainer h1 {
-      font-size: 2.5rem;
-    }
-  
-    .leftContainer {
-      width: 100%;
-      text-align: center; /* Banner fotoğrafının altındaki içeriği ortala */
-    }
-  
-    .rightContainer {
-      width: 100%;
-    }
-    
-    .verticalTabs {
-      width: 100%;
-    }
-  
-    .cardContainer {
-      justify-content: center;
-    }
-    
-    .verticalTabsContent h2{  
-      text-align: center;
-    }
-  
-    .tabLabel {
-      font-size: 13px;
-    }
-  }
-  
-  @media screen and (max-width: 767px) {
-    .bannerImage {
-      height: 30vh;
-    }
-  
-    .titleContainer {
-      width: 90%;
-    }
-  
-    .titleContainer h1 {
-      font-size: 2rem;
-    }
-    .tabLabel {
-      font-size: 12px;
-    }
-    .verticalTabsContent h2{  
-      font-size: 20px;
-      text-align: center;
-    }
-    .cardContainer {
-      justify-content: center;
-    }
 
-    .errorMessage {
 
-      max-width: 200px; /* Maksimum genişlik */
-    }
-  
-    .infoMessage {
-  
-      max-width: 200px; /* Maksimum genişlik */
-    }
-  
-  }
+}
+
+

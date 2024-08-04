@@ -1,53 +1,65 @@
-/* styles/YayinlarimizdanSecmeler.module.css */
-
-.bannerImage {
-  position: relative;
-  width: 100%;
-  height: 50vh;
-  overflow: hidden;
-  z-index: 1; /* Önceki değeri 999'dan düşürdüm, çünkü 999'dan büyük bir z-index değeri kullanılabilir */
-  text-align: center;
-  color: black;
+/* Konteyner Stilleri */
+.Container {
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: 1rem auto 2rem;
 }
 
-.titleContainer {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 80%; /* veya istediğiniz genişlik */
-  z-index: 2; /* Banner üzerindeki yazılarımızın ön planda olması için z-index değerini artırdık */
+.textContainer {
+  margin-bottom: 40px;
 }
 
-.titleContainer h1 {
-  font-size: 3rem;
-  margin-bottom: 1rem; /* İstediğiniz boşluk eklenebilir */
-  color: black;
-}
-
-.textContainer{
-  padding: 20px;
-}
-
-.textContainer p{
+.textContainer p {
   font-size: 16px;
 }
 
 .cardContainer {
-  display: flex;
-  flex-wrap: wrap; /* Kartlar sığmadığı durumda bir sonraki satıra geçmesini sağlar */
-  justify-content: space-evenly;
+  display: grid;
   gap: 30px; /* Kartlar arasındaki boşluk */
+  margin: 1rem auto; /* Konteynerin ortalanması */
+  
+  box-sizing: border-box; /* Padding ve border hesaplamaları için */
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Kartları uygun şekilde yerleştirir */
 }
 
-.paginationContainer {
-  margin-top: 40px;
-  margin-bottom: 40px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.card {
+  box-sizing: border-box; /* Kart genişlik hesaplamaları için */
+  width: 100%; /* Kart genişliğini konteyner genişliğine göre ayarla */
+  max-width: 100%; /* Kartların taşmasını önle */
 }
 
+/* Mobil ekranlar için stil */
+@media screen and (max-width: 767px) {
+  .textContainer {
+    margin-bottom: 20px;
+  }
+  
+  .textContainer p {
+    font-size: 14px;
+  }
+
+  .cardContainer {
+    grid-template-columns: 1fr; /* Tek sütun düzeni */
+  }
+}
+
+/* Tablet ve küçük ekranlar için stil */
+@media screen and (min-width: 768px) and (max-width: 1099px) {
+  .cardContainer {
+    grid-template-columns: repeat(3, 1fr); /* Üç sütun düzeni */
+  }
+}
+
+/* Büyük ekranlar için stil */
+@media screen and (min-width: 1100px) {
+  .cardContainer {
+    grid-template-columns: repeat(5, 1fr); /* Beş sütun düzeni */
+  }
+}
+
+/* Hata Mesajı Stilleri */
 .errorMessage {
   color: #D8000C; /* Hata metninin rengi, daha yumuşak bir kırmızı tonu */
   font-size: 18px; /* Metin boyutu */
@@ -67,13 +79,22 @@
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Gölgeyi artırır ve daha belirgin hale getirir */
 }
 
+/* Yüklenme Mesajı Stilleri */
+.loaderMain {  
+  display: flex;
+  justify-content: center; /* Loader'ı yatay olarak ortala */
+  align-items: center; /* Loader'ı dikey olarak ortala */
+  height: 100vh; /* Loader'ın yüksekliğini viewport yüksekliğine eşitle */
+}
+
 .loader {
   display: flex;
   justify-content: center; /* Loader'ı yatay olarak ortala */
   align-items: center; /* Loader'ı dikey olarak ortala */
-  height: 50vh; /* Loader'ın yüksekliğini viewport yüksekliğine eşitle */
+  height: 40vh; /* Loader'ın yüksekliğini viewport yüksekliğine eşitle */
 }
 
+/* Veri Yoksa Mesaj Stilleri */
 .noDataMessage {
   text-align: center; /* Metni ortalar */
   padding: 20px; /* Çevresine dolgu ekler */
@@ -91,42 +112,4 @@
 .noDataMessage:hover {
   transform: scale(1.02); /* Fare ile üzerine gelindiğinde büyütme efekti */
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Gölgeyi artırır */
-}
-
-@media screen and (max-width: 1100px) {
-  .bannerImage {
-    height: 40vh;
-  }
-
-  .titleContainer h1 {
-    font-size: 2.5rem;
-  }
-
-  .cardContainer {
-    margin-inline: 4rem;
-  }
-
-  /* Diğer stillendirmeler buraya eklenebilir */
-}
-
-/* Mobil ekranlar için stil */
-@media screen and (max-width: 767px) {
-  .bannerImage {
-    height: 30vh;
-  }
-
-  .titleContainer h1 {
-    font-size: 2rem;
-  }
-
-  .textContainer p{
-    font-size: 14px;
-  }
-
-  .cardContainer {
-    margin-inline: 2rem;
-  }
-  
-
-  /* Diğer stillendirmeler buraya eklenebilir */
 }

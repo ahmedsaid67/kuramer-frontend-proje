@@ -6,98 +6,192 @@ import styles from '../../../styles/TemelKonularKavram.module.css';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { API_ROUTES } from '../../../utils/constants';
-import BaslikGorsel from '../../../compenent/BaslikGorsel';
 import BasindaBizCardOge from '../../../compenent/BasindaBizCardOge';
 import Stack from '@mui/material/Stack';
 import CircularProgress from '@mui/material/CircularProgress';
 import GorselBasinCardOge from "../../../compenent/GorselBasinCardOge"
+import BaslikGorselCompenent from '../../../compenent/BaslikGorselCompenent';
 
 function Index() {
   const [yaziliBasin, setYaziliBasin] = useState([]);
   const [gorselBasin, setGorselBasin] = useState([]);
-  const [activeTab, setActiveTab] = useState('basinda-biz');
   const router = useRouter();
   const [orientation, setOrientation] = useState('vertical'); // Default olarak 'vertical'
-  const currentPage = parseInt(router.query.page || '1', 10);
   const [totalPagesYazili, setTotalPagesYazili] = useState(0);
   const [totalPagesGorsel, setTotalPagesGorsel] = useState(0);
   const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(false); 
-  const tab = router.query.tab || 'basinda-biz';
+  const [isLoading, setIsLoading] = useState(true); 
+
+  const [isLoadingYaziliBasin,setIsLoadingYaziliBasin] = useState(true)
+  const [isLoadingGorselBasin,setIsLoadingGorselBasin] = useState(true)
+
+  const [errorPage, setErrorPage] = useState(null);
+  const [isPagesLoading, setPagesIsLoading] = useState(true); 
+  const currentPage = parseInt(router.query.page || '1', 10);
+
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [itemsError, setItemsError] = useState(null);
+  const path = router.asPath;
+
+
+  const [tab1,setTab1]=useState({})
+  const [tab2,setTab2]=useState({})
+  const [tab3,setTab3]=useState({})
+
+  useEffect(() => {
+    const menuFetch = async () => {
+      setLoading(true); // Yükleniyor durumunu başlat
+      setItemsError(null); // Hata durumunu sıfırla
+
+      try {
+        
+        const parts = path.split('?');
+        const firstPart = `${parts[0]}`; // Bu, '/kurumsal' ya da '/kuran-i-kerim' olacaktır
+        const response = await axios.post(API_ROUTES.MENU_ALT_OGE, { url: firstPart });
+        setItems(response.data.items);
+      } catch (error) {
+        setItemsError('Veriler yüklenirken beklenmeyen bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
+        console.error('Error fetching menu items:', error); // Hata detayını konsola yazdır
+      } finally {
+        setLoading(false); // Yükleme tamamlandı
+      }
+    };
+
+    menuFetch();
+  }, []);
+
+
+  const pagesFetchData = async (page) => {
+    setPagesIsLoading(true);
+    setErrorPage(null);
+  
+    try {
+      const url = path.split('&')[0];
+
+      if (url === items[0].url) {
+        // Check if tab1 has data, otherwise fetch it
+        if (!Object.keys(tab1).length > 0) {
+          const response1 = await axios.post(API_ROUTES.SAYFALAR_GET_GORSEL, { url: url });
+          setTab1(response1.data); // Store the fetched data in tab1
+
+        }
+      } else if (url === items[1].url) {
+        // Check if tab2 has data, otherwise fetch it
+        if (!Object.keys(tab2).length > 0) {
+          const response2 = await axios.post(API_ROUTES.SAYFALAR_GET_GORSEL, { url: url });
+          setTab2(response2.data); // Store the fetched data in tab2
+        }
+      }else if (url === items[2].url) {
+        // Check if tab3 has data, otherwise fetch it
+        if (!Object.keys(tab3).length > 0) {
+          const response2 = await axios.post(API_ROUTES.SAYFALAR_GET_GORSEL, { url: url });
+          setTab3(response2.data); // Store the fetched data in tab2
+        }
+      }
+  
+    } catch (error) {
+      setErrorPage('Veriler yüklenirken beklenmeyen bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
+      console.log("error:", error);
+    } finally {
+      setPagesIsLoading(false); // Yükleme işlemi tamamlandığında veya hata oluştuğunda
+    }
+  };
+
+  
+  const getDataForBaslikGorsel = () => {
+    const url = path.split('&')[0];
+    switch (url) {
+      case items[0].url:
+        return tab1;
+      case items[1].url:
+        return tab2;
+      case items[2].url:
+        return tab3;
+      default:
+        return {};
+    }
+  };
 
 
 
   // Veri alma işlemini yapan fonksiyon
-  const fetchData = async (tab, page) => {
-    setIsLoading(true);
+  const fetchData = async (currentPage) => {
+    setIsLoadingYaziliBasin(true);
+    setIsLoadingGorselBasin(true);
     try {
       let response;
-      if (tab === "yazili-basin") {
-        const yaziliBasinUrl = API_ROUTES.YAZILI_BASIN_ACTIVE.replace('currentPage', page);
+      if (path.replace(/&page=\d+/, '') === items[1].url) {
+        const yaziliBasinUrl = API_ROUTES.YAZILI_BASIN_ACTIVE.replace('currentPage', currentPage);
         response = await axios.get(yaziliBasinUrl);
+        //console.log("res:",response.data.results)
         setYaziliBasin(response.data.results);
         setTotalPagesYazili(Math.ceil(response.data.count / 10));
-      } else if (tab === "gorsel-basin") {
-        const gorselBasinUrl = API_ROUTES.GORSEL_BASIN_ACTIVE.replace('currentPage', page);
+        setIsLoadingYaziliBasin(false);
+      } else if (path.replace(/&page=\d+/, '') === items[2].url) {
+        const gorselBasinUrl = API_ROUTES.GORSEL_BASIN_ACTIVE.replace('currentPage', currentPage);
         response = await axios.get(gorselBasinUrl);
+        //console.log("res:",response.data.results)
         setGorselBasin(response.data.results);
         setTotalPagesGorsel(Math.ceil(response.data.count / 10));
+        setIsLoadingGorselBasin(false)
       }
       setError(null);
     } catch (error) {
       console.error("Veri yükleme sırasında bir hata oluştu:", error);
       if (error.response && error.response.status === 404 && error.response.data.detail === "Invalid page.") {
-        // 'Invalid page' detayını kontrol eden ve buna göre hata mesajı döndüren koşul
         setError('Geçersiz sayfa. Bu sayfa mevcut değil veya sayfa numarası hatalı. Lütfen sayfa numarasını kontrol edin.');
       } else {
         setError('Veriler yüklenirken beklenmeyen bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
       }
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  // İlk yükleme için veri alma
-  useEffect(() => {
-    fetchData(tab, currentPage);
-  }, []); // Boş dizi, bu effect'in sadece bileşen mount edildiğinde çalışacağını garanti eder
 
-  
+
+  useEffect(() => {
+    if (items.length>0) {
+      const urls = items.map(item => item.url);
+      if (!urls.includes(path.replace(/&page=\d+/, ''))) {
+        router.push('/hata-sayfasi');
+      }else{
+        pagesFetchData();
+        if (items.slice(1, 3).some(item => path.replace(/&page=\d+/, '') === item.url)) {
+          fetchData(currentPage);
+        }
+        
+      }
+      
+    }
+  }, [items,path]);
+
+
 
   const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
-    fetchData(newValue, 1);
-    router.push(`/medyagaleri/basinda-biz?tab=${newValue}`, undefined, { shallow: true });
+    router.push(newValue, undefined, { shallow: true });
   };
+
+
 
   const handleChangePage = (event, value) => {
-    fetchData(activeTab, value);
-    router.push(`/medyagaleri/basinda-biz?tab=${activeTab}&page=${value}`, undefined, { shallow: true });
+    scrollToTop(() => {
+      router.push(`${path.replace(/&page=\d+/, '')}&page=${value}`, undefined, { shallow: true });
+    })
   };
 
-
-  useEffect(() => {
-    const handleRouteChange = () => {
-      const newTab = router.query.tab;
-      const validTabs = ['basinda-biz', 'yazili-basin', 'gorsel-basin']; // Geçerli tab değerlerinin listesi
-  
-      if (validTabs.includes(newTab)) {
-        setActiveTab(newTab);
-        fetchData(newTab, currentPage);
-      } else if (newTab) {
-        router.push('/hata-sayfasi');
+  const scrollToTop = (callback) => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Kaydırmanın tamamlanması için yaklaşık süre
+    setTimeout(() => {
+      if (callback) {
+        callback();
       }
-
-    };
-
-    handleRouteChange()
-
-  
-  }, [router.query.tab,currentPage]); // router.query.tab'e bağlı olarak çalışacak
+    }, 500); // 500 milisaniye kaydırmanın tamamlanması için varsayılan süre
+  };
   
   
-    // Ekran boyutuna göre sekme yönünü ayarlama
-    useEffect(() => {
+  // Ekran boyutuna göre sekme yönünü ayarlama
+  useEffect(() => {
       const handleResize = () => {
         if (window.innerWidth <= 1100) {
           setOrientation('horizontal');
@@ -108,10 +202,9 @@ function Index() {
       handleResize();
       window.addEventListener('resize', handleResize);
       return () => window.removeEventListener('resize', handleResize);
-    }, []);
+  }, []);
 
 
-  
 
   return (
     <>
@@ -120,155 +213,158 @@ function Index() {
         <link rel="icon" href="/kuramerlogo.png" />
       </Head>
 
-      <BaslikGorsel metin={"Basında Biz"} />
+      { loading   ? (
+          <div className={styles.loaderMain}>
+          <CircularProgress /> 
+          </div>)
+          : itemsError || errorPage  ? (
+          <div className={styles.errorMessage}>{itemsError || errorPage}</div>
+        )
+        : items.length > 0 ? (
+        
+        <>
 
-      <div className={styles.mainContainer}>
-        <div className={styles.leftContainer}>
-        <Tabs
-          orientation={orientation}
-          variant="fullWidth"
-          value={activeTab}
-          onChange={handleTabChange}
-          className={styles.verticalTabs}
-          aria-label="Vertical tabs example"
-          centered
-          
-        >
-          <Tab
-            className={styles.tab}
-            label={
-              <Typography className={styles.tabLabel}>
-                {("Basında Biz").toLocaleUpperCase('tr-TR')}
-              </Typography>
-            }
-            value="basinda-biz"
-          />
-          <Tab
-            className={styles.tab}
-            label={
-              <Typography className={styles.tabLabel}>
-                Yazılı Basın
-              </Typography>
-            }
-            value="yazili-basin"
-          />
-          <Tab
-            className={styles.tab}
-            label={
-              <Typography className={styles.tabLabel}>
-                Görsel Basın
-              </Typography>
-            }
-            value="gorsel-basin"
-          />
-        </Tabs>
-        </div>
+        <BaslikGorselCompenent data={getDataForBaslikGorsel()} altPage={false} dinamicPage={{}} isPagesLoading={isPagesLoading}/>
 
-        <div className={styles.rightContainer}>
-          <div className={styles.verticalTabsContent}>
-            <TabPanel value={activeTab} index="basinda-biz">
-              <h2>Basında Biz</h2>
-              <p>
-              Kur'an Araştırma Merkezi, Kur'an'ın anlaşılması ve yorumlanmasına katkıda bulunmak amacıyla
-               akademik çalışmalar yürüten bir kuruluştur. Merkezimiz, alanında uzman akademisyenlerin makalelerini, 
-               kapsamlı araştırmalarını ve kitaplarını yayınlamaktadır. "Basında Biz" sayfamızda, merkezimizin 
-               çalışmalarının ulusal ve uluslararası basında nasıl yer bulduğuna dair örnekler ve medyanın merkezimize 
-               olan ilgisini yansıtan haberler sunulmaktadır. Bu sayfa, kurumumuzun araştırma ve yayın faaliyetlerinin geniş 
-               kitlelere ulaştığının ve konuyla ilgili kamuoyu farkındalığının artırılmasına katkı sağladığının bir göstergesidir.
-              </p>
-              
-            </TabPanel>
+        <div className={styles.mainContainer}>
+          <div className={styles.leftContainer}>
+          <Tabs
+            orientation={orientation}
+            variant="fullWidth"
+            value={path.replace(/&page=\d+/, '')}
+            onChange={handleTabChange}
+            className={styles.verticalTabs}
+            aria-label="Vertical tabs example"
+            centered
+            
+          >
+            {items.map((kategori,key) => (
+                  <Tab sx={{
+                    borderBottom: 1,
+                    borderColor: 'divider',
+                    color: 'black',
+                    '&.Mui-selected': {
+                      color: 'black', 
+                    },
+                  }} key={key} label={<Typography component="span" sx={{
+                    fontWeight: 'bold',
+                    textTransform: 'none',
+                  }}>{kategori.title}</Typography>} value={kategori.url} />
+                ))}
+          </Tabs>
+          </div>
 
-            <TabPanel value={activeTab} index="yazili-basin">
-              <h2>Yazılı Basın</h2>
-              {isLoading ? (
-                <div className={styles.loader}>
-                  <CircularProgress />
-                </div>
-              ) : error ? (
-                <div className={styles.errorMessage}>
-                  {error}
-                </div>
-              ) : yaziliBasin.length > 0 ? (
-                <div className={styles.cardContainer}>
-                  {yaziliBasin.map((yayin, index) => (
-                    <BasindaBizCardOge key={index} yayin={yayin}/>
-                  ))}
-                </div>
-              ) : (
-                <div className={styles.noDataMessage}>
-                  Kayıtlı veri bulunmamaktadır.
-                </div>
-              )}
-              {!isLoading && !error && totalPagesYazili > 0 && (
-                <Stack spacing={2} alignItems="center" className={styles.paginationContainer}>
-                  <Pagination 
-                    count={totalPagesYazili} 
-                    page={currentPage} 
-                    onChange={handleChangePage} 
-                    variant="outlined" 
-                    shape="rounded" 
-                    sx={{
-                      '& .MuiPaginationItem-root': { color: 'inherit' },
-                      '& .MuiPaginationItem-page.Mui-selected': {
-                        backgroundColor: '#2e5077',
-                        color: '#fff',
-                        '&:hover': {
-                          backgroundColor: '#1a365d',
+          <div className={styles.rightContainer}>
+            <div className={styles.verticalTabsContent}>
+            <TabPanel value={path} index={items[0].url}>
+                {isPagesLoading ? (
+                  <div className={styles.loader}>
+                    <CircularProgress />
+                  </div>
+                ) : errorPage ? (
+                  <div className={styles.errorMessage}>
+                    {errorPage}
+                  </div>
+                ) : (
+                  <div className={styles.icerik} dangerouslySetInnerHTML={{ __html: tab1?.icerik }} />
+                ) 
+                }
+                
+              </TabPanel>
+
+              <TabPanel value={path.replace(/&page=\d+/, '')} index={items[1].url}>
+                {isLoadingYaziliBasin ? (
+                  <div className={styles.loader}>
+                    <CircularProgress />
+                  </div>
+                ) : error || errorPage  ? (
+                  <div className={styles.errorMessage}>
+                    {error || errorPage }
+                  </div>
+                ) : yaziliBasin.length > 0 ? (
+                  <div className={styles.cardContainer}>
+                    {yaziliBasin.map((yayin, index) => (
+                      <BasindaBizCardOge key={index} yayin={yayin}/>
+                    ))}
+                  </div>
+                ) : (
+                  <div className={styles.noDataMessage}>
+                    Kayıtlı veri bulunmamaktadır.
+                  </div>
+                )}
+                
+                {!isLoadingYaziliBasin && !error && totalPagesYazili > 0 && (
+                  <Stack spacing={2} alignItems="center" className={styles.paginationContainer}>
+                    <Pagination 
+                      count={totalPagesYazili} 
+                      page={currentPage} 
+                      onChange={handleChangePage} 
+                      variant="outlined" 
+                      shape="rounded" 
+                      sx={{
+                        '& .MuiPaginationItem-root': { color: 'inherit' },
+                        '& .MuiPaginationItem-page.Mui-selected': {
+                          backgroundColor: '#2e5077',
+                          color: '#fff',
+                          '&:hover': {
+                            backgroundColor: '#1a365d',
+                          },
                         },
-                      },
-                    }}
-                  />
-                </Stack>
-              )}
-            </TabPanel>
-
-            <TabPanel value={activeTab} index="gorsel-basin">
-              <h2>Görsel Basın</h2>
-              {isLoading ? (
-                <div className={styles.loader}>
-                  <CircularProgress />
-                </div>
-              ) : error ? (
-                <div className={styles.errorMessage}>
-                  {error}
-                </div>
-              ) : gorselBasin.length > 0 ? (
-                <div className={styles.cardContainer}>
-                  {gorselBasin.map((yayin, index) => (
-                    <GorselBasinCardOge key={index} yayin={yayin}/>
-                  ))}
-                </div>
-              ) : (
-                <div className={styles.noDataMessage}>
-                  Kayıtlı veri bulunmamaktadır.
-                </div>
-              )}
-              {!isLoading && !error && totalPagesGorsel > 0 && (
-                <Stack spacing={2} alignItems="center" className={styles.paginationContainer}>
-                  <Pagination 
-                    count={totalPagesGorsel} 
-                    page={currentPage} 
-                    onChange={handleChangePage} 
-                    variant="outlined" 
-                    shape="rounded" 
-                    sx={{
-                      '& .MuiPaginationItem-root': { color: 'inherit' },
-                      '& .MuiPaginationItem-page.Mui-selected': {
-                        backgroundColor: '#2e5077',
-                        color: '#fff',
-                        '&:hover': {
-                          backgroundColor: '#1a365d',
+                      }}
+                    />
+                  </Stack>
+                )}
+              </TabPanel>
+              <TabPanel value={path.replace(/&page=\d+/, '')} index={items[2].url}>
+                {isLoadingGorselBasin ? (
+                  <div className={styles.loader}>
+                    <CircularProgress />
+                  </div>
+                ) : error || errorPage  ? (
+                  <div className={styles.errorMessage}>
+                    {error || errorPage }
+                  </div>
+                ) : gorselBasin.length > 0 ? (
+                  <div className={styles.cardContainer}>
+                    {gorselBasin.map((yayin, index) => (
+                      <GorselBasinCardOge key={index} yayin={yayin}/>
+                    ))}
+                  </div>
+                ) : (
+                  <div className={styles.noDataMessage}>
+                    Kayıtlı veri bulunmamaktadır.
+                  </div>
+                )}
+                {!isLoadingGorselBasin && !error && totalPagesGorsel > 0 && (
+                  <Stack spacing={2} alignItems="center" className={styles.paginationContainer}>
+                    <Pagination 
+                      count={totalPagesGorsel} 
+                      page={currentPage} 
+                      onChange={handleChangePage} 
+                      variant="outlined" 
+                      shape="rounded" 
+                      sx={{
+                        '& .MuiPaginationItem-root': { color: 'inherit' },
+                        '& .MuiPaginationItem-page.Mui-selected': {
+                          backgroundColor: '#2e5077',
+                          color: '#fff',
+                          '&:hover': {
+                            backgroundColor: '#1a365d',
+                          },
                         },
-                      },
-                    }}
-                  />
-                </Stack>
-              )}
-            </TabPanel>
+                      }}
+                    />
+                  </Stack>
+                )}
+              </TabPanel>
+            </div>
           </div>
         </div>
-      </div>
+        </>
+      ): (
+        <div className={styles.noDataMessage}>Kayıtlı Öge verisi bulunmamaktadır.</div>
+      )
+    }
     </>
   );
 }

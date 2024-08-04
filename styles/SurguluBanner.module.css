@@ -1,23 +1,76 @@
-/* SurguluBanner.module.css */
 .sliderContainer {
   margin-bottom: -5px;
-  background-color: #d4cfca; /* Arka plan rengi */
-
+  background: #d4cfca;
   margin-top: 5px;
+  width: 100%;
+  height: auto;
 }
+
+
+.customDots {
+  position: absolute;
+  top: 90%; /* Slider'ın yüksekliğinin %90'ı kadar aşağıda */
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  list-style: none;
+  padding: 0;
+  z-index: 10; /* Z-index yüksek değeri ile dot'ların diğer elementlerin üstünde görünmesini sağlar */
+}
+
+.customDots li {
+  margin: 0 5px;
+}
+
+.customDots li button {
+  font-size: 12px;
+  line-height: 20px;
+  width: 13px;
+  height: 13px;
+  padding: 0;
+  border-radius: 50%;
+  border: none;
+  background: #fff; /* Dot'ların arka plan rengini hafif şeffaf beyaz olarak ayarla */
+  cursor: pointer;
+  transition: background 0.3s ease; /* Arka plan rengi değişimini yumuşat */
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.5); /* Gölgelendirme efekti */
+}
+.customDots li button::before {
+  content: none;
+}
+
+.customDots li button:hover {
+  background: #2e5077; /* Üzerine gelindiğinde dot'un arka plan rengini değiştir */
+}
+
+.customDots li.slick-active button {
+  background: #2e5077; /* Aktif dot'un arka plan rengini ayarla */
+  opacity: 1; /* Aktif dot'u tamamen opak yap */
+}
+
+
 
 
 .rightArrow, .leftArrow {
   position: absolute;
   top: 50%;
   transform: translate(0, -50%);
-  font-size: 24px;
-  color: #fff;
+  font-size: 16px;
   z-index: 5;
   cursor: pointer;
-  background: linear-gradient(to right, #2e5077, #457fbc);
+  background: #fff; /* Beyaz arka plan */
+  color: #2e5077; /* Mavi ok renk */
   border-radius: 50%;
-  padding: 12px 24px;
+  padding: 9px 14.5px;
+  transition: background 0.3s ease, color 0.3s ease; /* Renk değişikliği için geçiş efekti */
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+}
+
+/* Üzerine gelindiğinde stil değişiklikleri */
+.rightArrow:hover, .leftArrow:hover {
+  background: #2e5077; /* Mavi arka plan */
+  color: #fff; /* Beyaz ok renk */
 }
 
 .leftArrow {
@@ -28,19 +81,22 @@
   right: 32px;
 }
 
+/* SurguluBanner.module.css içerisinde */
 .placeholder {
   width: 100%;
-  height: 100vh; /* Banner'ınızın yüksekliğine göre ayarlayın */
+  height: 800px; /* Varsayılan yükseklik, ihtiyaca göre ayarlayın */
   background: #d4cfca;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  
 }
+
+
+
+
 
 /* Responsive adjustments */
 @media only screen and (max-width: 768px) {
   .rightArrow, .leftArrow {
-    padding: 6px 12px; /* Adjust padding accordingly */
+    padding: 6px 9px; /* Adjust padding accordingly */
     font-size: 12px;
     left: 8px; /* Both arrows adjusted to the same side for simplification */
     right: auto;
@@ -50,12 +106,33 @@
     right: 8px;
     left: auto;
   }
+  .placeholder{
+    height: 180px;
+  }
+
+  .customDots li button {
+
+    width: 10px;
+    height: 10px;
+  }
 }
 
-@media only screen and (min-width: 768px) and (max-width:1100px) {
+
+/* Responsive adjustments */
+@media only screen and (max-width: 500px) {
+  .customDots {
+
+    top: 85%; /* Slider'ın yüksekliğinin %90'ı kadar aşağıda */
+
+  }
+}
+
+
+
+@media only screen and (min-width: 768px) and (max-width:900px) {
   .rightArrow, .leftArrow {
-    padding: 9px 18px; /* Adjust padding accordingly */
-    font-size: 18px;
+    padding: 9px 14.5px; /* Adjust padding accordingly */
+    font-size: 16px;
     left: 8px; /* Both arrows adjusted to the same side for simplification */
     right: auto;
   }
@@ -64,12 +141,31 @@
     right: 8px;
     left: auto;
   }
+
+  .placeholder{
+    height: 350px;
+  }
 }
 
-.slick-slide img {
-  width: 100%;
-  height: auto;
-  background-repeat: no-repeat;
+
+
+@media only screen and (min-width: 900px) and (max-width:1100px) {
+  .rightArrow, .leftArrow {
+    padding: 9px 14.5px; /* Adjust padding accordingly */
+    font-size: 16px;
+    left: 8px; /* Both arrows adjusted to the same side for simplification */
+    right: auto;
+  }
+
+  .rightArrow {
+    right: 8px;
+    left: auto;
+  }
+  .placeholder{
+    height: 450px;
+  }
 }
+
+
 
 

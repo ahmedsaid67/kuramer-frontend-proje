@@ -7,21 +7,100 @@ import { useRouter } from 'next/router';
 import axios from 'axios';
 import CardOge from '../../compenent/CardOge';
 import Head from 'next/head';
-import BaslikGorsel from "../../compenent/BaslikGorsel";
 import { API_ROUTES } from '../../utils/constants';
 import Stack from '@mui/material/Stack';
 import CircularProgress from '@mui/material/CircularProgress'; 
+import BaslikGorselCompenent from '../../compenent/BaslikGorselCompenent';
 
 function Index() {
   const [mushafFarklari,setMushafFarklari] = useState([]); // Değişken adını güncelle
-  const [activeTab, setActiveTab] = useState('kuran-i-kerim');
   const router = useRouter();
   const [orientation, setOrientation] = useState('vertical'); // Default olarak 'vertical'
+  const [isScrolTab, setIsScrolTab] = useState(false);
 
   const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setIsLoading] = useState(true); // Yükleme durumu için state
   const [error, setError] = useState(null);
+
+
+  const [errorPage, setErrorPage] = useState(null);
+  const [isPagesLoading, setPagesIsLoading] = useState(true); // Yükleme durumu için state
   const currentPage = parseInt(router.query.page || '1', 10);
+
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [itemsError, setItemsError] = useState(null);
+  const path = router.asPath;
+
+  const [tab1,setTab1]=useState({})
+  const [tab2,setTab2]=useState({})
+
+
+  useEffect(() => {
+    const menuFetch = async () => {
+      setLoading(true); // Yükleniyor durumunu başlat
+      setItemsError(null); // Hata durumunu sıfırla
+
+      try {
+        
+        const parts = path.split('?');
+        const firstPart = `${parts[0]}`; // Bu, '/kurumsal' ya da '/kuran-i-kerim' olacaktır
+        const response = await axios.post(API_ROUTES.MENU_ALT_OGE, { url: firstPart });
+        setItems(response.data.items);
+      } catch (error) {
+        setItemsError('Veriler yüklenirken beklenmeyen bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
+        console.error('Error fetching menu items:', error); // Hata detayını konsola yazdır
+      } finally {
+        setLoading(false); // Yükleme tamamlandı
+      }
+    };
+
+    menuFetch();
+  }, []);
+
+  const pagesFetchData = async (page) => {
+    setPagesIsLoading(true);
+    setErrorPage(null);
+  
+    try {
+      const url = path.split('&')[0];
+
+  
+      if (url === items[0].url) {
+        // Check if tab1 has data, otherwise fetch it
+        if (!Object.keys(tab1).length > 0) {
+          const response1 = await axios.post(API_ROUTES.SAYFALAR_GET_GORSEL, { url: url });
+          setTab1(response1.data); // Store the fetched data in tab1
+
+        }
+      } else if (url === items[2].url) {
+        // Check if tab2 has data, otherwise fetch it
+        if (!Object.keys(tab2).length > 0) {
+          const response2 = await axios.post(API_ROUTES.SAYFALAR_GET_GORSEL, { url: url });
+          setTab2(response2.data); // Store the fetched data in tab2
+        }
+      }
+  
+    } catch (error) {
+      setErrorPage('Veriler yüklenirken beklenmeyen bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
+      console.log("error:", error);
+    } finally {
+      setPagesIsLoading(false); // Yükleme işlemi tamamlandığında veya hata oluştuğunda
+    }
+  };
+
+
+  const getDataForBaslikGorsel = () => {
+    const url = path.split('&')[0];
+    switch (url) {
+      case items[0].url:
+        return tab1;
+      case items[2].url:
+        return tab2;
+      default:
+        return {};
+    }
+  };
 
 
   const fetchData = async (page) => {
@@ -44,66 +123,75 @@ function Index() {
     }
   };
 
+
+
   useEffect(() => {
-    if (router.query.tab) {
-      const validTabs = ['kuran-i-kerim', 'mushaf-farklari']; 
-      if (!validTabs.includes(router.query.tab)) {
+    if (items.length>0) {
+      const urls = items.map(item => item.url);
+      if (!urls.includes(path.replace(/&page=\d+/, ''))) {
         router.push('/hata-sayfasi');
       }else{
-        setActiveTab(router.query.tab);
-        if (router.query.tab=="mushaf-farklari"){
+        pagesFetchData();
+        if (path.replace(/&page=\d+/, '')==items[2].url){
           fetchData(currentPage);
+          
         }
-      }     
-    } else {
-      setActiveTab('kuran-i-kerim');
-    }
-    
-  }, [router.query.tab,currentPage]);
-
-  useEffect(() => {
-    // Ekran genişliğine bağlı olarak orientation'ı ayarla
-    const handleResize = () => {
-      if (window.innerWidth <= 1100) {
-        setOrientation('horizontal');
-      } else {
-        setOrientation('vertical');
       }
-    };
+      
+    }
+  }, [items,path]);
 
-    // Sayfa yüklendiğinde ve pencere boyutu değiştiğinde kontrol et
-    handleResize();
-    window.addEventListener('resize', handleResize);
-
-    // Temizlik fonksiyonu, event listener'ı kaldırır
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [router.query.tab]);
 
   const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
-    // Yönlendirme işlemini burada düzenleyin
-    if (newValue === 'mushaflar') {
-      router.push('/kuran-i-kerim/mushaflar');
-    }else if (newValue === 'mushaf-farklari'){
-      fetchData(1);
-      router.push(`/kuran-i-kerim?tab=${newValue}`, undefined, { shallow: true });
-    }
-    else {
-      const newUrl = `/kuran-i-kerim?tab=${newValue}`;
-      router.push(newUrl, undefined, { shallow: true });
-    }
+    router.push(newValue, undefined, { shallow: true });
+  };
+
+
+
+  
+  const handleChangePage = (event, value) => {
+    scrollToTop(() => {
+      router.push(`${path.replace(/&page=\d+/, '')}&page=${value}`, undefined, { shallow: true });
+    })
+  };
+
+  const scrollToTop = (callback) => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Kaydırmanın tamamlanması için yaklaşık süre
+    setTimeout(() => {
+      if (callback) {
+        callback();
+      }
+    }, 500); // 500 milisaniye kaydırmanın tamamlanması için varsayılan süre
   };
 
   const handleDownloadPDF = (pdfData) => {
     window.open(pdfData.url, '_blank');
   };
 
-  const handleChangePage = (event, value) => {
-    fetchData(value);
-    router.push(`/kuran-i-kerim?tab=${activeTab}&page=${value}`, undefined, { shallow: true });
-  };
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 1100) {
+        setOrientation('horizontal');
+      } else {
+        setOrientation('vertical');
+      }
+
+      const checkIsScrollTab = () => typeof window !== "undefined" && window.innerWidth <= 900;
+  
+      setIsScrolTab(checkIsScrollTab());
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+
+
 
   return (
     <>
@@ -112,169 +200,119 @@ function Index() {
         <link rel="icon" href="/kuramerlogo.png" />
       </Head>
 
-      <BaslikGorsel metin={"Kuran-ı Kerim"} />
+      { loading   ? (
+          <div className={styles.loaderMain}>
+          <CircularProgress /> 
+          </div>)
+          : itemsError || errorPage  ? (
+          <div className={styles.errorMessage}>{itemsError || errorPage}</div>
+        )
+        : items.length > 0 ? (
+      
+      <>
+
+        <BaslikGorselCompenent data={getDataForBaslikGorsel()} altPage={false} dinamicPage={{}} isPagesLoading={isPagesLoading}/>
 
 
-      <div className={styles.mainContainer}>
-        <div className={styles.leftContainer}>
-        <Tabs
-          orientation={orientation}
-          variant="fullWidth"
-          value={activeTab}
-          onChange={handleTabChange}
-          className={styles.verticalTabs}
-          aria-label="Vertical tabs example"
-          centered
-        >
-          <Tab sx={{
-              borderBottom: 1,
-              borderColor: 'divider',
-              color: 'black',
-              '&.Mui-selected': {
-                color: 'black', 
-              },
-            }}
-            label={
-              <Typography sx={{
-                fontWeight: 'bold',
-                '@media (max-width: 767px)': {
-                  fontSize: '13px', 
-                },
-                '@media (min-width: 768px) and (max-width: 1100px)': {
-                  fontSize: '13px', 
-                },
-                '@media (min-width: 1101px)': {
-                  fontSize: '14px', 
-                },
-              }}>
-                Kuran-ı Kerim
-              </Typography>
-            }
-            value="kuran-i-kerim"
-          />
-          <Tab sx={{
-              borderBottom: 1,
-              borderColor: 'divider',
-              color: 'black',
-              '&.Mui-selected': {
-                color: 'black', 
-              },
-            }}
-            label={
-              <Typography sx={{
-                fontWeight: 'bold',
-                '@media (max-width: 767px)': {
-                  fontSize: '13px', 
-                },
-                '@media (min-width: 768px) and (max-width: 1100px)': {
-                  fontSize: '13px', 
-                },
-                '@media (min-width: 1101px)': {
-                  fontSize: '14px', 
-                },
-              }}>
-                Mushaflar
-              </Typography>
-            }
-            value="mushaflar"
-          />
-          <Tab sx={{
-              borderBottom: 1,
-              borderColor: 'divider',
-              color: 'black',
-              '&.Mui-selected': {
-                color: 'black', 
-              },
-            }}
-            label={
-              <Typography sx={{
-                fontWeight: 'bold',
-                '@media (max-width: 767px)': {
-                  fontSize: '13px', 
-                },
-                '@media (min-width: 768px) and (max-width: 1100px)': {
-                  fontSize: '13px', 
-                },
-                '@media (min-width: 1101px)': {
-                  fontSize: '14px', 
-                },
-              }}>
-                Mushaf Farkları
-              </Typography>
-            }
-            value="mushaf-farklari"
-          />
-        </Tabs>
-
-        </div>
-
-        <div className={styles.rightContainer}>
-          <div className={styles.verticalTabsContent}>
-            <TabPanel value={activeTab} index="kuran-i-kerim">
-              <h2>Kuran-ı Kerim</h2>
-              <p>
-                Bu sayfada, Kuran'ın çeşitli mushaf örneklerini bulabilir ve onların benzersiz özelliklerini keşfedebilirsiniz. 
-                Her bir mushaf, kendi tarihi ve kültürel önemi içinde ele alınmıştır. Amacımız, Kuran'ın çeşitliliğini ve zenginliğini, 
-                mümkün olan en basit ve erişilebilir şekilde sizlere sunmaktır.
-                Mushaflarımız, Kuran'ın muhafazası ve aktarım süreçlerine genel bir giriş niteliğindedir. 
-                Bu nüshalar, farklı dönemlerden ve coğrafyalardan seçilmiş olup, Kuran'ın evrenselliğini ve zaman içindeki sürekliliğini yansıtmaktadır.
-                Sayfamız, Kuran'ın derinliklerine dalmak isteyen herkes için bir başlangıç noktası olarak hizmet eder. 
-                Burada, Kuran'ın tarihine ve onun çeşitli yönlerine ilişkin temel bilgileri bulabilirsiniz.
-              </p>
-            
-            </TabPanel>
-
-
-            <TabPanel value={activeTab} index="mushaflar">
-            </TabPanel>
-
-            <TabPanel value={activeTab} index="mushaf-farklari">
-              <h2>Mushaf Farklari</h2>
-              {isLoading ? (
-                <div className={styles.loader}>
-                  <CircularProgress />
-                </div>
-              ) : error ? (
-                <div className={styles.errorMessage}>
-                  {error}
-                </div>
-              ) : mushafFarklari.length > 0 ? (
-                <div className={styles.cardContainer}>
-                  {mushafFarklari.map((yayin, index) => (
-                    <CardOge key={index} yayin={yayin} handleDownloadPDF={handleDownloadPDF} />
-                  ))}
-                </div>
-              ) : (
-                <div className={styles.noDataMessage}>
-                  Kayıtlı veri bulunmamaktadır.
-                </div> 
-              )}
-              {!isLoading && !error && totalPages > 0 && (
-                <Stack spacing={2} alignItems="center" className={styles.paginationContainer}>
-                  <Pagination 
-                    count={totalPages} 
-                    page={currentPage} 
-                    onChange={handleChangePage} 
-                    variant="outlined" 
-                    shape="rounded" 
-                    sx={{
-                      '& .MuiPaginationItem-root': { color: 'inherit' },
-                      '& .MuiPaginationItem-page.Mui-selected': {
-                        backgroundColor: '#2e5077',
-                        color: '#fff',
-                        '&:hover': {
-                          backgroundColor: '#1a365d',
-                        },
-                      },
-                    }}
-                  />
-                </Stack>
-              )}
-            </TabPanel>
+        <div className={styles.mainContainer}>
+          <div className={styles.leftContainer}>
+            <Tabs
+            orientation={orientation}
+            variant={isScrolTab ? "scrollable" : "standard"}
+            scrollButtons={isScrolTab ? "auto" : false}
+            value={path.replace(/&page=\d+/, '')}
+            onChange={handleTabChange}
+            className={styles.verticalTabs}
+            aria-label="Vertical tabs example"
+            centered={!isScrolTab}
+            >
+              {items.map((kategori,key) => (
+                <Tab sx={{
+                  borderBottom: 1,
+                  borderColor: 'divider',
+                  color: 'black',
+                  '&.Mui-selected': {
+                    color: 'black', 
+                  },
+                }} key={key} label={<Typography component="span" sx={{
+                  fontWeight: 'bold',
+                  textTransform: 'none',
+                }}>{kategori.title}</Typography>} value={kategori.url} />
+              ))}
+            </Tabs>
           </div>
-        </div>
+
+          <div className={styles.rightContainer}>
+            <div className={styles.verticalTabsContent}>
+            <TabPanel value={path} index={items[0].url}>
+                
+                {isPagesLoading ? (
+                  <div className={styles.loader}>
+                    <CircularProgress />
+                  </div>
+                ) : errorPage ? (
+                  <div className={styles.errorMessage}>
+                    {errorPage}
+                  </div>
+                ) : (
+                  <div className={styles.icerik} dangerouslySetInnerHTML={{ __html: tab1?.icerik }} />
+                ) 
+                }
+              </TabPanel>
+
+              <TabPanel value={path} index={items[1].url}></TabPanel>
+
+              <TabPanel value={path.replace(/&page=\d+/, '')} index={items[2].url}>
+                {isLoading ? (
+                  <div className={styles.loader}>
+                    <CircularProgress />
+                  </div>
+                ) : error || errorPage  ? (
+                  <div className={styles.errorMessage}>
+                    {error || errorPage }
+                  </div>
+                ) : mushafFarklari.length > 0 ? (
+                  <div className={styles.cardContainer}>
+                    {mushafFarklari.map((yayin, index) => (
+                      <CardOge key={index} yayin={yayin} handleDownloadPDF={handleDownloadPDF} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className={styles.noDataMessage}>
+                    Kayıtlı veri bulunmamaktadır.
+                  </div> 
+                )}
+                {!isLoading && !error && totalPages > 0 && (
+                  <Stack spacing={2} alignItems="center" className={styles.paginationContainer}>
+                    <Pagination 
+                      count={totalPages} 
+                      page={currentPage} 
+                      onChange={handleChangePage} 
+                      variant="outlined" 
+                      shape="rounded" 
+                      sx={{
+                        '& .MuiPaginationItem-root': { color: 'inherit' },
+                        '& .MuiPaginationItem-page.Mui-selected': {
+                          backgroundColor: '#2e5077',
+                          color: '#fff',
+                          '&:hover': {
+                            backgroundColor: '#1a365d',
+                          },
+                        },
+                      }}
+                    />
+                  </Stack>
+                )}
+              </TabPanel>
+            </div>
+          </div>
       </div>
     </>
+      ): (
+        <div className={styles.noDataMessage}>Kayıtlı Öge verisi bulunmamaktadır.</div>
+      )
+    }
+  </>
   );
 }
 

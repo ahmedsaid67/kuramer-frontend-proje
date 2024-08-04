@@ -1,0 +1,56 @@
+/* src/styles/PersonellerCardOge.module.css */
+.containerStyle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.imageStyle {
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 12px;
+}
+
+.textStyle {
+  text-align: center;
+  color: #333;
+  margin: 4px 0;
+  font-size: 14px;
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap; /* Ensure single line */
+  max-width: 220px;
+}
+
+.gecmisHoverEffect {
+  text-align: center;
+  color: #fff; /* Metin rengini beyaza çevir */
+  background-color: #2e5077; /* Daha yumuşak başlangıç rengi */
+  margin: 4px 0;
+  padding: 8px 16px; /* Metin etrafında yeterli boşluk */
+  font-size: 14px; /* Metin boyutunu biraz küçült */
+  font-weight: normal; /* Yazı tipi kalınlığını azalt */
+  border-radius: 5px; /* Daha az yuvarlak köşeler */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Daha hafif bir gölge */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap; /* Metni tek satırda tut */
+  max-width: 220px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s, box-shadow 0.2s; /* Daha hızlı animasyonlar */
+}
+
+.gecmisHoverEffect:hover {
+  background-color: #1a365d; /* Daha canlı bir arka plan rengi */
+  transform: scale(1.05); /* Biraz daha fazla büyütme */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Gölgeyi biraz artır */
+  transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease; /* Daha yumuşak bir geçiş efekti */
+}
+
+  
+  
+  

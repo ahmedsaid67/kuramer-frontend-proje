@@ -1,8 +1,25 @@
 import styles from '../styles/CustomFooter.module.css';
-
-
+import { API_ROUTES } from '../utils/constants';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const Footer = () => {
+
+  const [socialMedia, setSocialMedia] = useState([]);
+
+  useEffect(() => {
+    const fetchSocialMedia = async () => {
+      try {
+        const response = await axios.get(API_ROUTES.SOSYAL_MEDYA_ACTIVE);
+        setSocialMedia(response.data);
+      } catch (error) {
+        console.error('Sosyal medya bilgileri yüklenirken bir hata oluştu:', error);
+      }
+    };
+
+    fetchSocialMedia();
+  }, []);
+
 
 
   return (
@@ -27,7 +44,7 @@ const Footer = () => {
           <ul>
             <li><a href="/">Anasayfa</a></li>
             <li><a href="/yayinlar/kitaplar">Kitap Serileri</a></li>
-            <li><a href="/yayinlarimizdan-secmeler">Yayinlarimizdan Secmeler</a></li>
+            <li><a href="/yayinlarimizdan-secmeler">Yayınlarımızdan Seçmeler</a></li>
             <li><a href="/temel-konu-kavramlar">Temel Konu ve Kavramlar</a></li>
             <li><a href="/iletisim">İletişim</a></li>
             <li><a href="/kurumsal?tab=hakkimizda">Hakkımızda</a></li>
@@ -36,23 +53,13 @@ const Footer = () => {
 
 
         <div className={styles.footerSection}>
-          <h3>Sosyal Medya</h3>
+          <h3>Sosyal Medya ve İlgili Kuruluşlar</h3>
           <div className={styles.socialIcons}>
-            <a href="https://www.facebook.com/profile.php?id=100022853400645" target="_blank">
-              <img src="/icons/facebook.png" alt="Facebook Icon" className={styles.icon} />
-            </a>
-            <a href="https://plus.google.com/u/0/+KuranAra%C5%9Ft%C4%B1rmalar%C4%B1MerkeziKURAMER" target="_blank">
-              <img src="/icons/google-plus.png" alt="Google Plus Icon" className={styles.icon} />
-            </a>
-            <a href="https://www.linkedin.com/company/kuramer" target="_blank" rel="noopener noreferrer">
-              <img src="/icons/linkedin.png" alt="LinkedIn" className={styles.icon} />
-            </a>
-            <a href="https://twitter.com/kuramer_" target="_blank">
-              <img src="/icons/twitter.png" alt="Twitter Icon" className={styles.icon} />
-            </a>
-            <a href="https://www.youtube.com/c/KuranAra%C5%9Ft%C4%B1rmalar%C4%B1MerkeziKURAMER/featured" target="_blank">
-              <img src="/icons/youtube.png" alt="YouTube Icon" className={styles.icon} />
-            </a>
+            {socialMedia.map(media => (
+              <a key={media.id} href={media.url} target="_blank" rel="noopener noreferrer">
+                <img src={media.img} alt={`${media.name} Icon`} className={styles.icon} />
+              </a>
+            ))}
           </div>
         </div>
           

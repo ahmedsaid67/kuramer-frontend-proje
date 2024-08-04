@@ -6,8 +6,7 @@ import styles from '../styles/KuramerTv.module.css';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+
 
 import Slider from 'react-slick';
 import { API_ROUTES } from '../utils/constants';
@@ -96,7 +95,7 @@ export default function KuramerTv() {
       {kitapSerileri.length > 0 && (
           <div className={styles.container}>
             <Link href={"/medyagaleri/videogaleri/kategori"}>
-              <h1 className={styles.title}>KuramerTv</h1>
+              <h1 className={styles.title}>KURAMER TV</h1>
             </Link>
             <div className={styles.carouselContainer}>
                 <Slider {...settings}>

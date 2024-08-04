@@ -7,11 +7,10 @@ import { useRouter } from 'next/router';
 import KitapCard from '../../../compenent/KitapCard';
 import KitapCardMobile from '../../../compenent/KitapCardMobile';
 import Head from 'next/head';
-import BaslikGorselDetay from '../../../compenent/BaslikGorselDetay';
 import { API_ROUTES } from '../../../utils/constants';
 import Stack from '@mui/material/Stack';
 import CircularProgress from '@mui/material/CircularProgress'; 
-
+import BaslikGorselCompenent from '../../../compenent/BaslikGorselCompenent';
 
 const convertToUrlFriendly = (text) => {
   if (text && typeof text === 'string') {
@@ -29,53 +28,89 @@ const convertToUrlFriendly = (text) => {
 
 
 function Kitaplar() {
+  const router = useRouter();
   const [kategoriler, setKategoriler] = useState([]);
   const [activeTab, setActiveTab] = useState('');
   const [kitaplar, setKitaplar] = useState([]);
   const [orientation, setOrientation] = useState('vertical');
   const [isMobile, setIsMobile] = useState(false);
-  const router = useRouter();
   const [isScrolTab, setIsScrolTab] = useState(false);
   const [variant, setVariant] = useState('fullWidth');
   const [categoriesError, setCategoriesError] = useState(null)
   const [categoriesLoading,setCategoriesLoading] = useState(true)
   const [totalPages, setTotalPages] = useState(0);
-  const currentPage = parseInt(router.query.page || '1', 10);
 
+
+   const currentPage = parseInt(router.query.page || '1', 10);
   const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(true); // Yükleme durumu için state
-  
+  const [isLoading, setIsLoading] = useState(true); 
 
+  const [pages,setPages] = useState({})
+  const [isPagesLoading,setIsPagesLoading] = useState(true)
+  const [errorPage, setErrorPage] = useState(null);
+  const [dinamicPage,setDinamicPage] = useState({})
+
+  const path = router.asPath;
+
+
+  const pagesFetchData = async (page) => {
+    setIsPagesLoading(true);
+    try {
+      const ampersandIndex = path.indexOf('?');
+      const extractedPath = ampersandIndex !== -1 ? path.slice(0, ampersandIndex) : path;
+      //console.log("extractedPath:",extractedPath)
+      const response1 = await axios.post(API_ROUTES.SAYFALAR_GET_GORSEL, { url: extractedPath });
+      setPages(response1.data); // Değişken adını güncelle
+      //console.log("response1:",response1.data)
+      setErrorPage(null)
+    } catch (error) {
+      setErrorPage('Veriler yüklenirken beklenmeyen bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
+      console.log("error:",error)
+    } finally {
+      setIsPagesLoading(false); // Yükleme işlemi tamamlandığında veya hata oluştuğunda
+    }
+  };
 
   useEffect(() => {
     const fetchCategoriesAndValidateTab = async () => {
+      if (!router.isReady) return;
+  
       setCategoriesLoading(true);
       try {
         const response = await axios.get(API_ROUTES.KITAP_KATEGORI_ACTIVE);
         const categories = response.data;
-  
-        // Kategorileri başarıyla çektikten sonra
         setKategoriler(categories);
   
-        // URL'deki `tab` parametresini URL dostu bir string'e çevir
         const tabUrlFriendly = router.query.tab ? convertToUrlFriendly(router.query.tab) : null;
   
-        // URL'deki `tab`'ın geçerli olup olmadığını kontrol et
         const isValidTab = categories.some(category => convertToUrlFriendly(category.baslik) === tabUrlFriendly);
   
         if (tabUrlFriendly && !isValidTab) {
-          const fakeInitialTab = categories.length > 0 ? convertToUrlFriendly(categories[0].baslik) : '';
-          setActiveTab(fakeInitialTab)
           router.push('/hata-sayfasi');
+          const fakeInitialTab = categories.length > 0 ? convertToUrlFriendly(categories[0].baslik) : '';
+          setActiveTab(fakeInitialTab);
         } else {
-          // Eğer `tab` geçerliyse veya `tab` belirtilmemişse, initial tab'ı set et
-          const initialTab = tabUrlFriendly || convertToUrlFriendly(categories[0]?.baslik);
-          setActiveTab(initialTab);
+          if (tabUrlFriendly) {
+            setActiveTab(tabUrlFriendly);
+            // Kategori adını doğru şekilde ayarla
+            const matchingCategory = categories.find(category => convertToUrlFriendly(category.baslik) === tabUrlFriendly);
+            if (matchingCategory) {
+              pagesFetchData()
+              setDinamicPage({name: matchingCategory.baslik, url: path});
+              
+            }
+          } else {
+            // İlk kategoriye varsayılan olarak dön
+            const initialTab = convertToUrlFriendly(categories[0]?.baslik);
+            setActiveTab(initialTab);
+            pagesFetchData()
+            setDinamicPage({name:categories[0]?.baslik , url: `${path}?tab=${initialTab}`});
+          }
         }
   
         setCategoriesError(null);
       } catch (error) {
-        console.error('Kategoriler yüklenirken hata oluştu:', error);
+        console.error('Kategoriler yüklenirken hata:', error);
         setCategoriesError('Veriler yüklenirken beklenmeyen bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
       } finally {
         setCategoriesLoading(false);
@@ -83,7 +118,7 @@ function Kitaplar() {
     };
   
     fetchCategoriesAndValidateTab();
-  }, []);
+  }, [router.isReady]);
 
 
   const fetchBooks = async (kategoriId,page) => {
@@ -112,39 +147,45 @@ function Kitaplar() {
       const selectedKategori = kategoriler.find(k => convertToUrlFriendly(k.baslik) === activeTab);
       if (selectedKategori) {
         fetchBooks(selectedKategori.id,currentPage);
+        pagesFetchData()
+        const newPath = path.includes('?tab=') ? path : `${path}?tab=${activeTab}`;
+        setDinamicPage({ name: selectedKategori.baslik, url: newPath });
       }
     }
   }, [kategoriler]);
 
   useEffect(() => {
     if (router.query.tab && kategoriler.length > 0) {
+      setActiveTab(router.query.tab)
       const selectedKategori = kategoriler.find(k => convertToUrlFriendly(k.baslik) === router.query.tab);
       if (selectedKategori) {
         fetchBooks(selectedKategori.id,currentPage);
+
+        pagesFetchData()
+        setDinamicPage({name:selectedKategori.baslik , url: `${path}`});
       }
-      
+    }else if (router && kategoriler.length > 0){
+      const initialTab = convertToUrlFriendly(kategoriler[0]?.baslik);
+      setActiveTab(initialTab);
+      const selectedKategori = kategoriler[0];
+      fetchBooks(selectedKategori.id,currentPage);
+      pagesFetchData()
+      setDinamicPage({name:selectedKategori.baslik , url: `${path}`});
     }
-  }, [kategoriler,currentPage]);
+  }, [router]);
+
 
   
-
   const handleTabChange = (event, newValue) => {
-    
-    setActiveTab(newValue);
-    const selectedKategori = kategoriler.find(k => convertToUrlFriendly(k.baslik) === newValue);
-    if (selectedKategori) {
-      fetchBooks(selectedKategori.id,1);
-    }
-    router.push(`/yayinlar/kitaplar?tab=${newValue}`, undefined, { shallow: true });
+    const basePath = path.includes('?') ? path.split('?')[0] : path;
+    router.push(`${basePath}?tab=${newValue}`, undefined, { shallow: true });
 
   };
 
+
   const handlePageChange = (event, value) => {
-    const selectedKategori = kategoriler.find(k => convertToUrlFriendly(k.baslik) === activeTab);
-    if (selectedKategori) {
-      fetchBooks(selectedKategori.id,value);
-    }
-    router.push(`/yayinlar/kitaplar?tab=${activeTab}&page=${value}`);
+    const basePath = path.includes('?') ? path.split('?')[0] : path;
+    router.push(`${basePath}?tab=${activeTab}&page=${value}`);
   };
 
 
@@ -210,62 +251,56 @@ function Kitaplar() {
         <link rel="icon" href="/kuramerlogo.png" />
       </Head>
 
-      <BaslikGorselDetay metin={"Kitaplar"} link={"/yayinlar"} />
 
-      
+
       { categoriesLoading ? (
-        <div className={styles.loader}>
+        <div className={styles.loaderMain}>
         <CircularProgress /> 
         </div>)
-        : categoriesError ? (
-        <div className={styles.errorMessage}>{categoriesError}</div>
+        : categoriesError || errorPage ? (
+        <div className={styles.errorMessage}>{categoriesError || errorPage}</div>
       )
       : kategoriler.length > 0 ? (
-        <div className={styles.mainContainer}>
-          <div className={styles.leftContainer}>
-            <Tabs
-              orientation={orientation}
-              variant={isScrolTab ? variant : "standard"}
-              scrollButtons={isScrolTab ? "auto" : false}
-              value={activeTab}
-              onChange={handleTabChange}
-              className={styles.verticalTabs}
-              aria-label="Vertical tabs example"
-              centered={!isScrolTab}
-            >
-              {kategoriler.map(kategori => (
-                <Tab  sx={{
-                  borderBottom: 1,
-                  borderColor: 'divider',
-                  color: 'black',
-                  '&.Mui-selected': {
-                    color: 'black', 
-                  },
-                }} key={kategori.id} label={<Typography component="span" sx={{
-                  fontWeight: 'bold',
-                  '@media (max-width: 767px)': {
-                    fontSize: '13px', 
-                  },
-                  '@media (min-width: 768px) and (max-width: 1100px)': {
-                    fontSize: '13px', 
-                  },
-                  '@media (min-width: 1101px)': {
-                    fontSize: '14px', 
-                  },
-                }}>{kategori.baslik.toLocaleUpperCase('tr-TR')}</Typography>} value={convertToUrlFriendly(kategori.baslik)} />
-              ))}
-            </Tabs>
-          </div>
+
+      <>
+
+      <BaslikGorselCompenent data={pages} altPage={true} dinamicPage={dinamicPage} isPagesLoading={isPagesLoading}/>
+      <div className={styles.mainContainer}>
+        <div className={styles.leftContainer}>
+          <Tabs
+            orientation={orientation}
+            variant={isScrolTab ? variant : "standard"}
+            scrollButtons={isScrolTab ? "auto" : false}
+            value={activeTab}
+            onChange={handleTabChange}
+            className={styles.verticalTabs}
+            aria-label="Vertical tabs example"
+            centered={!isScrolTab}
+          >
+            {kategoriler.map(kategori => (
+              <Tab  sx={{
+                borderBottom: 1,
+                borderColor: 'divider',
+                color: 'black',
+                '&.Mui-selected': {
+                  color: 'black', // Seçili Tab için de metin rengi siyah olarak ayarlanır
+                },
+               
+              }} key={kategori.id} label={<Typography  component="span" sx={{
+                fontWeight: 'bold',
+                textTransform: 'none',
+              }}>{kategori.baslik}</Typography>} value={convertToUrlFriendly(kategori.baslik)} />
+            ))}
+          </Tabs>
+        </div>
 
           <div className={styles.rightContainer}>
             <div className={styles.verticalTabsContent}>
               {kategoriler.map(kategori => (
                 <TabPanel key={kategori.id} value={activeTab} index={convertToUrlFriendly(kategori.baslik)}>
-                  <h2>{kategori.baslik}</h2>
-
                   {isLoading ? (
                     <div className={styles.loader}>
-                      <CircularProgress /> {/* Yükleme göstergesi */}
+                      <CircularProgress />
                     </div>
                     ) : error ? (
                       <div className={styles.errorMessage}>{error}</div>
@@ -273,10 +308,10 @@ function Kitaplar() {
                       <div className={styles.cardContainer}>
                         {isMobile
                         ? kitaplar.map((kitap, index) => (
-                            <KitapCardMobile key={index} kitap={kitap} />
+                            <KitapCardMobile key={index} kitap={kitap }path={path} activeTab={activeTab} />
                           ))
                         : kitaplar.map((kitap, index) => (
-                            <KitapCard key={index} kitap={kitap} />
+                            <KitapCard key={index} kitap={kitap} path={path} activeTab={activeTab}/>
                           ))
                         }
                       </div>
@@ -312,10 +347,10 @@ function Kitaplar() {
             </div>
           </div>
         </div>
+        </>
       ): (
-        <div className={styles.infoMessage}>Kayıtlı Kitap Kategori verisi bulunmamaktadır.</div>)
+        <div className={styles.noDataMessage}>Kayıtlı Kitap Kategorisi bulunmamaktadır.</div>)
       }
-
     </>
   );
 }

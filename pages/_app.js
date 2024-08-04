@@ -1,12 +1,11 @@
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import '../styles/globals.css'
 import Layout from '../compenent/Layout';
-
+import Head from 'next/head';
 import { wrapper } from '../context/provider';
-
 import React, { useRef, useEffect } from "react";
 import { useRouter } from "next/router";
-
+import '@fortawesome/fontawesome-svg-core/styles.css'; // fontawesome-svg-core için gerekli CSS
 
 
 
@@ -27,12 +26,18 @@ function MyApp({ Component, pageProps }) {
   }, [pageProps, isRetainableRoute]);
 
   return (
-    <Layout>
-      {isRetainableRoute && retainedReduxState.current && (
-        <Component {...retainedReduxState.current} />
-      )}
-      {!isRetainableRoute && <Component {...pageProps} />}
-    </Layout>
+    <>
+
+
+
+      <Layout>
+        {isRetainableRoute && retainedReduxState.current && (
+          <Component {...retainedReduxState.current} />
+        )}
+        {!isRetainableRoute && <Component {...pageProps} />}
+      </Layout>
+      </>
+   
   );
 }
 

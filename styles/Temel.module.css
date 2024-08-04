@@ -34,18 +34,19 @@
 
 .rightImage {
   width: 100%;
-  height: 100%; /* Görselin yüksekliğini artır */
-  object-fit: cover; /* Görselin oranını koruyarak alanı doldur */
+  height: auto;
 }
 
 .customButton {
   background-color: #2e5077;
   color: #fff;
   border: none;
-  padding: 10px 20px;
+  padding: 10px 15px;
   cursor: pointer;
   transition: background-color 0.3s;
   border-radius: 5px;
+  font-size: 16px;
+  margin-top: 10px;
 }
 
 .customButton:hover {
@@ -68,6 +69,22 @@
   font-size: 16px;
 }
 
+@media (max-width: 1024px) {
+
+
+  .baslik {
+    font-size: 20px;
+  }
+  
+  .altbaslik {
+    font-size: 16px;
+  }
+
+  .baslik, .altbaslik, .metin {
+    margin: 7.5px 0; /* Biraz boşluk ekle */
+  }
+}
+
 @media (max-width: 768px) {
   .mainContent {
     flex-direction: column; /* Küçük ekranlarda içerikleri dikey sırala */
@@ -87,5 +104,25 @@
   .leftContent {
     order: 2; /* This will place the left content at the bottom */
     /* ... other styles ... */
+  }
+
+  .baslik {
+    font-size: 18px;
+  }
+  
+  .altbaslik {
+    font-size: 14px;
+  }
+
+  .customButton {
+    font-size: 14px;
+    margin-top: 5px;
+  }
+  .metin{
+    font-size: 14px;
+  }
+
+  .baslik, .altbaslik, .metin {
+    margin: 7.5px 0; /* Biraz boşluk ekle */
   }
 }

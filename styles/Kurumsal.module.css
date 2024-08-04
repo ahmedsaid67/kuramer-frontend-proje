@@ -1,92 +1,57 @@
-/* styles/TemelKonularKavram.module.css */
-
-/* Genel Stiller */
 .mainContainer {
   display: flex;
   margin-bottom: 3rem;
+  
 }
 
 .leftContainer {
   width: 20%;
   color: #fff;
   padding: 20px;
+  padding-top: 30px;
+
 }
 
 .rightContainer {
   width: 80%;
+  padding: 20px;
+  padding-top: 30px;
 }
+
+
 .cardContainer {
-  padding: 10px;
   display: flex;  /* Kartları yatay olarak düzenle */
   flex-wrap: wrap; /* Kartlar sığmadığında alt satıra geç */
   gap: 30px; /* Kartlar arasındaki boşluk */
 }
 
-/* Banner ve Başlık Stilleri */
-.bannerImage {
-  position: relative;
-  width: 100%;
-  height: 50vh;
-  overflow: hidden;
-  z-index: 1;
-  text-align: center;
-  background-color: #333;
-}
 
-.titleContainer {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 80%;
-  z-index: 2;
-}
-
-.titleContainer h1 {
-  font-size: 3rem;
-  margin: 0;
-  color: black;
-}
 
 /* Card ve "Devamını Gör" Butonu Stilleri (Sağ Taraf) */
-
-.showMoreButtonContainer {
-  text-align: center;
-  margin-top: 20px;
-}
 
 .verticalTabs {
   width: 100%;
   background-color: white;
 }
 
-.tab {
-  border-bottom: 1px solid #ccc; /* Ince çizgi */
-}
-
-.tabLabel {
-  color: black;
-  font-weight: bold;
-  font-size: 14px;
-}
-
-.tabSelected {
-  color: darkslategray; /* Aktif olduğunda daha koyu renk */
-}
-
 .verticalTabsContent {
   width: 100%;
-  padding: 20px;
+  min-height: 50vh;
+  
 }
 
-.verticalTabsContent h2{
-  font-size: 24px;
+
+
+.icerik{         /* sonradan üretildi */
+  line-height: 1.5rem;  
 }
 
-.personel p{
-  font-size: 16px;
-  font-weight: 500;
+.icerik :first-child {
+  margin-top: 0;
+  padding-top: 0;
 }
+
+
 
 .paginationContainer {
   margin-top: 40px;
@@ -115,12 +80,20 @@
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Gölgeyi artırır ve daha belirgin hale getirir */
 }
 
+.loaderMain {  /* sonradan üretildi */
+  display: flex;
+  justify-content: center; /* Loader'ı yatay olarak ortala */
+  align-items: center; /* Loader'ı dikey olarak ortala */
+  height: 100vh; /* Loader'ın yüksekliğini viewport yüksekliğine eşitle */
+}
+
 .loader {
   display: flex;
   justify-content: center; /* Loader'ı yatay olarak ortala */
   align-items: center; /* Loader'ı dikey olarak ortala */
-  height: 50vh; /* Loader'ın yüksekliğini viewport yüksekliğine eşitle */
+  height: 60vh; /* Loader'ın yüksekliğini viewport yüksekliğine eşitle */
 }
+
 
 .noDataMessage {
   text-align: center; /* Metni ortalar */
@@ -141,36 +114,26 @@
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3); /* Gölgeyi artırır */
 }
 
-
 /* Medya Sorguları */
 @media screen and (max-width: 1100px) {
-  .bannerImage {
-    height: 40vh;
-  }
-
 
   .mainContainer {
     display: flex;
     flex-direction: column;
   }
 
-  .titleContainer {
-    width: 70%;
-  }
-
-  .titleContainer h1 {
-    font-size: 2.5rem;
-  }
 
   .leftContainer {
     width: 100%;
     text-align: center; /* Banner fotoğrafının altındaki içeriği ortala */
+    padding: 10px 20px 0 20px;  /* sonradan eklendi */
   }
 
   .rightContainer {
     width: 100%;
+    padding-top: 30px;
   }
-  
+
   .verticalTabs {
     width: 100%;
   }
@@ -178,41 +141,8 @@
   .cardContainer {
     justify-content: center;
   }
-  .tabLabel {
-    font-size: 13px;
-  }
-  .verticalTabsContent p{  
-    font-size: 14px;
-  }
-  .verticalTabsContent h2{
-    font-size: 20px;
-  }
-}
 
-@media screen and (max-width: 767px) {
-  .bannerImage {
-    height: 30vh;
-  }
-
-  .titleContainer {
-    width: 90%;
-  }
-
-  .titleContainer h1 {
-    font-size: 2rem;
-  }
-  .tabLabel {
-    font-size: 12px;
-  }
-  .verticalTabsContent p{  
-    font-size: 14px;
-  }
-  .verticalTabsContent h2{
-    font-size: 20px;
-  }
-  .cardContainer {
-    justify-content: center;
-  }
-  
 
 }
+
+

@@ -6,7 +6,6 @@ import TabPanel from '../../compenent/TabPanel';
 import styles from '../../styles/TemelKonularKavram.module.css';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import BaslikGorsel from '../../compenent/BaslikGorsel';
 import { API_ROUTES } from '../../utils/constants';
 import SempozyumCard from '../../compenent/SempozyumCard';
 import CalistayCard from '../../compenent/CalistayCard';
@@ -16,6 +15,7 @@ import EgitimCard from '../../compenent/EgitimlerCard';
 
 import Stack from '@mui/material/Stack';
 import CircularProgress from '@mui/material/CircularProgress'; // Yükleme göstergesi için ekleyin
+import BaslikGorselCompenent from '../../compenent/BaslikGorselCompenent';
 
 
 function Index() {
@@ -25,92 +25,236 @@ function Index() {
   const [arastirmalar, setArastirmalar] = useState([]);
   const [egitimler, setEgitimler] = useState([]);
 
-  const [activeTab, setActiveTab] = useState('faaliyetler');
   const router = useRouter();
   const [orientation, setOrientation] = useState('vertical'); // Default olarak 'vertical'
 
-  const currentPage = parseInt(router.query.page || '1', 10);
-  const tab = router.query.tab || 'faaliyetler';
+
   const [totalPagesSempozyumlar, setTotalPagesSempozyumlar] = useState(0);
   const [totalPagesCalistay, setTotalPagesCalistay] = useState(0);
   const [totalPagesKonferanslar, setTotalPagesKonferanslar] = useState(0);
   const [totalPagesArastirmalar, setTotalPagesArastirmalar] = useState(0);
   const [totalPagesEgitimler, setTotalPagesEgitimler] = useState(0);
   const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(true); // Yükleme durumu için state
+  
+  const [isLoadingSempozyumlar,setIsLoadingSempozyumlar] = useState(true)
+  const [isLoadingCalistaylar,setIsLoadingCalistaylar] = useState(true)
+  const [isLoadingKonferanslar,setIsLoadingKonferanslar] = useState(true)
+  const [isLoadingArastirmalar,setIsLoadingArastirmalar] = useState(true)
+  const [isLoadingEgitimler,setIsLoadingEgitimler] = useState(true)
 
   const [isScrolTab, setIsScrolTab] = useState(false);
   const [variant, setVariant] = useState('fullWidth');
 
+  const [errorPage, setErrorPage] = useState(null);
+  const [isPagesLoading, setPagesIsLoading] = useState(true); // Yükleme durumu için state
+  const currentPage = parseInt(router.query.page || '1', 10);
 
-  const fetchData = async (tab, currentPage) => {
-    setIsLoading(true);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [itemsError, setItemsError] = useState(null);
+  const path = router.asPath;
+
+
+  const [tab1,setTab1]=useState({})
+  const [tab2,setTab2]=useState({})
+  const [tab3,setTab3]=useState({})
+  const [tab4,setTab4]=useState({})
+  const [tab5,setTab5]=useState({})
+  const [tab6,setTab6]=useState({})
+
+
+  useEffect(() => {
+    const menuFetch = async () => {
+      setLoading(true); // Yükleniyor durumunu başlat
+      setItemsError(null); // Hata durumunu sıfırla
+
+      try {
+        
+        const parts = path.split('?');
+        const firstPart = `${parts[0]}`; // Bu, '/kurumsal' ya da '/kuran-i-kerim' olacaktır
+        const response = await axios.post(API_ROUTES.MENU_ALT_OGE, { url: firstPart });
+        setItems(response.data.items);
+      } catch (error) {
+        setItemsError('Veriler yüklenirken beklenmeyen bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
+        console.error('Error fetching menu items:', error); // Hata detayını konsola yazdır
+      } finally {
+        setLoading(false); // Yükleme tamamlandı
+      }
+    };
+
+    menuFetch();
+  }, []);
+
+
+  const pagesFetchData = async (page) => {
+    setPagesIsLoading(true);
+    setErrorPage(null);
+  
     try {
-      let response;
-      if (tab === "sempozyumlar") {
-        const sempozyumlarUrl = API_ROUTES.SEMPOZYUMLAR_ACTIVE.replace('currentPage', currentPage);
-        response = await axios.get(sempozyumlarUrl);
-        setSempozyumlar(response.data.results);
-        setTotalPagesSempozyumlar(Math.ceil(response.data.count / 10));
-      } else if (tab === "calistay") {
-        const calistayUrl = API_ROUTES.CALISTAYLAR_ACTIVE.replace('currentPage', currentPage);
-        response = await axios.get(calistayUrl);
-        setCalistay(response.data.results);
-        setTotalPagesCalistay(Math.ceil(response.data.count / 10));
-      } else if (tab === "konferanslar") {
-        const konferanslarUrl = API_ROUTES.KONFERANSLAR_ACTIVE.replace('currentPage', currentPage);
-        response = await axios.get(konferanslarUrl);
-        setKonferanslar(response.data.results);
-        setTotalPagesKonferanslar(Math.ceil(response.data.count / 10));
-      } else if (tab === "arastirmalar") {
-        const arastirmalarUrl = API_ROUTES.ARASTIRMALAR_ACTIVE.replace('currentPage', currentPage);
-        response = await axios.get(arastirmalarUrl);
-        setArastirmalar(response.data.results);
-        setTotalPagesArastirmalar(Math.ceil(response.data.count / 10));
+      const url = path.split('&')[0];
+
+  
+      if (url === items[0].url) {
+        // Check if tab1 has data, otherwise fetch it
+        if (!Object.keys(tab1).length > 0) {
+          const response1 = await axios.post(API_ROUTES.SAYFALAR_GET_GORSEL, { url: url });
+          setTab1(response1.data); // Store the fetched data in tab1
+
+        }
+      } else if (url === items[1].url) {
+        // Check if tab2 has data, otherwise fetch it
+        if (!Object.keys(tab2).length > 0) {
+          const response2 = await axios.post(API_ROUTES.SAYFALAR_GET_GORSEL, { url: url });
+          setTab2(response2.data); // Store the fetched data in tab2
+        }
+      } else if (url === items[2].url) {
+        // Check if tab3 has data, otherwise fetch it
+        if (!Object.keys(tab3).length > 0) {
+          const response3 = await axios.post(API_ROUTES.SAYFALAR_GET_GORSEL, { url: url });
+          setTab3(response3.data); // Store the fetched data in tab3
+        }
+      } else if (url === items[3].url) {
+        // Check if tab4 has data, otherwise fetch it
+        if (!Object.keys(tab4).length > 0) {
+          const response4 = await axios.post(API_ROUTES.SAYFALAR_GET_GORSEL, { url: url });
+          setTab4(response4.data); // Store the fetched data in tab4
+        }
+      }else if (url === items[4].url) {
+        // Check if tab3 has data, otherwise fetch it
+        if (!Object.keys(tab5).length > 0) {
+          const response5 = await axios.post(API_ROUTES.SAYFALAR_GET_GORSEL, { url: url });
+          setTab5(response5.data); // Store the fetched data in tab3
+        }
+      } else if (url === items[5].url) {
+        // Check if tab4 has data, otherwise fetch it
+        if (!Object.keys(tab6).length > 0) {
+          const response6 = await axios.post(API_ROUTES.SAYFALAR_GET_GORSEL, { url: url });
+          setTab6(response6.data); // Store the fetched data in tab4
+        }
       }
-      else if (tab === "egitimler") {
-        const egitimlerUrl = API_ROUTES.EGITIMLER_ACTIVE.replace('currentPage', currentPage);
-        response = await axios.get(egitimlerUrl);
-        setEgitimler(response.data.results);
-        setTotalPagesEgitimler(Math.ceil(response.data.count / 10));
-      }
-      setError(null);
+  
     } catch (error) {
-      console.error("Veri yüklenirken bir hata oluştu", error);
-      setError('Veriler yüklenirken bir sorun oluştu.');
+      setErrorPage('Veriler yüklenirken beklenmeyen bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
+      console.log("error:", error);
     } finally {
-      setIsLoading(false);
+      setPagesIsLoading(false); // Yükleme işlemi tamamlandığında veya hata oluştuğunda
     }
   };
 
-  // İlk yükleme için veri alma
-  useEffect(() => {
-    fetchData(tab, currentPage);
-  }, []); // Boş dizi, bu effect'in sadece bileşen mount edildiğinde çalışacağını garanti eder
+  const getDataForBaslikGorsel = () => {
+    const url = path.split('&')[0];
+    switch (url) {
+      case items[0].url:
+        return tab1;
+      case items[1].url:
+        return tab2;
+      case items[2].url:
+        return tab3;
+      case items[3].url:
+        return tab4;
+      case items[4].url:
+        return tab5;
+      case items[5].url:
+        return tab6;
+      default:
+        return {};
+    }
+  };
 
-
-  
-  
-
-
-  useEffect(() => {
-    const handleRouteChange = () => {
-      const newTab = router.query.tab;
-      const validTabs = ['faaliyetler', 'sempozyumlar', 'calistay','konferanslar','arastirmalar','egitimler']; // Geçerli tab değerlerinin listesi
-  
-      if (validTabs.includes(newTab)) {
-        setActiveTab(newTab);
-        fetchData(newTab, currentPage);
-      } else if (newTab) {
-        router.push('/hata-sayfasi');
+    const fetchData = async (currentPage) => {
+      setIsLoadingSempozyumlar(true);
+      setIsLoadingCalistaylar(true)
+      setIsLoadingKonferanslar(true)
+      setIsLoadingArastirmalar(true)
+      setIsLoadingEgitimler(true)
+      try {
+        let response;
+        if (path.replace(/&page=\d+/, '') === items[1].url) {
+          const sempozyumlarUrl = API_ROUTES.SEMPOZYUMLAR_ACTIVE.replace('currentPage', currentPage);
+          response = await axios.get(sempozyumlarUrl);
+          setSempozyumlar(response.data.results);
+          setTotalPagesSempozyumlar(Math.ceil(response.data.count / 10));
+          setIsLoadingSempozyumlar(false)
+        } else if (path.replace(/&page=\d+/, '') === items[2].url) {
+          const calistayUrl = API_ROUTES.CALISTAYLAR_ACTIVE.replace('currentPage', currentPage);
+          response = await axios.get(calistayUrl);
+          setCalistay(response.data.results);
+          setTotalPagesCalistay(Math.ceil(response.data.count / 10));
+          setIsLoadingCalistaylar(false)
+        } else if (path.replace(/&page=\d+/, '') === items[3].url) {
+          const konferanslarUrl = API_ROUTES.KONFERANSLAR_ACTIVE.replace('currentPage', currentPage);
+          response = await axios.get(konferanslarUrl);
+          setKonferanslar(response.data.results);
+          setTotalPagesKonferanslar(Math.ceil(response.data.count / 10));
+          setIsLoadingKonferanslar(false)
+        } else if (path.replace(/&page=\d+/, '') === items[4].url) {
+          const arastirmalarUrl = API_ROUTES.ARASTIRMALAR_ACTIVE.replace('currentPage', currentPage);
+          response = await axios.get(arastirmalarUrl);
+          setArastirmalar(response.data.results);
+          setTotalPagesArastirmalar(Math.ceil(response.data.count / 10));
+          setIsLoadingArastirmalar(false)
+        }
+        else if (path.replace(/&page=\d+/, '') === items[5].url) {
+          const egitimlerUrl = API_ROUTES.EGITIMLER_ACTIVE.replace('currentPage', currentPage);
+          response = await axios.get(egitimlerUrl);
+          setEgitimler(response.data.results);
+          setTotalPagesEgitimler(Math.ceil(response.data.count / 10));
+          setIsLoadingEgitimler(false)
+        }
+        setError(null);
+      } catch (error) {
+        console.error("Veri yükleme sırasında bir hata oluştu:", error);
+      if (error.response && error.response.status === 404 && error.response.data.detail === "Invalid page.") {
+        // 'Invalid page' detayını kontrol eden ve buna göre hata mesajı döndüren koşul
+        setError('Geçersiz sayfa. Bu sayfa mevcut değil veya sayfa numarası hatalı. Lütfen sayfa numarasını kontrol edin.');
+      } else {
+        setError('Veriler yüklenirken beklenmeyen bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
       }
-
+    } 
     };
 
-    handleRouteChange()
 
+
+
+
+    useEffect(() => {
+      if (items.length>0) {
+        const urls = items.map(item => item.url);
+        if (!urls.includes(path.replace(/&page=\d+/, ''))) {
+          router.push('/hata-sayfasi');
+        }else{
+          pagesFetchData();
+          if (items.slice(1, 6).some(item => path.replace(/&page=\d+/, '') === item.url)) {
+            fetchData(currentPage);
+          }
+          
+        }
+        
+      }
+    }, [items,path]);
+
+
+    const handleTabChange = (event, newValue) => {
+      router.push(newValue, undefined, { shallow: true });
+    };
   
-  }, [router.query.tab,currentPage]); // router.query.tab'e bağlı olarak çalışacak
+  
+
+    const handleChangePage = (event, value) => {
+      scrollToTop(() => {
+        router.push(`${path.replace(/&page=\d+/, '')}&page=${value}`, undefined, { shallow: true });
+      })
+    };
+  
+    const scrollToTop = (callback) => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Kaydırmanın tamamlanması için yaklaşık süre
+      setTimeout(() => {
+        if (callback) {
+          callback();
+        }
+      }, 500); // 500 milisaniye kaydırmanın tamamlanması için varsayılan süre
+    };
 
 
 
@@ -135,20 +279,9 @@ function Index() {
     };
   }, []);
 
-  const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
-    fetchData(newValue, 1); // Sekme değiştiğinde, 1. sayfadan başlayarak veri yükle
-    router.push(`/faaliyetler?tab=${newValue}`, undefined, { shallow: true });
-  };
+  
 
-  const handleDownloadPDF = (pdfData) => {
-    window.open(pdfData.url, '_blank');
-  };
 
-  const handleChangePage = (event, value) => {
-    fetchData(activeTab, value);
-    router.push(`/faaliyetler?tab=${activeTab}&page=${value}`, undefined, { shallow: true });
-  };
 
 
 
@@ -184,9 +317,10 @@ function Index() {
     return () => {
       window.removeEventListener('resize', calculateTabWidths);
     };
-  }, []); 
-
+  }, []);
   
+  
+
 
   return (
     <>
@@ -195,431 +329,290 @@ function Index() {
         <link rel="icon" href="/kuramerlogo.png" />
       </Head>
       
-      <BaslikGorsel metin={"Faaliyetler"} />
+      { loading   ? (
+          <div className={styles.loaderMain}>
+          <CircularProgress /> 
+          </div>)
+          : itemsError || errorPage  ? (
+          <div className={styles.errorMessage}>{itemsError || errorPage}</div>
+        )
+        : items.length > 0 ? (
+        
+        <>
 
+        <BaslikGorselCompenent data={getDataForBaslikGorsel()} altPage={false} dinamicPage={{}} isPagesLoading={isPagesLoading}/>
       
-
-      <div className={styles.mainContainer}>
-        <div className={styles.leftContainer}>
-        <Tabs
-           orientation={orientation}
-           variant={isScrolTab ? variant : "standard"}
-           scrollButtons={isScrolTab ? "auto" : false}
-           value={activeTab}
-           onChange={handleTabChange}
-           className={styles.verticalTabs}
-           aria-label="Vertical tabs example"
-           centered={!isScrolTab}
-        >
-          <Tab
-            sx={{
-              borderBottom: 1,
-              borderColor: 'divider',
-              color: 'black',
-              '&.Mui-selected': {
-                color: 'black', 
-              },
-            }}
-            label={
-              <Typography sx={{
-                fontWeight: 'bold',
-                '@media (max-width: 767px)': {
-                  fontSize: '13px', 
-                },
-                '@media (min-width: 768px) and (max-width: 1100px)': {
-                  fontSize: '13px', 
-                },
-                '@media (min-width: 1101px)': {
-                  fontSize: '14px', 
-                },
-              }}>
-                {("Faaliyetler").toLocaleUpperCase('tr-TR')}
-              </Typography>
-            }
-            value="faaliyetler"
-          />
-          <Tab
-            sx={{
-              borderBottom: 1,
-              borderColor: 'divider',
-              color: 'black',
-              '&.Mui-selected': {
-                color: 'black', 
-              },
-            }}
-            label={
-              <Typography sx={{
-                fontWeight: 'bold',
-                '@media (max-width: 767px)': {
-                  fontSize: '13px', 
-                },
-                '@media (min-width: 768px) and (max-width: 1100px)': {
-                  fontSize: '13px', 
-                },
-                '@media (min-width: 1101px)': {
-                  fontSize: '14px', 
-                },
-              }}>
-                Sempozyumlar
-              </Typography>
-            }
-            value="sempozyumlar"
-          />
-          <Tab
-            sx={{
-              borderBottom: 1,
-              borderColor: 'divider',
-              color: 'black',
-              '&.Mui-selected': {
-                color: 'black', 
-              },
-            }}
-            label={
-              <Typography sx={{
-                fontWeight: 'bold',
-                '@media (max-width: 767px)': {
-                  fontSize: '13px', 
-                },
-                '@media (min-width: 768px) and (max-width: 1100px)': {
-                  fontSize: '13px', 
-                },
-                '@media (min-width: 1101px)': {
-                  fontSize: '14px', 
-                },
-              }}>
-                Çalıştaylar
-              </Typography>
-            }
-            value="calistay"
-          />
-          <Tab
-            sx={{
-              borderBottom: 1,
-              borderColor: 'divider',
-              color: 'black',
-              '&.Mui-selected': {
-                color: 'black', 
-              },
-            }}
-            label={
-              <Typography sx={{
-                fontWeight: 'bold',
-                '@media (max-width: 767px)': {
-                  fontSize: '13px', 
-                },
-                '@media (min-width: 768px) and (max-width: 1100px)': {
-                  fontSize: '13px', 
-                },
-                '@media (min-width: 1101px)': {
-                  fontSize: '14px', 
-                },
-              }}>
-                Konferanslar
-              </Typography>
-            }
-            value="konferanslar"
-          />
-          <Tab
-            sx={{
-              borderBottom: 1,
-              borderColor: 'divider',
-              color: 'black',
-              '&.Mui-selected': {
-                color: 'black', 
-              },
-            }}
-            label={
-              <Typography sx={{
-                fontWeight: 'bold',
-                '@media (max-width: 767px)': {
-                  fontSize: '13px', 
-                },
-                '@media (min-width: 768px) and (max-width: 1100px)': {
-                  fontSize: '13px', 
-                },
-                '@media (min-width: 1101px)': {
-                  fontSize: '14px', 
-                },
-              }}>
-                Araştırmalar
-              </Typography>
-            }
-            value="arastirmalar"
-          />
-          <Tab
-            sx={{
-              borderBottom: 1,
-              borderColor: 'divider',
-              color: 'black',
-              '&.Mui-selected': {
-                color: 'black', 
-              },
-            }}
-            label={
-              <Typography sx={{
-                fontWeight: 'bold',
-                '@media (max-width: 767px)': {
-                  fontSize: '13px', 
-                },
-                '@media (min-width: 768px) and (max-width: 1100px)': {
-                  fontSize: '13px', 
-                },
-                '@media (min-width: 1101px)': {
-                  fontSize: '14px', 
-                },
-              }}>
-                {("Eğitimler").toLocaleUpperCase('tr-TR')}
-              </Typography>
-            }
-            value="egitimler"
-          />
-        </Tabs>
-        </div>
+      
+        <div className={styles.mainContainer}>
+          <div className={styles.leftContainer}>
+            <Tabs
+            orientation={orientation}
+            variant={isScrolTab ? "scrollable" : "standard"}
+            scrollButtons={isScrolTab ? "auto" : false}
+            value={path.replace(/&page=\d+/, '')}
+            onChange={handleTabChange}
+            className={styles.verticalTabs}
+            aria-label="Vertical tabs example"
+            centered={!isScrolTab}
+            >
+              {items.map((kategori,key) => (
+                <Tab sx={{
+                  borderBottom: 1,
+                  borderColor: 'divider',
+                  color: 'black',
+                  '&.Mui-selected': {
+                    color: 'black', 
+                  },
+                }} key={key} label={<Typography component="span" sx={{
+                  fontWeight: 'bold',
+                  textTransform: 'none',
+                }}>{kategori.title}</Typography>} value={kategori.url} />
+              ))}
+            </Tabs>
+          </div>
 
         <div className={styles.rightContainer}>
-          <div className={styles.verticalTabsContent}>
-          <TabPanel value={activeTab} index="faaliyetler">
-            <h2>Faaliyetler</h2>
-              <p>
-                KURAMER, İslâmî düşünce alanında faaliyet gösteren veya o alana ilgi duyan muhtelif düşünce kuruluşları, 
-                üniversiteler, sivil toplum kurumları ve vakıflarla çeşitli düzeylerde görüş alışverişleri, düzenlenen ilmî faaliyetlere 
-                katılım ve katkıda bulunma, ortak etkinlikler vb. gibi muhtelif şekillerde işbirlikleri gerçekleştirmektedir. 
-              </p>
-              <p>
-                Bunlar arasında İngiltere’de faaliyet gösteren prestijli bir düşünce kuruluşu olan 
-                International Institute of Islamic Thought (IIIT) (Uluslararası İslami Düşünce Enstitüsü) ile ortak bir sempozyumun
-                (29 Nisan 2017’de yapılan Modern Dünyada Kur’an’ın Yeri: Makāsıdî Tefsire Doğru sempozyumu) gerçekleştirilmesi; İslâmî veya sosyal bilimler 
-                alanında faaliyet gösteren kurum ve kuruluşlarla diyalog ve ortak çalışmalar; KURAMER yönetici ve Bilim Kurulu üyelerinin münferiden veya KURAMER çalışmalarına 
-                katkıda bulunan bazı ilim adamlarıyla birlikte İstanbul, Ankara, İzmir, Malatya, Elazığ, Samsun, Gaziantep, Sakarya vd. birçok ilde üniversiteler ve 
-                ilmi kuruluşlarca düzenlenen dinî ilimler alanıyla ilgili sempozyumlara katılması sayılabilir. KURAMER yöneticilerinin ve Bilim Kurulu üyelerinin zaman zaman 
-                gazete ve televizyonlarda genel olarak dinî düşünce ve dinî hayatın meseleleri, özelde KURAMER çalışmaları konusunda çeşitli mülakat ve yayınlarının 
-                yer alması da kamuoyunda ilgi ve takdirle karşılanmaktadır.
-              </p>
-            </TabPanel>
-            <TabPanel value={activeTab} index="sempozyumlar">
-              <h2>Sempozyumlar</h2>
-                {isLoading ? (
+            <div className={styles.verticalTabsContent}>
+              <TabPanel value={path} index={items[0].url}>
+                
+                {isPagesLoading  ? (
                   <div className={styles.loader}>
                     <CircularProgress />
                   </div>
-                ) : error ? (
+                ) : errorPage ? (
                   <div className={styles.errorMessage}>
-                    {error}
+                    {errorPage}
                   </div>
-                ) : sempozyumlar.length > 0 ? (
-                  <div className={styles.cardContainer}>
-                    {sempozyumlar.map((yayin, index) => (
-                      <SempozyumCard key={index} data={yayin} handleDownloadPDF={handleDownloadPDF} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className={styles.noDataMessage}>
-                    Kayıtlı veri bulunmamaktadır.
-                  </div> 
-                )}
-                {!isLoading && !error && totalPagesSempozyumlar > 0 && (
-                  <Stack spacing={2} alignItems="center" className={styles.paginationContainer}>
-                    <Pagination 
-                      count={totalPagesSempozyumlar} 
-                      page={currentPage} 
-                      onChange={handleChangePage} 
-                      variant="outlined" 
-                      shape="rounded" 
-                      sx={{
-                        '& .MuiPaginationItem-root': { color: 'inherit' },
-                        '& .MuiPaginationItem-page.Mui-selected': {
-                          backgroundColor: '#2e5077',
-                          color: '#fff',
-                          '&:hover': {
-                            backgroundColor: '#1a365d',
-                          },
-                        },
-                      }}
-                    />
-                  </Stack>
-                )}
-            </TabPanel>
+                ) :  (
+                  <div className={styles.icerik} dangerouslySetInnerHTML={{ __html: tab1?.icerik }} />
+                ) 
+                }
+              </TabPanel>
 
-            <TabPanel value={activeTab} index="calistay">
-              <h2>Çalıştaylar</h2>
-              {isLoading ? (
-                  <div className={styles.loader}>
-                    <CircularProgress />
-                  </div>
-                ) : error ? (
-                  <div className={styles.errorMessage}>
-                    {error}
-                  </div>
-                ) : calistay.length > 0 ? (
-                  <div className={styles.cardContainer}>
-                    {calistay.map((yayin, index) => (
-                      <CalistayCard  key={index} data={yayin} handleDownloadPDF={handleDownloadPDF} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className={styles.noDataMessage}>
-                    Kayıtlı veri bulunmamaktadır.
-                  </div> 
-                )}
-                {!isLoading && !error && totalPagesCalistay > 0 && (
-                  <Stack spacing={2} alignItems="center" className={styles.paginationContainer}>
-                    <Pagination 
-                      count={totalPagesCalistay} 
-                      page={currentPage} 
-                      onChange={handleChangePage} 
-                      variant="outlined" 
-                      shape="rounded" 
-                      sx={{
-                        '& .MuiPaginationItem-root': { color: 'inherit' },
-                        '& .MuiPaginationItem-page.Mui-selected': {
-                          backgroundColor: '#2e5077',
-                          color: '#fff',
-                          '&:hover': {
-                            backgroundColor: '#1a365d',
+              <TabPanel value={path.replace(/&page=\d+/, '')} index={items[1].url}>
+                  {isLoadingSempozyumlar ? (
+                    <div className={styles.loader}>
+                      <CircularProgress />
+                    </div>
+                  ) : error || errorPage  ? (
+                    <div className={styles.errorMessage}>
+                      {error || errorPage }
+                    </div>
+                  ) : sempozyumlar.length > 0 ? (
+                    <div className={styles.cardContainer}>
+                      {sempozyumlar.map((yayin, index) => (
+                        <SempozyumCard key={index} data={yayin} path={path} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className={styles.noDataMessage}>
+                      Kayıtlı veri bulunmamaktadır.
+                    </div> 
+                  )}
+                  {!isLoadingSempozyumlar && !error && totalPagesSempozyumlar > 0 && (
+                    <Stack spacing={2} alignItems="center" className={styles.paginationContainer}>
+                      <Pagination 
+                        count={totalPagesSempozyumlar} 
+                        page={currentPage} 
+                        onChange={handleChangePage} 
+                        variant="outlined" 
+                        shape="rounded" 
+                        sx={{
+                          '& .MuiPaginationItem-root': { color: 'inherit' },
+                          '& .MuiPaginationItem-page.Mui-selected': {
+                            backgroundColor: '#2e5077',
+                            color: '#fff',
+                            '&:hover': {
+                              backgroundColor: '#1a365d',
+                            },
                           },
-                        },
-                      }}
-                    />
-                  </Stack>
-                )}
-            </TabPanel>
+                        }}
+                      />
+                    </Stack>
+                  )}
+              </TabPanel>
 
-            <TabPanel value={activeTab} index="konferanslar">
-              <h2>Konferanslar</h2>
-              {isLoading ? (
-                  <div className={styles.loader}>
-                    <CircularProgress />
-                  </div>
-                ) : error ? (
-                  <div className={styles.errorMessage}>
-                    {error}
-                  </div>
-                ) : konferanslar.length > 0 ? (
-                  <div className={styles.cardContainer}>
-                    {konferanslar.map((yayin, index) => (
-                      <KonferansCard key={index} data={yayin} handleDownloadPDF={handleDownloadPDF} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className={styles.noDataMessage}>
-                    Kayıtlı veri bulunmamaktadır.
-                  </div> 
-                )}
-                {!isLoading && !error && totalPagesKonferanslar > 0 && (
-                  <Stack spacing={2} alignItems="center" className={styles.paginationContainer}>
-                    <Pagination 
-                      count={totalPagesKonferanslar} 
-                      page={currentPage} 
-                      onChange={handleChangePage} 
-                      variant="outlined" 
-                      shape="rounded" 
-                      sx={{
-                        '& .MuiPaginationItem-root': { color: 'inherit' },
-                        '& .MuiPaginationItem-page.Mui-selected': {
-                          backgroundColor: '#2e5077',
-                          color: '#fff',
-                          '&:hover': {
-                            backgroundColor: '#1a365d',
+              <TabPanel value={path.replace(/&page=\d+/, '')} index={items[2].url}>
+                {isLoadingCalistaylar ? (
+                    <div className={styles.loader}>
+                      <CircularProgress />
+                    </div>
+                  ) : error || errorPage ? (
+                    <div className={styles.errorMessage}>
+                      {error || errorPage}
+                    </div>
+                  ) : calistay.length > 0 ? (
+                    <div className={styles.cardContainer}>
+                      {calistay.map((yayin, index) => (
+                        <CalistayCard path={path} key={index} data={yayin}/>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className={styles.noDataMessage}>
+                      Kayıtlı veri bulunmamaktadır.
+                    </div> 
+                  )}
+                  {!isLoadingCalistaylar && !error && totalPagesCalistay > 0 && (
+                    <Stack spacing={2} alignItems="center" className={styles.paginationContainer}>
+                      <Pagination 
+                        count={totalPagesCalistay} 
+                        page={currentPage} 
+                        onChange={handleChangePage} 
+                        variant="outlined" 
+                        shape="rounded" 
+                        sx={{
+                          '& .MuiPaginationItem-root': { color: 'inherit' },
+                          '& .MuiPaginationItem-page.Mui-selected': {
+                            backgroundColor: '#2e5077',
+                            color: '#fff',
+                            '&:hover': {
+                              backgroundColor: '#1a365d',
+                            },
                           },
-                        },
-                      }}
-                    />
-                  </Stack>
-                )}
+                        }}
+                      />
+                    </Stack>
+                  )}
+              </TabPanel>
 
-            </TabPanel>
+              <TabPanel value={path.replace(/&page=\d+/, '')} index={items[3].url}>
+                {isLoadingKonferanslar ? (
+                    <div className={styles.loader}>
+                      <CircularProgress />
+                    </div>
+                  ) : error || errorPage ? (
+                    <div className={styles.errorMessage}>
+                      {error || errorPage}
+                    </div>
+                  ) : konferanslar.length > 0 ? (
+                    <div className={styles.cardContainer}>
+                      {konferanslar.map((yayin, index) => (
+                        <KonferansCard path={path} key={index} data={yayin} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className={styles.noDataMessage}>
+                      Kayıtlı veri bulunmamaktadır.
+                    </div> 
+                  )}
+                  {!isLoadingKonferanslar && !error && totalPagesKonferanslar > 0 && (
+                    <Stack spacing={2} alignItems="center" className={styles.paginationContainer}>
+                      <Pagination 
+                        count={totalPagesKonferanslar} 
+                        page={currentPage} 
+                        onChange={handleChangePage} 
+                        variant="outlined" 
+                        shape="rounded" 
+                        sx={{
+                          '& .MuiPaginationItem-root': { color: 'inherit' },
+                          '& .MuiPaginationItem-page.Mui-selected': {
+                            backgroundColor: '#2e5077',
+                            color: '#fff',
+                            '&:hover': {
+                              backgroundColor: '#1a365d',
+                            },
+                          },
+                        }}
+                      />
+                    </Stack>
+                  )}
 
-            <TabPanel value={activeTab} index="arastirmalar">
-              <h2>Araştırmalar</h2>
-              {isLoading ? (
-                  <div className={styles.loader}>
-                    <CircularProgress />
-                  </div>
-                ) : error ? (
-                  <div className={styles.errorMessage}>
-                    {error}
-                  </div>
-                ) : arastirmalar.length > 0 ? (
-                  <div className={styles.cardContainer}>
-                    {arastirmalar.map((yayin, index) => (
-                      <ArastirmaCard key={index} data={yayin} handleDownloadPDF={handleDownloadPDF} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className={styles.noDataMessage}>
-                    Kayıtlı veri bulunmamaktadır.
-                  </div> 
-                )}
-                {!isLoading && !error && totalPagesArastirmalar > 0 && (
-                  <Stack spacing={2} alignItems="center" className={styles.paginationContainer}>
-                    <Pagination 
-                      count={totalPagesArastirmalar} 
-                      page={currentPage} 
-                      onChange={handleChangePage} 
-                      variant="outlined" 
-                      shape="rounded" 
-                      sx={{
-                        '& .MuiPaginationItem-root': { color: 'inherit' },
-                        '& .MuiPaginationItem-page.Mui-selected': {
-                          backgroundColor: '#2e5077',
-                          color: '#fff',
-                          '&:hover': {
-                            backgroundColor: '#1a365d',
+              </TabPanel>
+
+              <TabPanel value={path.replace(/&page=\d+/, '')} index={items[4].url}>
+                {isLoadingArastirmalar ? (
+                    <div className={styles.loader}>
+                      <CircularProgress />
+                    </div>
+                  ) : error || errorPage ? (
+                    <div className={styles.errorMessage}>
+                      {error || errorPage}
+                    </div>
+                  ) : arastirmalar.length > 0 ? (
+                    <div className={styles.cardContainer}>
+                      {arastirmalar.map((yayin, index) => (
+                        <ArastirmaCard path={path} key={index} data={yayin}  />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className={styles.noDataMessage}>
+                      Kayıtlı veri bulunmamaktadır.
+                    </div> 
+                  )}
+                  {!isLoadingArastirmalar && !error && totalPagesArastirmalar > 0 && (
+                    <Stack spacing={2} alignItems="center" className={styles.paginationContainer}>
+                      <Pagination 
+                        count={totalPagesArastirmalar} 
+                        page={currentPage} 
+                        onChange={handleChangePage} 
+                        variant="outlined" 
+                        shape="rounded" 
+                        sx={{
+                          '& .MuiPaginationItem-root': { color: 'inherit' },
+                          '& .MuiPaginationItem-page.Mui-selected': {
+                            backgroundColor: '#2e5077',
+                            color: '#fff',
+                            '&:hover': {
+                              backgroundColor: '#1a365d',
+                            },
                           },
-                        },
-                      }}
-                    />
-                  </Stack>
-                )}
-            </TabPanel>
-            
-            <TabPanel value={activeTab} index="egitimler">
-              <h2>Eğitimler</h2>
-              {isLoading ? (
-                  <div className={styles.loader}>
-                    <CircularProgress />
-                  </div>
-                ) : error ? (
-                  <div className={styles.errorMessage}>
-                    {error}
-                  </div>
-                ) : egitimler.length > 0 ? (
-                  <div className={styles.cardContainer}>
-                    {egitimler.map((yayin, index) => (
-                      <EgitimCard key={index} data={yayin} handleDownloadPDF={handleDownloadPDF} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className={styles.noDataMessage}>
-                    Kayıtlı veri bulunmamaktadır.
-                  </div> 
-                )}
-                {!isLoading && !error && totalPagesEgitimler > 0 && (
-                  <Stack spacing={2} alignItems="center" className={styles.paginationContainer}>
-                    <Pagination 
-                      count={totalPagesEgitimler} 
-                      page={currentPage} 
-                      onChange={handleChangePage} 
-                      variant="outlined" 
-                      shape="rounded" 
-                      sx={{
-                        '& .MuiPaginationItem-root': { color: 'inherit' },
-                        '& .MuiPaginationItem-page.Mui-selected': {
-                          backgroundColor: '#2e5077',
-                          color: '#fff',
-                          '&:hover': {
-                            backgroundColor: '#1a365d',
+                        }}
+                      />
+                    </Stack>
+                  )}
+              </TabPanel>
+              
+              <TabPanel value={path.replace(/&page=\d+/, '')} index={items[5].url}>
+                {isLoadingEgitimler ? (
+                    <div className={styles.loader}>
+                      <CircularProgress />
+                    </div>
+                  ) : error || errorPage ? (
+                    <div className={styles.errorMessage}>
+                      {error || errorPage}
+                    </div>
+                  ) : egitimler.length > 0 ? (
+                    <div className={styles.cardContainer}>
+                      {egitimler.map((yayin, index) => (
+                        <EgitimCard path={path} key={index} data={yayin} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className={styles.noDataMessage}>
+                      Kayıtlı veri bulunmamaktadır.
+                    </div> 
+                  )}
+                  {!isLoadingEgitimler && !error && totalPagesEgitimler > 0 && (
+                    <Stack spacing={2} alignItems="center" className={styles.paginationContainer}>
+                      <Pagination 
+                        count={totalPagesEgitimler} 
+                        page={currentPage} 
+                        onChange={handleChangePage} 
+                        variant="outlined" 
+                        shape="rounded" 
+                        sx={{
+                          '& .MuiPaginationItem-root': { color: 'inherit' },
+                          '& .MuiPaginationItem-page.Mui-selected': {
+                            backgroundColor: '#2e5077',
+                            color: '#fff',
+                            '&:hover': {
+                              backgroundColor: '#1a365d',
+                            },
                           },
-                        },
-                      }}
-                    />
-                  </Stack>
-                )}
-            </TabPanel>
+                        }}
+                      />
+                    </Stack>
+                  )}
+              </TabPanel>
 
           </div>
         </div>
       </div>
+      </>
+      ): (
+        <div className={styles.noDataMessage}>Kayıtlı Öge verisi bulunmamaktadır.</div>
+      )
+    }
     </>
   );
 }

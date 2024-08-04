@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardMedia, Button, Typography, Grid } from '@mui/material';
 
 const cardStyle = {
-  maxWidth: '250px',
+  width: '250px',
   height: 'auto',
   position: 'relative',
   marginBottom: 5,
@@ -31,7 +31,6 @@ const contentContainerStyle = {
 const titleStyle = {
   textAlign: 'center',
   fontSize: '14px',
-  fontFamily: 'sans-serif',
   fontWeight: 550,
   color: '#343434',
   overflow: 'hidden',
@@ -88,7 +87,7 @@ function CardOge({ yayin, handleDownloadPDF }) {
             sx={buttonStyle}
             onClick={() => handleDownloadPDF({ url: yayin.pdf_dosya, title: yayin.baslik })}
           >
-            PDF İndir
+            Dokümanı İncele
           </Button>
         </div>
       </Card>

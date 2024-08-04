@@ -13,26 +13,9 @@ import Grid from '@mui/material/Grid';
 import { useRouter } from 'next/router';
 import { useSelector } from 'react-redux';
 import { API_ROUTES } from '../../../utils/constants';
-
+import {TextEditor} from '../../../compenent/Editor';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import PdfViewer from '../../../compenent/PdfViewer';
-
-const StyledTableCell = styled(TableCell)({
-    fontWeight: 'bold',
-    backgroundColor: '#f5f5f5',
-  });
-  
-  const StyledTableRow = styled(TableRow)({
-    '&:hover': {
-      backgroundColor: 'rgba(0, 0, 0, 0.04)',
-    },
-  });
-
-  const CustomPopper = styled('div')({
-    // Özelleştirilmiş stil tanımlamaları
-    width: '250px',
-    height: '300px',
-});
 
 export default function Arastirmalar() {
     const [data, setData] = useState([]);
@@ -43,6 +26,7 @@ export default function Arastirmalar() {
       baslik: '',
       pdfDosya: null,
       kapakFotografi: null,
+      icerik:"",
       yayin: null,
       album:null,
       durum: true
@@ -70,6 +54,11 @@ export default function Arastirmalar() {
     const [showPdfViewerEkle, setShowPdfViewerEkle] = useState(false);
 
     const [isSaving, setIsSaving] = useState(false);
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [selectedIds, setSelectedIds] = useState([]);
+
+    const [warningDialogOpen, setWarningDialogOpen] = useState(false);
+
 
 
     const [secilenAlbumId, setSecilenAlbumId] = useState(null);
@@ -78,6 +67,9 @@ export default function Arastirmalar() {
 
     const user = useSelector((state) => state.user);
     const router = useRouter();
+
+  
+  
 
 
     const handleClick = () => {
@@ -195,6 +187,7 @@ export default function Arastirmalar() {
         setNewItem({
             baslik: '',
             pdfDosya: null,
+            icerik:"",
             kapakFotografi: null,
             yayin:null,
             album:null,
@@ -222,7 +215,7 @@ export default function Arastirmalar() {
     
       const handleSave = (editedItem) => {
   
-        if (!editedItem.baslik || !editedItem.kapak_fotografi || !editedItem.pdf_dosya  ) {
+        if (!editedItem.baslik || !editedItem.kapak_fotografi  ) {
           setUyariMesaji("Lütfen tüm alanları doldurunuz.");
           return;
         }
@@ -235,7 +228,7 @@ export default function Arastirmalar() {
           formData.append('kapak_fotografi', editedItem["kapak_fotografi_file"]);
         }
 
-        if (typeof editedItem["pdf_dosya"] === "object") {
+        if ( editedItem["pdf_dosya"] &&  typeof editedItem["pdf_dosya"] === "object") {
           formData.append("pdf_dosya", editedItem["pdf_dosya"]);
         }
 
@@ -252,6 +245,8 @@ export default function Arastirmalar() {
         if (editedItem.album){
           formData.append("album_id", editedItem.album.id);
         }
+
+        
         
 
   
@@ -280,7 +275,7 @@ export default function Arastirmalar() {
     
       const handleAddNewItem = () => {
 
-        if (!newItem.baslik || !newItem.kapakFotografi || !newItem.pdfDosya) {
+        if (!newItem.baslik || !newItem.kapakFotografi ) {
 
           setUyariMesajiEkle("Lütfen tüm alanları doldurunuz.");
           return;
@@ -291,7 +286,10 @@ export default function Arastirmalar() {
         formData.append('kapak_fotografi', newItem["kapakFotografi_file"]);
         formData.append("durum", newItem["durum"]);
         formData.append("baslik", newItem["baslik"]);
+        if (newItem.pdfDosya){
         formData.append("pdf_dosya", newItem["pdfDosya"]);
+        }
+        formData.append("icerik", newItem["icerik"]);
         if (newItem.yayin){
           formData.append("yayin_id", newItem.yayin.id);
         }
@@ -343,41 +341,72 @@ export default function Arastirmalar() {
           setSelectedRows({});
         }
     };
-    const handleDeleteSelected = () => {
+
+    const handleCloseWarningDialog = () => {
+      setWarningDialogOpen(false);
+    };
+
+
+    const handleOpenDeleteConfirm = () => {
+      const ids = Object.keys(selectedRows).filter(id => selectedRows[id]);
+      if (ids.length === 0) {
+        // Hiçbir öğe seçilmemişse uyarı diyalogunu aç
+        setWarningDialogOpen(true);
+      } else {
+        // Seçili öğeler varsa onay penceresini aç
+        setSelectedIds(ids);
+        setDeleteConfirmOpen(true);
+      }
+    };
+  
+    const handleCloseDeleteConfirm = () => {
+      setDeleteConfirmOpen(false);
+    };
+
+
+
+    const handleConfirmDelete = () => {
       setDeleteError('');
-      const selectedIds = Object.keys(selectedRows).filter(id => selectedRows[id]);
-    
       axios.post(API_ROUTES.ARASTIRMALAR_DELETE, { ids: selectedIds })
-        .then(() => axios.get(API_ROUTES.ARASTIRMALAR))
-        .then(response => {
+        .then(() => {
+          return axios.get(API_ROUTES.ARASTIRMALAR);
+        })
+        .then((response) => {
           const newTotalCount = response.data.count;
           const newTotalPages = Math.ceil(newTotalCount / 10);
           setTotalPages(newTotalPages);
     
           let updatedPage = currentPage;
-          if (currentPage > newTotalPages) {
-            updatedPage = Math.max(newTotalPages, 1); // Eğer yeni toplam sayfa sayısı 0 ise, 1'e ayarla
-          } else if (currentPage === newTotalPages && response.data.results.length === 0 && currentPage > 1) {
-            updatedPage = currentPage - 1; // Son sayfada veri kalmadıysa bir önceki sayfaya git
+          if (newTotalPages < currentPage) {
+            updatedPage = newTotalPages;
           }
     
-          setCurrentPage(updatedPage);
-    
-          if (updatedPage !== currentPage) {
-            return axios.get(API_ROUTES.ARASTIRMALAR_PAGINATIONS.replace("currentPage",updatedPage))
+          if (newTotalPages === 0) {
+            setCurrentPage(1);
+            setData([]);
+            setSelectedRows({});
+            setDeleteConfirmOpen(false);
           } else {
-            return response;
+            setCurrentPage(updatedPage);
+            return axios.get(API_ROUTES.ARASTIRMALAR_PAGINATIONS.replace('currentPage', updatedPage));
           }
         })
-        .then(response => {
-          setData(response.data.results);
+        .then((response) => {
+          if (response) {
+            setData(response.data.results);
+          }
           setSelectedRows({});
+          setDeleteConfirmOpen(false);
         })
-        .catch(error => {
+        .catch((error) => {
           console.error('Toplu silme işlemi sırasında hata oluştu:', error);
           setDeleteError('Veriler silinirken bir hata oluştu. Lütfen tekrar deneyin.');
+          setDeleteConfirmOpen(false);
         });
     };
+
+
+ 
     
     
     if (isLoading) {
@@ -645,7 +674,7 @@ export default function Arastirmalar() {
                       variant="contained"
                       size="small"
                       startIcon={<DeleteIcon />}
-                      onClick={handleDeleteSelected}
+                      onClick={handleOpenDeleteConfirm}
                       style={{ backgroundColor: "#d32f2f", color: '#fff', marginBottom: "10px", textTransform: 'none', fontSize: '0.75rem' }}
                     >
                       Sil
@@ -668,6 +697,7 @@ export default function Arastirmalar() {
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>PDF Dosya</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Yayın</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Albüm</TableCell>
+                        <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>İçerik</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Durum</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Detaylar</TableCell>
                       </TableRow>
@@ -691,6 +721,7 @@ export default function Arastirmalar() {
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.pdf_dosya ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.yayin ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.album ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
+                          <TableCell style={{ fontSize: '0.75rem' }}>{row.icerik ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.durum ? 'Aktif' : 'Pasif'}</TableCell>
                           <TableCell>
                             <Button
@@ -717,6 +748,7 @@ export default function Arastirmalar() {
                     >
                       Ekle
                     </Button>
+
                   </div>
                   {data.length > 0 && (
                     <Pagination
@@ -810,7 +842,7 @@ export default function Arastirmalar() {
                     {selectedItem && selectedItem.pdf_dosya ? (
                         <>
                             <Typography variant="subtitle1" style={{ marginBottom: '10px', position: 'absolute', top: 0, left: 10 }}>
-                                PDF Dosyası:
+                                PDF Dosya (isteğe bağlı) :
                             </Typography>
                             <div
                                 style={{
@@ -844,7 +876,7 @@ export default function Arastirmalar() {
                     ) : (
                         <>
                         <Typography variant="subtitle1" style={{ marginBottom: '10px', position: 'absolute', top: 0, left: 10 }}>
-                                PDF Dosyası:
+                            PDF Dosya (isteğe bağlı) :
                         </Typography>
                         <label htmlFor="pdf_dosyaInput">
                             <IconButton
@@ -867,6 +899,9 @@ export default function Arastirmalar() {
                     onChange={(e) => handleFileChange(e, "pdf_dosya")}
                 />
             </div>
+
+            {/* editor düzenleme*/}
+          
 
 
             {/* Yayın */}
@@ -910,6 +945,8 @@ export default function Arastirmalar() {
                     )}
                 </div>
             </div>
+
+            
 
 
 
@@ -955,9 +992,20 @@ export default function Arastirmalar() {
                 </div>
             </div>
 
+            {/* icerik*/}
+            {selectedItem && (
+              <>
+                <Typography variant="subtitle1" style={{ marginBottom: '10px', marginTop:'10px'}}>
+                  İçerik (isteğe bağlı) :
+                </Typography>
+                <TextEditor selectedItem={selectedItem} setSelectedItem={setSelectedItem}/>
+              </>
+            )}
+
+
             
 
-            <FormControlLabel control={<Checkbox checked={selectedItem ? selectedItem.durum : false} onChange={(e) => setSelectedItem({ ...selectedItem, durum: e.target.checked })} />} label="Durum" />
+            <FormControlLabel control={<Checkbox checked={selectedItem ? selectedItem.durum : false} onChange={(e) => setSelectedItem({ ...selectedItem, durum: e.target.checked })} />} label="Aktif" />
           </DialogContent>
           {saveError && <p style={{ color: 'red', marginLeft: '25px' }}>{saveError}</p>}
           {uyariMesaji && <p style={{ color: 'red', marginLeft: '25px' }}>{uyariMesaji}</p>}
@@ -1133,7 +1181,7 @@ export default function Arastirmalar() {
           {!newItem.pdfDosya ? (
             <>
             <Typography variant="subtitle1"  style={{ marginBottom: '10px', position: 'absolute', top: 0, left: 10 }}>
-                    PDF Dosyası:
+                 PDF Dosya (isteğe bağlı) :
             </Typography>
             <label htmlFor="pdf_dosyaInput">
               <IconButton
@@ -1147,7 +1195,7 @@ export default function Arastirmalar() {
           ) : (
             <>
             <Typography variant="subtitle1"  style={{ marginBottom: '10px', position: 'absolute', top: 0, left: 10 }}>
-                    PDF Dosyası:
+                PDF Dosya (isteğe bağlı) :
             </Typography>
             <div
                                 style={{
@@ -1189,7 +1237,8 @@ export default function Arastirmalar() {
           onChange={(e) => handleFileChangeEkle(e, "pdfDosya")}
         />
 
-
+        
+      
 
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
           <div style={{ border: '2px dashed grey', width: '100%', height: '200px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>            
@@ -1275,11 +1324,24 @@ export default function Arastirmalar() {
             </div>
 
 
+        {/* editor ekleme */}
+        
+        {newItem && (
+              <>
+                <Typography variant="subtitle1" style={{ marginBottom: '10px', marginTop:'10px'}}>
+                  İçerik (isteğe bağlı):
+                </Typography>
+                <TextEditor selectedItem={newItem} setSelectedItem={setNewItem}/>
+              </>
+            )}
+
 
         <FormControlLabel
           control={<Checkbox checked={newItem.durum || false} onChange={(e) => setNewItem({ ...newItem, durum: e.target.checked })} />}
-          label="Durum"
+          label="Aktif"
         />
+
+        
       </DialogContent>
 
       {(showPdfViewerEkle && <PdfViewer pdfDataFile={newItem?.pdfDosya} setShowPdfViewer={setShowPdfViewerEkle} showPdfViewer={showPdfViewerEkle}  />)}
@@ -1375,6 +1437,38 @@ export default function Arastirmalar() {
             </DialogActions>
       </Dialog>
 
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={handleCloseDeleteConfirm}
+      >
+        <DialogTitle>Silme Onayı</DialogTitle>
+        <DialogContent>
+          <Typography>Seçili öğeleri silmek istediğinizden emin misiniz?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteConfirm} color="primary">
+            İPTAL
+          </Button>
+          <Button onClick={handleConfirmDelete} color="primary" autoFocus>
+            SİL
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={warningDialogOpen}
+        onClose={handleCloseWarningDialog}
+      >
+        <DialogTitle>Uyarı</DialogTitle>
+        <DialogContent>
+          <Typography>Silmek için önce bir öğe seçmelisiniz.</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseWarningDialog} color="primary">
+            Tamam
+          </Button>
+        </DialogActions>
+      </Dialog>
 
 
         </>

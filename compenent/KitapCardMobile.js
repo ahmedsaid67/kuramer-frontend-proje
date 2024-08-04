@@ -24,7 +24,6 @@ const containerStyles = {
 };
 
 const titleStyle = {
-  fontFamily: 'sans-serif',
   fontWeight: 'bold',
   color: '#000',
   fontSize: '15px',
@@ -34,8 +33,14 @@ const titleStyle = {
   textOverflow: 'ellipsis',
   display: '-webkit-box',
   WebkitBoxOrient: 'vertical',
+  fontFamily: 'Playfair Display, serif', 
 };
 
+
+const yazarTitleStyle = {
+
+  fontFamily: 'Playfair Display, serif', 
+};
   
 
 const summaryStyle = {
@@ -43,6 +48,7 @@ const summaryStyle = {
   fontSize: '14px',
   whiteSpace: 'pre-line',
   color: '#000',
+  fontFamily: 'Playfair Display, serif', 
 };
 
 const readMoreButtonStyle = {
@@ -53,10 +59,13 @@ const readMoreButtonStyle = {
   textDecoration: 'underline',
 };
 
-const KitapCardMobile = ({ kitap }) => {
+const KitapCardMobile = ({ kitap,path,activeTab }) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
+  
+  const basePath = path.includes('?') ? path.split('?')[0] : path;
 
-  const linkTo = `/yayinlar/kitaplar/${kitap.slug}`;
+
+  const linkTo = `${basePath}/${activeTab}/${kitap.slug}`;
 
 
   const handleToggleCollapse = () => {
@@ -86,7 +95,7 @@ const KitapCardMobile = ({ kitap }) => {
                   {kitap.ad}
                 </Typography>
               </Link>
-              <Typography variant="subtitle1" color="body1" gutterBottom>
+              <Typography variant="subtitle1" sx={yazarTitleStyle} color="body1" gutterBottom>
                 {kitap.yazar}
               </Typography>
               

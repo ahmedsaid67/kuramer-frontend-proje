@@ -6,16 +6,14 @@
   width: 100%;
   background: #d4cfca;
   color: #222;
-  font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   margin-top: 0;
   margin-bottom: 1px;
-  padding-top: 60px;
-  padding-bottom: 60px;
+  padding-top: 10px;
+  padding-bottom: 50px;
 }
 
 .title {
   font-size: 24px;
-  margin-bottom: 20px;
 }
 
 .carouselContainer {
@@ -23,7 +21,6 @@
 }
 
 .card {
-  border-radius: 10px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -44,10 +41,13 @@
 }
 
 .cardText {
-  padding: 10px 40px;
+  padding: 10px;
   flex: 1;
   line-height: 1.6;
   font-size: 16px;
+  white-space: nowrap; /* Prevents the text from wrapping */
+  overflow: hidden;    /* Hides text that goes beyond the bounds */
+  text-overflow: ellipsis; /* Adds ellipsis when text overflows */
 }
 
 
@@ -56,17 +56,20 @@
   top: 50%;
   transform: translateY(-50%);
   cursor: pointer;
-  background: linear-gradient(to right, #2e5077, #457fbc);
-  color: white;
+  background: #fff; /* Beyaz arka plan */
+  color: #2e5077; /* Mavi ok renk */
   border-radius: 50%;
   padding: 6px 12px;
   box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.3);
-  transition: background 0.3s ease;
+  transition: background 0.3s ease, color 0.3s ease; /* Renk değişikliği için geçiş efekti */
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
   z-index: 10;
 }
 
+
 .customPrevArrow:hover, .customNextArrow:hover {
-  background: #457fbc;
+  background: #2e5077; /* Mavi arka plan */
+  color: #fff; /* Beyaz ok renk */
 }
 
 .customPrevArrow {
@@ -138,6 +141,10 @@
     max-width: 240px;
     height: auto; /* Yüksekliği orantılı olarak ayarla */
     object-fit: cover; /* Görseli kırpma veya sığdırma */
+  }
+  .cardText {
+
+    font-size: 14px;
   }
 }
 

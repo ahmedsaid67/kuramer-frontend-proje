@@ -16,16 +16,7 @@ import { useSelector } from 'react-redux';
 import {API_ROUTES} from "../../utils/constants"
 
 
-const StyledTableCell = styled(TableCell)({
-    fontWeight: 'bold',
-    backgroundColor: '#f5f5f5',
-  });
-  
-  const StyledTableRow = styled(TableRow)({
-    '&:hover': {
-      backgroundColor: 'rgba(0, 0, 0, 0.04)',
-    },
-  });
+
 
 export default function YayinlarimizdanSecmeler() {
     const [data, setData] = useState([]);
@@ -36,6 +27,7 @@ export default function YayinlarimizdanSecmeler() {
       baslik: '',
       kapakFotografi: null,
       pdfDosya: null,
+      ozet:'',
       durum: true
     });
     const [selectedRows, setSelectedRows] = useState({});
@@ -48,6 +40,11 @@ export default function YayinlarimizdanSecmeler() {
     const [uyariMesaji, setUyariMesaji] = useState("");
     const [uyariMesajiEkle, setUyariMesajiEkle] = useState("");
     const [isSaving, setIsSaving] = useState(false);
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [selectedIds, setSelectedIds] = useState([]);
+
+    const [warningDialogOpen, setWarningDialogOpen] = useState(false);
+
 
     const user = useSelector((state) => state.user);
     const router = useRouter();
@@ -109,6 +106,7 @@ export default function YayinlarimizdanSecmeler() {
           baslik: '',
           kapakFotografi: null,
           pdfDosya: null,
+          ozet:'',
           durum: true
         }); // newItem durumunu sıfırla
         setUyariMesajiEkle("");
@@ -129,7 +127,7 @@ export default function YayinlarimizdanSecmeler() {
     
       const handleSave = (editedItem) => {
   
-        if (!editedItem.baslik || !editedItem.kapak_fotografi || !editedItem.pdf_dosya) {
+        if (!editedItem.baslik || !editedItem.kapak_fotografi || !editedItem.pdf_dosya || !editedItem.ozet ) {
           setUyariMesaji("Lütfen tüm alanları doldurunuz.");
           return;
         }
@@ -146,6 +144,7 @@ export default function YayinlarimizdanSecmeler() {
           formData.append("pdf_dosya", editedItem["pdf_dosya"]);
         }
 
+        formData.append("ozet", editedItem["ozet"]);
         formData.append("durum", editedItem["durum"]);
         formData.append("baslik", editedItem["baslik"]);
 
@@ -173,7 +172,7 @@ export default function YayinlarimizdanSecmeler() {
     
       const handleAddNewItem = () => {
 
-        if (!newItem.baslik || !newItem.kapakFotografi || !newItem.pdfDosya) {
+        if (!newItem.baslik || !newItem.kapakFotografi || !newItem.pdfDosya || !newItem.ozet) {
           setUyariMesajiEkle("Lütfen tüm alanları doldurunuz.");
           return;
         }
@@ -184,6 +183,7 @@ export default function YayinlarimizdanSecmeler() {
         formData.append("durum", newItem["durum"]);
         formData.append("baslik", newItem["baslik"]);
         formData.append("pdf_dosya", newItem["pdfDosya"]);
+        formData.append("ozet", newItem["ozet"]);
 
         setIsSaving(true); 
         axios.post(API_ROUTES.YAYINLARIMIZDAN_SECMELER, formData)
@@ -227,41 +227,71 @@ export default function YayinlarimizdanSecmeler() {
           setSelectedRows({});
         }
     };
-    const handleDeleteSelected = () => {
-        setDeleteError('');
-        const selectedIds = Object.keys(selectedRows).filter(id => selectedRows[id]);
-      
-        axios.post(API_ROUTES.YAYINLARIMIZDAN_SECMELER_DELETE, { ids: selectedIds })
-        .then(() => axios.get(API_ROUTES.YAYINLARIMIZDAN_SECMELER))
-          .then(response => {
-            const newTotalCount = response.data.count;
-            const newTotalPages = Math.ceil(newTotalCount / 10);
-            setTotalPages(newTotalPages);
-      
-            let updatedPage = currentPage;
-            if (currentPage > newTotalPages) {
-              updatedPage = Math.max(newTotalPages, 1); // Eğer yeni toplam sayfa sayısı 0 ise, 1'e ayarla
-            } else if (currentPage === newTotalPages && response.data.results.length === 0 && currentPage > 1) {
-              updatedPage = currentPage - 1; // Son sayfada veri kalmadıysa bir önceki sayfaya git
-            }
-      
-            setCurrentPage(updatedPage);
-      
-            if (updatedPage !== currentPage) {
-              return axios.get(API_ROUTES.YAYINLARIMIZDAN_SECMELER_PAGINATIONS.replace("currentPage",updatedPage))
-            } else {
-              return response;
-            }
-          })
-          .then(response => {
-            setData(response.data.results);
+
+    const handleCloseWarningDialog = () => {
+      setWarningDialogOpen(false);
+    };
+
+
+    const handleOpenDeleteConfirm = () => {
+      const ids = Object.keys(selectedRows).filter(id => selectedRows[id]);
+      if (ids.length === 0) {
+        // Hiçbir öğe seçilmemişse uyarı diyalogunu aç
+        setWarningDialogOpen(true);
+      } else {
+        // Seçili öğeler varsa onay penceresini aç
+        setSelectedIds(ids);
+        setDeleteConfirmOpen(true);
+      }
+    };
+  
+    const handleCloseDeleteConfirm = () => {
+      setDeleteConfirmOpen(false);
+    };
+
+
+
+    const handleConfirmDelete = () => {
+      setDeleteError('');
+      axios.post(API_ROUTES.YAYINLARIMIZDAN_SECMELER_DELETE, { ids: selectedIds })
+        .then(() => {
+          return axios.get(API_ROUTES.YAYINLARIMIZDAN_SECMELER);
+        })
+        .then((response) => {
+          const newTotalCount = response.data.count;
+          const newTotalPages = Math.ceil(newTotalCount / 10);
+          setTotalPages(newTotalPages);
+    
+          let updatedPage = currentPage;
+          if (newTotalPages < currentPage) {
+            updatedPage = newTotalPages;
+          }
+    
+          if (newTotalPages === 0) {
+            setCurrentPage(1);
+            setData([]);
             setSelectedRows({});
-          })
-          .catch(error => {
-            console.error('Toplu silme işlemi sırasında hata oluştu:', error);
-            setDeleteError('Veriler silinirken bir hata oluştu. Lütfen tekrar deneyin.');
-          });
-      };
+            setDeleteConfirmOpen(false);
+          } else {
+            setCurrentPage(updatedPage);
+            return axios.get(API_ROUTES.YAYINLARIMIZDAN_SECMELER_PAGINATIONS.replace('currentPage', updatedPage));
+          }
+        })
+        .then((response) => {
+          if (response) {
+            setData(response.data.results);
+          }
+          setSelectedRows({});
+          setDeleteConfirmOpen(false);
+        })
+        .catch((error) => {
+          console.error('Toplu silme işlemi sırasında hata oluştu:', error);
+          setDeleteError('Veriler silinirken bir hata oluştu. Lütfen tekrar deneyin.');
+          setDeleteConfirmOpen(false);
+        });
+    };
+    
+  
       
     
     
@@ -319,10 +349,7 @@ export default function YayinlarimizdanSecmeler() {
                 }));
 
                 event.target.value = '';
-
-
-
-            
+ 
           
           }
                 }
@@ -382,95 +409,97 @@ export default function YayinlarimizdanSecmeler() {
     return(
         <>
              <>
-             <Container maxWidth="lg" style={{  position: 'relative' }}>
-                {deleteError && <div style={{ color: '#f44336', textAlign: 'center', marginBottom: '10px', fontSize: '0.75rem' }}>{deleteError}</div>}
-                <Paper elevation={2} style={{ padding: '15px', overflowX: 'auto', backgroundColor: 'white' }}>
-                  {data.length > 0 && (
-                    <Button
-                      variant="contained"
+             <Container maxWidth="lg" style={{ position: 'relative' }}>
+        {deleteError && <div style={{ color: '#f44336', textAlign: 'center', marginBottom: '10px', fontSize: '0.75rem' }}>{deleteError}</div>}
+        <Paper elevation={2} style={{ padding: '15px', overflowX: 'auto', backgroundColor: 'white' }}>
+          {data.length > 0 && (
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<DeleteIcon />}
+              onClick={handleOpenDeleteConfirm}
+              style={{ backgroundColor: "#d32f2f", color: '#fff', marginBottom: "10px", textTransform: 'none', fontSize: '0.75rem' }}
+            >
+              Sil
+            </Button>
+          )}
+          <Table size="small">
+            <TableHead>
+              <TableRow style={{ backgroundColor: '#1976d2' }}>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    onChange={handleSelectAllRows}
+                    checked={Object.keys(selectedRows).length > 0 && Object.keys(selectedRows).length === data.length}
+                    indeterminate={Object.keys(selectedRows).length > 0 && Object.keys(selectedRows).length < data.length}
+                    size="small"
+                    style={{ color: '#fff' }}
+                  />
+                </TableCell>
+                <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Başlık</TableCell>
+                <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Kapak Fotoğrafı</TableCell>
+                <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>PDF Dosya</TableCell>
+                <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Özet</TableCell>
+                <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Durum</TableCell>
+                <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Detaylar</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {data.map(row => (
+                <TableRow key={row.id}>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={selectedRows[row.id] || false}
+                      onChange={() => handleSelectRow(row.id)}
                       size="small"
-                      startIcon={<DeleteIcon />}
-                      onClick={handleDeleteSelected}
-                      style={{ backgroundColor: "#d32f2f", color: '#fff', marginBottom: "10px", textTransform: 'none', fontSize: '0.75rem' }}
-                    >
-                      Sil
-                    </Button>
-                  )}
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow style={{ backgroundColor: '#1976d2' }}> 
-                        <TableCell padding="checkbox">
-                          <Checkbox
-                            onChange={handleSelectAllRows}
-                            checked={Object.keys(selectedRows).length > 0 && Object.keys(selectedRows).length === data.length}
-                            indeterminate={Object.keys(selectedRows).length > 0 && Object.keys(selectedRows).length < data.length}
-                            size="small"
-                            style={{ color: '#fff' }}  
-                          />
-                        </TableCell>
-                        <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Başlık</TableCell>
-                        <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Kapak Fotoğrafı</TableCell>
-                        <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>PDF Dosya</TableCell>
-                        <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Durum</TableCell>
-                        <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Detaylar</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {data.map(row => (
-                        <TableRow key={row.id}>
-                          <TableCell padding="checkbox">
-                            <Checkbox
-                              checked={selectedRows[row.id] || false}
-                              onChange={() => handleSelectRow(row.id)}
-                              size="small"
-                            />
-                          </TableCell>
-                          <TableCell style={{ fontSize: '0.75rem', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            <Tooltip title={row.baslik} placement="top">
-                              <span>{truncateText(row.baslik, 40)}</span>
-                            </Tooltip>
-                          </TableCell>
-                          <TableCell style={{ fontSize: '0.75rem' }}>{row.kapak_fotografi ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
-                          <TableCell style={{ fontSize: '0.75rem' }}>{row.pdf_dosya ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
-                          <TableCell style={{ fontSize: '0.75rem' }}>{row.durum ? 'Aktif' : 'Pasif'}</TableCell>
-                          <TableCell>
-                            <Button
-                              variant="contained"
-                              size="small"
-                              startIcon={<InfoIcon />}
-                              onClick={() => handleOpen(row)}
-                              style={{ backgroundColor: '#1976d2', color: '#fff', textTransform: 'none', fontSize: '0.75rem' }}
-                            >
-                              Detaylar
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                  <div style={{ textAlign: 'right', marginTop: '10px' }}>
-                    <Button
-                      variant="contained"
-                      size="small"
-                      style={{ backgroundColor: '#388e3c', color: '#fff', textTransform: 'none', fontSize: '0.75rem' }}
-                      onClick={handleOpenAddDialog}
-                      startIcon={<AddIcon />}
-                    >
-                      Ekle
-                    </Button>
-                  </div>
-                  {data.length > 0 && (
-                    <Pagination
-                      count={totalPages}
-                      page={currentPage}
-                      onChange={handlePageChange}
-                      variant="outlined"
-                      size="small"
-                      style={{ marginTop: '10px', display: 'flex', justifyContent: 'center' }}
                     />
-                  )}
-                </Paper>
-              </Container>
+                  </TableCell>
+                  <TableCell style={{ fontSize: '0.75rem', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <Tooltip title={row.baslik} placement="top">
+                      <span>{truncateText(row.baslik, 40)}</span>
+                    </Tooltip>
+                  </TableCell>
+                  <TableCell style={{ fontSize: '0.75rem' }}>{row.kapak_fotografi ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
+                  <TableCell style={{ fontSize: '0.75rem' }}>{row.pdf_dosya ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
+                  <TableCell style={{ fontSize: '0.75rem' }}>{row.ozet ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
+                  <TableCell style={{ fontSize: '0.75rem' }}>{row.durum ? 'Aktif' : 'Pasif'}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      startIcon={<InfoIcon />}
+                      onClick={() => handleOpen(row)}
+                      style={{ backgroundColor: '#1976d2', color: '#fff', textTransform: 'none', fontSize: '0.75rem' }}
+                    >
+                      Detaylar
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <div style={{ textAlign: 'right', marginTop: '10px' }}>
+            <Button
+              variant="contained"
+              size="small"
+              style={{ backgroundColor: '#388e3c', color: '#fff', textTransform: 'none', fontSize: '0.75rem' }}
+              onClick={handleOpenAddDialog}
+              startIcon={<AddIcon />}
+            >
+              Ekle
+            </Button>
+          </div>
+          {data.length > 0 && (
+            <Pagination
+              count={totalPages}
+              page={currentPage}
+              onChange={handlePageChange}
+              variant="outlined"
+              size="small"
+              style={{ marginTop: '10px', display: 'flex', justifyContent: 'center' }}
+            />
+          )}
+        </Paper>
+      </Container>
 
 
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
@@ -603,7 +632,32 @@ export default function YayinlarimizdanSecmeler() {
                     onChange={(e) => handleFileChange(e, "pdf_dosya")}
                 />
             </div>
-            <FormControlLabel control={<Checkbox checked={selectedItem ? selectedItem.durum : false} onChange={(e) => setSelectedItem({ ...selectedItem, durum: e.target.checked })} />} label="Durum" />
+
+
+            <TextField
+              label="Özet"
+              multiline
+              rows={6}  // Bu varsayılan satır sayısını artırır, ancak minHeight ile kombinlenmelidir.
+              value={selectedItem ? selectedItem.ozet : ''}
+              onChange={(e) => setSelectedItem({ ...selectedItem, ozet: e.target.value })}
+              fullWidth
+              margin="normal"
+              variant="outlined"
+              InputProps={{
+                style: {
+                  minHeight: '400px', // Çerçevenin minimum yüksekliğini artırır
+                },
+                inputProps: {
+                  style: {
+                    height: '380px', // textarea'nın yüksekliğini direkt olarak ayarlar
+                  }
+                }
+              }}
+            />
+
+
+
+            <FormControlLabel control={<Checkbox checked={selectedItem ? selectedItem.durum : false} onChange={(e) => setSelectedItem({ ...selectedItem, durum: e.target.checked })} />} label="Aktif" />
           </DialogContent>
           {saveError && <p style={{ color: 'red', marginLeft: '25px' }}>{saveError}</p>}
           {uyariMesaji && <p style={{ color: 'red', marginLeft: '25px' }}>{uyariMesaji}</p>}
@@ -638,10 +692,11 @@ export default function YayinlarimizdanSecmeler() {
           fullWidth
           margin="normal"
         />
-        <div style={{ textAlign: 'center', marginBottom: '20px', border: '2px dashed grey', padding: '10px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '20px',marginTop:"20px"  }}>
+          <div style={{ border: '2px dashed grey', width: '100%', height: '200px', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
           {!newItem.kapakFotografi ? (
             <>
-             <Typography variant="subtitle1" style={{ marginBottom: '10px', position: 'absolute', top: 150, left: 30 }}>
+             <Typography variant="subtitle1" style={{ marginBottom: '10px', position: 'absolute', top: 0, left: 10 }}>
                Kapak Fotoğrafı:
              </Typography>
             <label htmlFor="kapak_fotografiInput">
@@ -655,25 +710,25 @@ export default function YayinlarimizdanSecmeler() {
             </>
           ) : (
             <>
-                <Typography variant="subtitle1" style={{ marginBottom: '10px', position: 'absolute', top: 150, left: 30  }}>
+                <Typography variant="subtitle1" style={{ marginBottom: '10px', position: 'absolute', top: 0, left: 10 }}>
                     Kapak Fotoğrafı:
                 </Typography>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                
                     <img
                         src={newItem.kapakFotografi}
                         alt="Kapak Fotoğrafı"
-                        style={{ maxWidth: '50%', maxHeight: '100px' }}
+                        style={{ maxWidth: '50%', maxHeight: '100px', position: 'relative' }}
                     />
                     <IconButton
                         onClick={() => handleRemoveImageEkle('kapakFotografi')}
-                        style={{ fontSize: '20px', backgroundColor: 'transparent', color: 'red', position: 'absolute', top: -20, right: -20 }}
+                        style={{ fontSize: '20px', backgroundColor: 'transparent', color: 'red', position: 'absolute', top: 0, right: 0 }}
                     >
                         <CloseIcon />
                     </IconButton>
-                </div>
             </>
 
           )}
+          </div>
         </div>
         <input
           type="file"
@@ -682,15 +737,16 @@ export default function YayinlarimizdanSecmeler() {
           style={{ display: 'none' }}
           onChange={(e) => handleFileChangeEkle(e, "kapakFotografi")}
         />
-        <div style={{ textAlign: 'center', marginBottom: '20px', border: '2px dashed grey', padding: '10px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+          <div style={{ border: '2px dashed grey', width: '100%', height: '80px', display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
           {!newItem.pdfDosya ? (
             <>
-            <Typography variant="subtitle1" style={{ marginBottom: '10px', position: 'relative', bottom: 10, right: 200  }}>
+            <Typography variant="subtitle1"  style={{ marginBottom: '10px', position: 'absolute', top: 0, left: 10 }}>
                     PDF Dosyası:
             </Typography>
             <label htmlFor="pdf_dosyaInput">
               <IconButton
-                style={{ fontSize: '50px', color: 'green' , position:"relative", right:"50px"}}
+                style={{ fontSize: '50px', color: 'green', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
                 component="span"
               >
                 <PictureAsPdfIcon />
@@ -699,20 +755,40 @@ export default function YayinlarimizdanSecmeler() {
             </>
           ) : (
             <>
-            <Typography variant="subtitle1" style={{ marginBottom: '10px', position: 'relative', top: -15, left: -170  }}>
+            <Typography variant="subtitle1"  style={{ marginBottom: '10px', position: 'absolute', top: 0, left: 10 }}>
                     PDF Dosyası:
             </Typography>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <PictureAsPdfIcon style={{ fontSize: '60px', color: 'red',cursor: 'pointer',transition: 'color 0.2s', position:"relative", right:"30px"}} onClick={handleClickEkle} />
-              <IconButton
-                onClick={() => handleRemoveImageEkle('pdfDosya')}
-                style={{ fontSize: '20px', backgroundColor: 'transparent', color: 'red', position: 'relative', bottom: 30, left: 185 }}
-              >
-                <CloseIcon />
-              </IconButton>
-            </div>
+            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    cursor: 'pointer',
+                                    transition: 'color 0.2s',
+                                }}
+                                onClick={handleClickEkle}
+                                onMouseDown={(e) => e.preventDefault()}
+                                onMouseUp={(e) => {/* Tıklandığında olacaklar */ }}
+                            >
+                                <PictureAsPdfIcon
+                                    style={{
+                                        fontSize: '80px',
+                                        color: 'red',
+                                        marginRight: '5px',
+                                        transition: 'color 0.2s',
+                                    }}
+
+                                />
+                            </div>
+                            {/* X simgesi */}
+                            <IconButton
+                                style={{ fontSize: '20px', backgroundColor: 'transparent', color: 'red', position: 'absolute', top: 0, right: 0 }}
+                                onClick={() => handleRemoveImageEkle("pdfDosya")}
+                            >
+                                <CloseIcon />
+                            </IconButton>
             </>
           )}
+        </div>
         </div>
         <input
           type="file"
@@ -721,9 +797,36 @@ export default function YayinlarimizdanSecmeler() {
           style={{ display: 'none' }}
           onChange={(e) => handleFileChangeEkle(e, "pdfDosya")}
         />
+
+
+        <TextField
+            label="Özet"
+            multiline
+            rows={6} // Satır sayısını artırarak yüksekliği artırın
+            value={newItem.ozet}
+            onChange={(e) => setNewItem({ ...newItem, ozet: e.target.value })}
+            fullWidth
+            margin="normal"
+              variant="outlined"
+              InputProps={{
+                style: {
+                  minHeight: '400px', // Çerçevenin minimum yüksekliğini artırır
+                },
+                inputProps: {
+                  style: {
+                    height: '380px', // textarea'nın yüksekliğini direkt olarak ayarlar
+                  }
+                }
+              }}
+        />
+
+
+
+
+
         <FormControlLabel
           control={<Checkbox checked={newItem.durum || false} onChange={(e) => setNewItem({ ...newItem, durum: e.target.checked })} />}
-          label="Durum"
+          label="Aktif"
         />
       </DialogContent>
       {(showPdfViewerEkle && <PdfViewer pdfDataFile={newItem?.pdfDosya} setShowPdfViewer={setShowPdfViewerEkle} showPdfViewer={showPdfViewerEkle}  />)}
@@ -737,10 +840,43 @@ export default function YayinlarimizdanSecmeler() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={handleCloseDeleteConfirm}
+      >
+        <DialogTitle>Silme Onayı</DialogTitle>
+        <DialogContent>
+          <Typography>Seçili öğeleri silmek istediğinizden emin misiniz?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteConfirm} color="primary">
+            İPTAL
+          </Button>
+          <Button onClick={handleConfirmDelete} color="primary" autoFocus>
+            SİL
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={warningDialogOpen}
+        onClose={handleCloseWarningDialog}
+      >
+        <DialogTitle>Uyarı</DialogTitle>
+        <DialogContent>
+          <Typography>Silmek için önce bir öğe seçmelisiniz.</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseWarningDialog} color="primary">
+            Tamam
+          </Button>
+        </DialogActions>
+      </Dialog>
+
     </>
 
 
-
-        </>
+    </>
     )
 }

@@ -19,7 +19,6 @@ const mediaStyle = {
 
 const titleStyle = {
   fontSize: '14px', // Font boyutunu küçült
-  fontFamily: 'sans-serif',
   fontWeight: 550,
   marginLeft:1,
   color: '#343434',
@@ -38,7 +37,6 @@ const titleStyle = {
 
 const dateStyle = {
   fontSize: '15px', // Font boyutunu küçült
-  fontFamily: 'sans-serif',
   color: '#343434',
   display: 'flex',
   overflow: 'hidden',
@@ -49,8 +47,7 @@ const dateStyle = {
 };
 
 const placeStyle = {
-  fontSize: '15px', // Font boyutunu küçült
-  fontFamily: 'sans-serif',
+  fontSize: '15px', // Font boyutunu küçül
   color: '#343434',
   display: 'flex',
   alignItems: 'center',
@@ -98,7 +95,7 @@ const buttonStyle = {
 
 };
 
-const SempozyumCard= ({ data, handleDownloadPDF }) => {
+const SempozyumCard= ({ data,path }) => {
 
   const formatDateWithoutTimeZone = (dateString) => {
     const options = { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' };
@@ -120,7 +117,10 @@ const SempozyumCard= ({ data, handleDownloadPDF }) => {
     };
   
     const slug = convertToUrlFriendly(data.baslik);
-    return `/faaliyetler/calistay/${slug}-${data.id}`;
+    const partFirst=path.split('?')[0]
+    const partSecond=path.split('tab=')[1]?.split('&')[0] 
+    const url =`${partFirst}/${partSecond}`
+    return `${url}/${slug}-${data.id}`;
   };
   
   // Usage

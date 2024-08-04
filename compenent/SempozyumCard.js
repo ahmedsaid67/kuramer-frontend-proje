@@ -19,7 +19,6 @@ const mediaStyle = {
 
 const titleStyle = {
   fontSize: '14px', // Font boyutunu küçült
-  fontFamily: 'sans-serif',
   fontWeight: 550,
   marginLeft:1,
   color: '#343434',
@@ -38,7 +37,6 @@ const titleStyle = {
 
 const dateStyle = {
   fontSize: '15px', // Font boyutunu küçült
-  fontFamily: 'sans-serif',
   color: '#343434',
   display: 'flex',
   overflow: 'hidden',
@@ -50,7 +48,6 @@ const dateStyle = {
 
 const placeStyle = {
   fontSize: '15px', // Font boyutunu küçült
-  fontFamily: 'sans-serif',
   color: '#343434',
   display: 'flex',
   alignItems: 'center',
@@ -78,27 +75,11 @@ const contentStyle = {
   flex: 1, // İçerik konteynerini genişlet
 };
 
-const buttonContainerStyle = {
-  textAlign: 'center',
-  padding: '0.1rem',
-  borderTop: '1px solid #ccc', // Üst kenara gri bir çizgi ekle
-  backgroundColor: 'white', // Arkaplan rengini beyaz yap
+
+const SempozyumCard= ({ data,path }) => {
+
   
-};
 
-
-
-const buttonStyle = {
-  fontSize: '12px',
-  width: '100%',
-  borderRadius: 0, // Köşelerin kavisini kaldır
-  '@media (max-width: 768px)': {
-    fontSize: '10px',
-  },
-
-};
-
-const SempozyumCard= ({ data, handleDownloadPDF }) => {
 
   const formatDateWithoutTimeZone = (dateString) => {
     const options = { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' };
@@ -120,7 +101,10 @@ const SempozyumCard= ({ data, handleDownloadPDF }) => {
     };
   
     const slug = convertToUrlFriendly(data.baslik);
-    return `/faaliyetler/sempozyum/${slug}-${data.id}`;
+    const partFirst=path.split('?')[0]
+    const partSecond=path.split('tab=')[1]?.split('&')[0] 
+    const url =`${partFirst}/${partSecond}`
+    return `${url}/${slug}-${data.id}`;
   };
   
   // Usage

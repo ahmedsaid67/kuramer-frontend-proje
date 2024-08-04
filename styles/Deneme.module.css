@@ -1,0 +1,62 @@
+.editorContainer {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.editorToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 15px;
+  background-color: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.editorToolbar button {
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  color: #444;
+  padding: 8px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.editorToolbar button:hover {
+  background-color: #e0e0e0;
+  color: #007bff;
+}
+
+.editorToolbar button:focus {
+  outline: none;
+  background-color: #e0e0e0;
+  color: #007bff;
+}
+
+.editorContent {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  padding: 15px;
+  border-radius: 10px;
+  min-height: 300px;
+}
+
+.myCustomEditor {
+  font-size: 16px;
+  height: 300px;
+  cursor: text;
+  overflow-y: auto;
+}
+
+.myCustomEditor:focus {
+  outline: none;
+}
+

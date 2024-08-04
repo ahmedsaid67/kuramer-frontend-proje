@@ -11,10 +11,6 @@ const cardStyle = {
   minHeight: 300,
   border: '1px solid #ccc',
   borderRadius: 4,
-  '@media (max-width: 768px)': {
-    maxWidth: 300,
-    minWidth: 300,
-  },
 };
 
 const mediaStyle = {
@@ -24,7 +20,6 @@ const mediaStyle = {
 
 const titleStyle = {
   fontSize: '14px', // Font boyutunu küçült
-  fontFamily: 'sans-serif',
   fontWeight: 550,
   color: '#343434',
   overflow: 'hidden',
@@ -41,7 +36,6 @@ const titleStyle = {
 
 const dateStyle = {
   fontSize: '14px', // Font boyutunu küçült
-  fontFamily: 'sans-serif',
   color: '#343434',
   display: 'flex',
   overflow: 'hidden',
@@ -54,7 +48,6 @@ const dateStyle = {
 
 const speakerStyle = {
   fontSize: '14px', // Font boyutunu küçült
-  fontFamily: 'sans-serif',
   color: '#343434',
   display: 'flex',
   alignItems: 'center',
@@ -67,7 +60,6 @@ const speakerStyle = {
 
 const placeStyle = {
   fontSize: '14px', // Font boyutunu küçült
-  fontFamily: 'sans-serif',
   color: '#343434',
   display: 'flex',
   alignItems: 'center',
@@ -114,7 +106,7 @@ const buttonStyle = {
 
 };
 
-const KonferansCard = ({ data, handleDownloadPDF }) => {
+const KonferansCard = ({ data, path, handleDownloadPDF }) => {
 
 
   const formatDateWithoutTimeZone = (dateString) => {
@@ -135,7 +127,10 @@ const KonferansCard = ({ data, handleDownloadPDF }) => {
     };
   
     const slug = convertToUrlFriendly(data.baslik);
-    return `/faaliyetler/konferans/${slug}-${data.id}`;
+    const partFirst=path.split('?')[0]
+    const partSecond=path.split('tab=')[1]?.split('&')[0] 
+    const url =`${partFirst}/${partSecond}`
+    return `${url}/${slug}-${data.id}`;
   };
   
   // Usage

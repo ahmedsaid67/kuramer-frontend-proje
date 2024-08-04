@@ -1,30 +1,43 @@
-// pages/index.js
-import styles from '../styles/Musaf.module.css';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import Link from 'next/link';
+import styles from '../styles/Musaf.module.css';
+import { API_ROUTES } from '../utils/constants';
 
 const Musaf = () => {
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    axios.get(API_ROUTES.HOME_PAGE_COMPENENTS_GET_GORSEL.replace('data', 'kuran-i-kerim'))
+      .then(response => setData(response.data))
+      .catch(error => console.error(error));
+  }, []);
+
   return (
-    <div className={styles.container}>
-        <div className={styles.mainContent}>
-              <div className={styles.leftContent}>
-                <div className={styles.textContainer}>
-                    <h1 className={styles.baslik}>KURAN-I KERİM</h1>
-                    <h4 className={styles.altbaslik}>KURAN'IN TARİHİ MİRASI: ESKİ MUSAFLAR</h4>
-                    <p className={styles.metin}>
-                        Kur'an'ın bilinen en eski nüshalarını keşfedin ve kıraat farklılıklarının zengin tarihine derinlemesine bir bakış atın.
-                    </p>
-                    <Link href="/kuran-i-kerim">
-                      <button className={styles.customButton}>Daha fazlası için tıklayınız</button>
-                    </Link>
-                </div>
+    <>
+      {data && (
+        <div className={styles.container}>
+          <div className={styles.mainContent}>
+            <div className={styles.leftContent}>
+              <div className={styles.textContainer}>
+                <h1 className={styles.baslik}>{data.baslik}</h1>
+                <h4 className={styles.altbaslik}>{data.alt_baslik}</h4>
+                <p className={styles.metin}>{data.icerik}</p>
+                <Link href={data.url}>
+                  <button className={styles.customButton}>Daha fazlası için tıklayınız</button>
+                </Link>
               </div>
-            <div className={styles.rightContent}>
-                <img src="/musaf.png" alt="Musaf" className={styles.rightImage} />
             </div>
+            <div className={styles.rightContent}>
+              <img src={data.img} alt={data.name} className={styles.rightImage} />
+            </div>
+          </div>
         </div>
-    </div>
+      )}
+    </>
   );
 };
 
 export default Musaf;
+
 

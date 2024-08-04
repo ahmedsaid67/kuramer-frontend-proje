@@ -32,7 +32,6 @@ const contentContainerStyle = {
 const titleStyle = {
   textAlign: 'center',
   fontSize: '14px',
-  fontFamily: 'sans-serif',
   fontWeight: 550,
   color: '#343434',
   overflow: 'hidden',
@@ -63,7 +62,6 @@ const buttonStyle = {
 const dateStyle = {
   textAlign: 'center',
   fontSize: '12px',
-  fontFamily: 'sans-serif',
   color: '#757575',
   marginTop: '0.5rem', // Başlık ile tarih arasında biraz boşluk bırak
   '@media (max-width: 768px)': {
@@ -75,6 +73,7 @@ const dateStyle = {
 
 function KamuoyuDuyurulariCardOge({ yayin, handleDownloadPDF }) {
   const [isCollapsed, setIsCollapsed] = React.useState(true);
+
 
   const handleTitleClick = () => {
     setIsCollapsed(!isCollapsed);
@@ -101,7 +100,7 @@ function KamuoyuDuyurulariCardOge({ yayin, handleDownloadPDF }) {
           sx={buttonStyle}
           onClick={() => handleDownloadPDF({ url: yayin.pdf_dosya, title: yayin.baslik })}
         >
-          PDF İndir
+          Dökümanı İncele
         </Button>
       </div>
     </Card>

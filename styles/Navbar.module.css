@@ -87,7 +87,7 @@
 .subNavItem {
   border-bottom: 1px solid #f0f0f0; /* Alt çizgi rengini hafiflet */
   color: #333;
-  font-size: 12px; /* Font boyutunu koru */
+  font-size: 14px; /* Font boyutunu koru */
 }
 
 
@@ -167,7 +167,7 @@
   }
 
   .navItem {
-    font-size: 14px;
+    font-size: 15px;
     padding: 0 12px;
     margin: 0 5px;
     text-align: center;
@@ -189,6 +189,15 @@
 
   .menuItemContainer:hover .subMenu {
     display: block;
+  }
+  .subNavItem {
+    font-size: 13px; /* Font boyutunu koru */
+  }
+
+  .subMenu {
+
+    min-width: 175px; /* Min genişlik */
+
   }
 
   
@@ -217,6 +226,9 @@
     margin: 0 5px;
     text-align: center;
   }
+  .subNavItem {
+    font-size: 10px; /* Font boyutunu koru */
+  }
 
   .navItem:hover .subMenu {
     display: block;
@@ -235,15 +247,10 @@
     display: block;
   }
 
-  .subNavItem {
-    border-bottom: 1px solid #f0f0f0; /* Alt çizgi rengini hafiflet */
-    color: #333;
-    font-size: 12px; /* Font boyutunu koru */
-  }
 
   .subMenu {
 
-    min-width: 150px; /* Min genişlik */
+    min-width: 140px; /* Min genişlik */
 
   }
 }
@@ -263,10 +270,14 @@
   }
 
   .navItem {
-    font-size: 10px;
+    font-size: 11.5px;
     padding: 0 8px;
     margin: 0 5px;
     text-align: center;
+  }
+
+  .subNavItem {
+    font-size: 10px; /* Font boyutunu koru */
   }
 
   .navItem:hover .subMenu {
@@ -293,7 +304,7 @@
 
   .subMenu {
 
-    min-width: 125px; /* Min genişlik */
+    min-width: 135px; /* Min genişlik */
 
   }
 }

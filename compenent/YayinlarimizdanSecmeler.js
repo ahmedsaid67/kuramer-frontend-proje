@@ -2,12 +2,8 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import styles from '../styles/Secmeler.module.css';
-
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
-
 import Slider from 'react-slick';
 import { API_ROUTES } from '../utils/constants';
 import Image from 'next/image';
@@ -87,21 +83,37 @@ export default function YayinlarimizdanSecmeler() {
     ]
   };
 
+
+  const generateLink = (data) => {
+    const convertToUrlFriendly = (text) => {
+      if (text && typeof text === 'string') {
+        const turkishCharacters = { 'ç': 'c', 'ğ': 'g', 'ı': 'i', 'ö': 'o', 'ş': 's', 'ü': 'u', 'İ': 'i' };
+        const cleanedText = text.trim().toLowerCase();
+        const urlFriendlyText = Array.from(cleanedText).map(char => turkishCharacters[char] || char).join('');
+        return urlFriendlyText.replace(/[\s,\.]+/g, '-'); // Remove spaces, commas, and dots
+      }
+      return '';
+    };
+  
+    const slug = convertToUrlFriendly(data.baslik);
+    return `/yayinlarimizdan-secmeler/${slug}-${data.id}`;
+  };
+
   return (
     <>
       {secmeler.length > 0 && (
           <div className={styles.container}>
             <Link href={"/yayinlarimizdan-secmeler"}>
-              <h1 className={styles.title}>Yayınlarımızdan Seçmeler</h1>
+              <h1 className={styles.title}>YAYINLARIMIZDAN SEÇMELER</h1>
             </Link>
               <div className={styles.carouselContainer}>
                 <Slider {...settings}>
                   {secmeler.map((seri) => (
                     <div key={seri.id} className={styles.card}>
-                      <Link href="/yayinlarimizdan-secmeler" >
+                      <Link href={generateLink(seri)}>
                         <Image src={seri.kapak_fotografi} alt={seri.baslik} width={240} height={352} className={styles.cardImage} loading="eager" />
                       </Link>
-                      <Link href="/yayinlarimizdan-secmeler" >
+                      <Link href={generateLink(seri)}>
                         <p className={styles.cardText}>{seri.baslik}</p>
                       </Link>
                     </div>

@@ -22,6 +22,7 @@ const MenuPage = () => {
     setIsLoading(true);
     try {
       const response = await axios.get(API_ROUTES.MENU);
+      console.log("response:",response.data.sort((a, b) => a.order - b.order))
       setMenuItems(response.data.sort((a, b) => a.order - b.order));
     } catch (error) {
       setApiError(true);
@@ -117,13 +118,13 @@ const MenuPage = () => {
       <Box maxWidth="md" >
         <Tabs value={selectedTab} onChange={handleTabChange} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile>
           {menuItems.filter(item => !item.parent).map((item, index) => (
-            <Tab label={item.title} key={item.id} sx={{ fontWeight: 'bold', fontSize: '0.75rem' }} />
+            <Tab label={item.title.toLocaleUpperCase('tr-TR')} key={item.id} sx={{ fontWeight: 'bold', fontSize: '0.75rem' }} />
           ))}
         </Tabs>
         {menuItems.filter(item => !item.parent).map((item, index) => (
           <TabPanel value={selectedTab} index={index} key={item.id}>
             <MenuItemComponent key={item.id} item={item} onCheck={handleCheck} changes={changes} isParent />
-            {menuItems.filter(subItem => subItem.parent === item.id).map(subItem => (
+            {menuItems.filter(subItem => subItem.parent?.id === item.id).map(subItem => (   /* parent idi burası endpoint guncellmesi sonrası paren?.id oldu */
               <MenuItemComponent key={subItem.id} item={subItem} onCheck={handleCheck} changes={changes} />
             ))}
           </TabPanel>

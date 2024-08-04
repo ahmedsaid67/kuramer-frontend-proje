@@ -48,6 +48,10 @@ const titleStyle = {
   '@media (max-width: 768px)': {
     fontSize: '12px',
   },
+  '&:hover': {
+    color: '#2e5077', // Üzerine gelindiğinde daha açık bir gri
+  },
+  
 };
 
 const modalStyle = {

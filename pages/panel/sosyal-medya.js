@@ -13,18 +13,9 @@ import { useRouter } from 'next/router';
 import { useSelector } from 'react-redux';
 import { API_ROUTES } from '../../utils/constants';
 
-const StyledTableCell = styled(TableCell)({
-    fontWeight: 'bold',
-    backgroundColor: '#f5f5f5',
-  });
-  
-  const StyledTableRow = styled(TableRow)({
-    '&:hover': {
-      backgroundColor: 'rgba(0, 0, 0, 0.04)',
-    },
-  });
 
-export default function BaslikGorsel() {
+
+export default function SosyalMedya() {
     const [data, setData] = useState([]);
     const [open, setOpen] = useState(false);
     const [openAddDialog, setOpenAddDialog] = useState(false);
@@ -32,6 +23,7 @@ export default function BaslikGorsel() {
     const [newItem, setNewItem] = useState({
       name: '',
       img: null,
+      url: '',
       durum: true
     });
     const [selectedRows, setSelectedRows] = useState({});
@@ -44,6 +36,10 @@ export default function BaslikGorsel() {
     const [uyariMesaji, setUyariMesaji] = useState("");
     const [uyariMesajiEkle, setUyariMesajiEkle] = useState("");
     const [isSaving, setIsSaving] = useState(false);
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [selectedIds, setSelectedIds] = useState([]);
+
+    const [warningDialogOpen, setWarningDialogOpen] = useState(false);
 
     const user = useSelector((state) => state.user);
     const router = useRouter();
@@ -55,7 +51,7 @@ export default function BaslikGorsel() {
       setIsLoading(true); // Veri yükleme başlamadan önce
       setHasError(false);
       try {
-        const response = await axios.get(API_ROUTES.BASLIK_GORSEL_PAGINATIONS.replace("currentPage",currentPage))
+        const response = await axios.get(API_ROUTES.SOSYAL_MEDYA_PAGINATIONS.replace("currentPage",currentPage))
         setData(response.data.results);
         setTotalPages(Math.ceil(response.data.count / 10));
       } catch (error) {
@@ -93,6 +89,7 @@ export default function BaslikGorsel() {
         setNewItem({
             name: '',
             img: null,
+            url: '',
             durum: true
         }); // newItem durumunu sıfırla
         setUyariMesajiEkle("");
@@ -113,7 +110,7 @@ export default function BaslikGorsel() {
     
       const handleSave = (editedItem) => {
   
-        if (!editedItem.name || !editedItem.img ) {
+        if (!editedItem.name || !editedItem.img || !editedItem.url ) {
           setUyariMesaji("Lütfen tüm alanları doldurunuz.");
           return;
         }
@@ -128,16 +125,17 @@ export default function BaslikGorsel() {
 
 
         formData.append("durum", editedItem["durum"]);
+        formData.append("url", editedItem["url"]);
         formData.append("name", editedItem["name"]);
 
         // PDF dosyası
         
         
         setIsSaving(true);
-        axios.put(API_ROUTES.BASLIK_GORSEL_DETAIL.replace("id",editedItem.id), formData)
+        axios.put(API_ROUTES.SOSYAL_MEDYA_DETAIL.replace("id",editedItem.id), formData)
           .then(response => {
             // Mevcut sayfayı yeniden yüklüyoru
-            return axios.get(API_ROUTES.BASLIK_GORSEL_PAGINATIONS.replace("currentPage",currentPage))
+            return axios.get(API_ROUTES.SOSYAL_MEDYA_PAGINATIONS.replace("currentPage",currentPage))
           })
           .then(response => {
 
@@ -146,8 +144,13 @@ export default function BaslikGorsel() {
             setSaveError("");  // Hata mesajını temizle
           })
           .catch(error => {
-            console.error('Güncelleme sırasında hata oluştu:', error);
-            setSaveError("Veri güncellenirken bir hata oluştu. Lütfen tekrar deneyiniz.");  // Hata mesajını ayarla
+            if(error.response.data.url && error.response.data.url[0]==='Enter a valid URL.'){
+              setSaveError("Lütfen geçerli bir URL girin"); 
+              console.error('error:', error);
+            }else{
+                console.error('Veri güncellenirken bir hata oluştu. Lütfen tekrar deneyiniz:', error);
+                setSaveError("Veri güncellenirken bir hata oluştu. Lütfen tekrar deneyiniz.");
+            }
           })
           .finally(() => {
             setIsSaving(false); // İşlem tamamlandığında veya hata oluştuğunda
@@ -159,7 +162,7 @@ export default function BaslikGorsel() {
     
       const handleAddNewItem = () => {
 
-        if (!newItem.name || !newItem.img ) {
+        if (!newItem.name || !newItem.img || !newItem.url ) {
           setUyariMesajiEkle("Lütfen tüm alanları doldurunuz.");
           return;
         }
@@ -169,12 +172,13 @@ export default function BaslikGorsel() {
         formData.append('img', newItem["img_file"]);
         formData.append("durum", newItem["durum"]);
         formData.append("name", newItem["name"]);
+        formData.append("url", newItem["url"]);
 
         setIsSaving(true); 
-        axios.post(API_ROUTES.BASLIK_GORSEL, formData)
+        axios.post(API_ROUTES.SOSYAL_MEDYA, formData)
           .then(response => {
             // Mevcut sayfayı yeniden yüklüyoru
-            return axios.get(API_ROUTES.BASLIK_GORSEL_PAGINATIONS.replace("currentPage",currentPage))
+            return axios.get(API_ROUTES.SOSYAL_MEDYA_PAGINATIONS.replace("currentPage",currentPage))
           })
           .then(response => {
             setData(response.data.results);
@@ -186,10 +190,15 @@ export default function BaslikGorsel() {
 
             
           })
-        .catch(error => {
-          console.error('Yeni veri eklerken hata oluştu:', error);
-          setSaveError("Yeni veri eklemesi sırasında bir hata meydana geldi. Lütfen işleminizi tekrar gerçekleştirmeyi deneyiniz."); 
-        })
+          .catch(error => {
+            if(error.response.data.url && error.response.data.url[0]==='Enter a valid URL.'){
+                setSaveError("Lütfen geçerli bir URL girin"); 
+                console.error('error:', error);
+            }else{
+                console.error('Yeni veri eklerken hata oluştu:', error);
+                setSaveError("Veri eklerken bir hata oluştu. Lütfen tekrar deneyiniz.");
+            } 
+          })
         .finally(() => {
           setIsSaving(false); // İşlem tamamlandığında veya hata oluştuğunda
         })
@@ -212,42 +221,71 @@ export default function BaslikGorsel() {
           setSelectedRows({});
         }
     };
-    const handleDeleteSelected = () => {
-        setDeleteError('');
-        const selectedIds = Object.keys(selectedRows).filter(id => selectedRows[id]);
-      
-        axios.post(API_ROUTES.BASLIK_GORSEL_DELETE, { ids: selectedIds })
-          .then(() => axios.get(API_ROUTES.BASLIK_GORSEL))
-          .then(response => {
-            const newTotalCount = response.data.count;
-            const newTotalPages = Math.ceil(newTotalCount / 10);
-            setTotalPages(newTotalPages);
-      
-            let updatedPage = currentPage;
-            if (currentPage > newTotalPages) {
-              updatedPage = Math.max(newTotalPages, 1); // Eğer yeni toplam sayfa sayısı 0 ise, 1'e ayarla
-            } else if (currentPage === newTotalPages && response.data.results.length === 0 && currentPage > 1) {
-              updatedPage = currentPage - 1; // Son sayfada veri kalmadıysa bir önceki sayfaya git
-            }
-      
-            setCurrentPage(updatedPage);
-      
-            if (updatedPage !== currentPage) {
-              return axios.get(API_ROUTES.BASLIK_GORSEL_PAGINATIONS.replace("currentPage",updatedPage))
-            } else {
-              return response;
-            }
-          })
-          .then(response => {
-            setData(response.data.results);
+
+    const handleCloseWarningDialog = () => {
+      setWarningDialogOpen(false);
+    };
+
+
+    const handleOpenDeleteConfirm = () => {
+      const ids = Object.keys(selectedRows).filter(id => selectedRows[id]);
+      if (ids.length === 0) {
+        // Hiçbir öğe seçilmemişse uyarı diyalogunu aç
+        setWarningDialogOpen(true);
+      } else {
+        // Seçili öğeler varsa onay penceresini aç
+        setSelectedIds(ids);
+        setDeleteConfirmOpen(true);
+      }
+    };
+  
+    const handleCloseDeleteConfirm = () => {
+      setDeleteConfirmOpen(false);
+    };
+
+
+
+    const handleConfirmDelete = () => {
+      setDeleteError('');
+      axios.post(API_ROUTES.SOSYAL_MEDYAL_DELETE, { ids: selectedIds })
+        .then(() => {
+          return axios.get(API_ROUTES.SOSYAL_MEDYA);
+        })
+        .then((response) => {
+          const newTotalCount = response.data.count;
+          const newTotalPages = Math.ceil(newTotalCount / 10);
+          setTotalPages(newTotalPages);
+    
+          let updatedPage = currentPage;
+          if (newTotalPages < currentPage) {
+            updatedPage = newTotalPages;
+          }
+    
+          if (newTotalPages === 0) {
+            setCurrentPage(1);
+            setData([]);
             setSelectedRows({});
-          })
-          .catch(error => {
-            console.error('Toplu silme işlemi sırasında hata oluştu:', error);
-            setDeleteError('Veriler silinirken bir hata oluştu. Lütfen tekrar deneyin.');
-          });
-      };
-      
+            setDeleteConfirmOpen(false);
+          } else {
+            setCurrentPage(updatedPage);
+            return axios.get(API_ROUTES.SOSYAL_MEDYA_PAGINATIONS.replace('currentPage', updatedPage));
+          }
+        })
+        .then((response) => {
+          if (response) {
+            setData(response.data.results);
+          }
+          setSelectedRows({});
+          setDeleteConfirmOpen(false);
+        })
+        .catch((error) => {
+          console.error('Toplu silme işlemi sırasında hata oluştu:', error);
+          setDeleteError('Veriler silinirken bir hata oluştu. Lütfen tekrar deneyin.');
+          setDeleteConfirmOpen(false);
+        });
+    };
+
+  
     
     
     if (isLoading) {
@@ -332,9 +370,10 @@ export default function BaslikGorsel() {
         }));
       };
 
-      function truncateText(text, maxLength) {
-        return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
-      }
+      const truncateText = (text, maxLength) => {
+        if (!text) return '';
+        return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+      };
 
 
 
@@ -351,7 +390,7 @@ export default function BaslikGorsel() {
                       variant="contained"
                       size="small"
                       startIcon={<DeleteIcon />}
-                      onClick={handleDeleteSelected}
+                      onClick={handleOpenDeleteConfirm}
                       style={{ backgroundColor: "#d32f2f", color: '#fff', marginBottom: "10px", textTransform: 'none', fontSize: '0.75rem' }}
                     >
                       Sil
@@ -371,6 +410,7 @@ export default function BaslikGorsel() {
                         </TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>İsim</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Görsel</TableCell>
+                        <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Bağlantı</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Durum</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Detaylar</TableCell>
                       </TableRow>
@@ -391,6 +431,11 @@ export default function BaslikGorsel() {
                             </Tooltip>
                           </TableCell>
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.img ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
+                          <TableCell style={{ fontSize: '0.75rem', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <Tooltip title={row.url} placement="top">
+                              <span>{truncateText(row.url, 40)}</span>
+                            </Tooltip>
+                          </TableCell>
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.durum ? 'Aktif' : 'Pasif'}</TableCell>
                           <TableCell>
                             <Button
@@ -497,9 +542,17 @@ export default function BaslikGorsel() {
                 />
             </div>
 
+            <TextField
+            label="Bağlantı"
+            value={selectedItem ? selectedItem.url : ''}
+            onChange={(e) => setSelectedItem({ ...selectedItem, url: e.target.value })}
+            fullWidth
+            margin="normal"
+          />
+
 
             
-            <FormControlLabel control={<Checkbox checked={selectedItem ? selectedItem.durum : false} onChange={(e) => setSelectedItem({ ...selectedItem, durum: e.target.checked })} />} label="Durum" />
+            <FormControlLabel control={<Checkbox checked={selectedItem ? selectedItem.durum : false} onChange={(e) => setSelectedItem({ ...selectedItem, durum: e.target.checked })} />} label="Aktif" />
           </DialogContent>
           {saveError && <p style={{ color: 'red', marginLeft: '25px' }}>{saveError}</p>}
           {uyariMesaji && <p style={{ color: 'red', marginLeft: '25px' }}>{uyariMesaji}</p>}
@@ -576,11 +629,18 @@ export default function BaslikGorsel() {
           style={{ display: 'none' }}
           onChange={(e) => handleFileChangeEkle(e, "img")}
         />
+        <TextField
+            label="Bağlantı"
+            value={newItem.url}
+            onChange={(e) => setNewItem({ ...newItem, url: e.target.value })}
+            fullWidth
+            margin="normal"
+          />
 
     
         <FormControlLabel
           control={<Checkbox checked={newItem.durum || false} onChange={(e) => setNewItem({ ...newItem, durum: e.target.checked })} />}
-          label="Durum"
+          label="Aktif"
         />
       </DialogContent>
      
@@ -594,6 +654,40 @@ export default function BaslikGorsel() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={handleCloseDeleteConfirm}
+      >
+        <DialogTitle>Silme Onayı</DialogTitle>
+        <DialogContent>
+          <Typography>Seçili öğeleri silmek istediğinizden emin misiniz?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteConfirm} color="primary">
+            İPTAL
+          </Button>
+          <Button onClick={handleConfirmDelete} color="primary" autoFocus>
+            SİL
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={warningDialogOpen}
+        onClose={handleCloseWarningDialog}
+      >
+        <DialogTitle>Uyarı</DialogTitle>
+        <DialogContent>
+          <Typography>Silmek için önce bir öğe seçmelisiniz.</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseWarningDialog} color="primary">
+            Tamam
+          </Button>
+        </DialogActions>
+      </Dialog>
+
     </>
 
 

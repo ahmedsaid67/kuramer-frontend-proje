@@ -1,29 +1,44 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import Link from 'next/link';
 import styles from '../styles/Temel.module.css';
+import { API_ROUTES } from '../utils/constants';
 
 const Temel = () => {
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    axios.get(API_ROUTES.HOME_PAGE_COMPENENTS_GET_GORSEL.replace('data', 'temel-konu-ve-kavramlar'))
+      .then(response => setData(response.data))
+      .catch(error => console.error(error));
+  }, []);
+
   return (
-    <div className={styles.container}>
-        <div className={styles.mainContent}>
+    <>
+      {data && (
+        <div className={styles.container}>
+          <div className={styles.mainContent}>
             <div className={styles.leftContent}>
-                <div className={styles.textContainer}>
-                    <h1 className={styles.baslik}>TEMEL KONU VE KAVRAMLAR</h1>
-                    <h4 className={styles.altbaslik}>Dinî Meselelerde İlmî Bakış: Merkezin Yol Haritası</h4>
-                    <p className={styles.metin}>
-                      Dini konularda geniş çaplı yazılarımız ve özel konulara dair kısa makalelerimizle bilgi sunuyoruz. Detayları keşfetmek için davetlisiniz!
-                    </p>
-                    <Link href="/temel-konu-kavramlar">
-                      <button className={styles.customButton}>Daha fazlası için tıklayınız</button>
-                    </Link>
-                </div>
+              <div className={styles.textContainer}>
+                <h1 className={styles.baslik}>{data.baslik}</h1>
+                <h4 className={styles.altbaslik}>{data.alt_baslik}</h4>
+                <p className={styles.metin}>{data.icerik}</p>
+                <Link href={data.url}>
+                  <button className={styles.customButton}>Daha fazlası için tıklayınız</button>
+                </Link>
+              </div>
             </div>
             <div className={styles.rightContent}>
-                <img src="/temel.png" alt="Temel" className={styles.rightImage} />
+              <img src={data.img} alt={data.name} className={styles.rightImage} />
             </div>
+          </div>
         </div>
-    </div>
+      )}
+    </>
   );
 };
 
 export default Temel;
+
+
 

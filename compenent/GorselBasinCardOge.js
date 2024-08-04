@@ -22,7 +22,6 @@ const mediaStyle = {
 
 const titleStyle = {
   fontSize: '14px', // Font boyutunu küçült
-  fontFamily: 'sans-serif',
   fontWeight: 550,
   color: '#343434',
   overflow: 'hidden',
@@ -34,6 +33,9 @@ const titleStyle = {
     fontSize: '13px',
   },
   marginBottom: 1,
+  '&:hover': {
+    color: '#2e5077', // Üzerine gelindiğinde daha açık bir gri
+  },
 };
 
 

@@ -1,42 +1,44 @@
 import React from 'react';
+import styles from '../styles/PersonellerCardOge.module.css';
+import Link from 'next/link';
 
-const containerStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  marginBottom: '20px',
+// Utility function to convert text to a URL-friendly slug
+const toSlug = (text) => {
+  return text
+    .toLowerCase()
+    .replace(/ /g, '-')
+    .replace(/[^\w-]+/g, '');
 };
 
-const imageStyle = {
-  width: '240px', // Görselin genişliği
-  height: '240px', // Görselin yüksekliği, yuvarlaklık için genişlik ile aynı olmalı
-  borderRadius: '50%', // Görseli yuvarlak yapar
-  objectFit: 'cover',
-  marginBottom: '12px', // Görsel ile metin arasındaki boşluğu artır
+function CardOge({ yayin,path,activeTab }) {
+  const slugAd = toSlug(yayin.ad);
+  const slugSoyad = toSlug(yayin.soyad);
+  const basePath = path.includes('?') ? path.split('?')[0] : path;
 
-};
-
-const textStyle = {
-  textAlign: 'center',
-  fontFamily: 'Arial, sans-serif',
-  color: '#333',
-  margin: '4px 0', // Metinler arasındaki boşluğu biraz artır
-  fontSize: '14px', // Metin boyutu
-  fontWeight:"bold"
-};
-
-function CardOge({ yayin }) {
   return (
-    <div style={containerStyle}>
+    <div className={styles.containerStyle}>
       <img
         src={yayin.img}
         alt={`${yayin.ad} ${yayin.soyad}`}
-        style={imageStyle}
+        className={styles.imageStyle}
       />
-      <p style={textStyle}>{yayin.unvan} {yayin.ad} {yayin.soyad}</p>
+      <p className={styles.textStyle}>{yayin.unvan} {yayin.ad} {yayin.soyad}</p>
+      {yayin.icerik && ( // Koşullu render: yayin.pdf_dosya değeri varsa aşağıdaki div gösterilir
+        <Link href={`${basePath}/${activeTab}/${slugAd}-${slugSoyad}-${yayin.id}`}>  
+          <div className={styles.gecmisHoverEffect}>
+            Özgeçmiş
+          </div>
+        </Link>
+      )}
     </div>
   );
 }
 
 export default CardOge;
+
+
+
+
+
+
 

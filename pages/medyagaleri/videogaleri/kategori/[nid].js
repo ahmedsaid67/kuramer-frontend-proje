@@ -5,11 +5,11 @@ import Head from 'next/head';
 import Image from 'next/image';
 import { API_ROUTES } from '../../../../utils/constants';
 import styles from '../../../../styles/VideoGaleriDetay.module.css';
-import BaslikGorsel from '../../../../compenent/BaslikGorsel';
+import BaslikGorselCompenent from '../../../../compenent/BaslikGorselCompenentDetail'
 import CircularProgress from '@mui/material/CircularProgress';
 import Stack from '@mui/material/Stack';
 import {Pagination} from '@mui/material';
-import Link from 'next/link';
+
 
 
 
@@ -22,23 +22,66 @@ export default function FotoGalleryPage() {
   const currentPage = parseInt(router.query.page || '1', 10);
   const [totalPages, setTotalPages] = useState(0);
 
+  const [errorPage, setErrorPage] = useState(null);
+  const [isPagesLoading, setPagesIsLoading] = useState(true); // Yükleme durumu için state
+  const [pages,setPages] = useState([])
+  const [detayItems,setDetayItems] = useState({})
+  const [catgoriItem, setcatgoriItem] = useState({});
 
-  useEffect(() => {
-    if (!router.isReady) return;
+  const path = router.asPath;
+
+
   
-    // router.query artık kullanılabilir
-    setIsLoading(true);
+  const pagesFetchData = async () => {
+    setPagesIsLoading(true);
+    try {
+
+      const cleanedPath = path.split('?')[0];
+      const pathSegments = cleanedPath.split('/').filter(Boolean);
+      const fixedPart = `/${pathSegments.slice(0, 3).join('/')}`;
+
+      
+      const response1 = await axios.post(API_ROUTES.SAYFALAR_GET_GORSEL, { url: fixedPart });
+      setPages(response1.data); // Değişken adını güncelle
+      setErrorPage(null)
+    } catch (error) {
+      setErrorPage('Veriler yüklenirken beklenmeyen bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
+      console.log("error:",error)
+    } finally {
+      setPagesIsLoading(false); // Yükleme işlemi tamamlandığında veya hata oluştuğunda
+    }
+  };
+
+
+
+
     const fetchData = async () => {
+      setIsLoading(true);
       try {
         const response = await axios.get(API_ROUTES.VIDEO_GALERI_KATEGORI_FILTER.replace("seciliKategori", nid).replace('currentPage', currentPage));
         setVideos(response.data.results);
         setTotalPages(Math.ceil(response.data.count / 10));
         setError(null)
+
+        if (response.data.results[0]){
+          setDetayItems({name: response.data.results[0].videogaleri_kategori.baslik, url: router.asPath});
+        }
+        else{
+          const url = path.split('&')[0];
+          const parts = url.split('/');
+          const slug = parts.pop();
+          //console.log("slug:",slug)
+          const res=await axios.get(API_ROUTES.VIDEO_GALERI_KATEGORI_SLUG_FILTER.replace("slug", slug));
+          //console.log("res:",res.data.baslik)
+          setDetayItems({name: res.data.baslik, url: router.asPath});
+        }
+
+        
       } catch (error) {
         console.error("Veri yükleme sırasında bir hata oluştu:", error);
-        if (error.response && error.response.status === 404 && error.response.data.detail === "Invalid page.") {
+        if (error.response && error.response.status === 404) {
           // 'Invalid page' detayını kontrol eden ve buna göre hata mesajı döndüren koşul
-          setError('Geçersiz sayfa. Bu sayfa mevcut değil veya sayfa numarası hatalı. Lütfen sayfa numarasını kontrol edin.');
+          setError('Geçersiz sayfa. Bu sayfa mevcut değil veya sayfa numarası hatalı. Lütfen kontrol edin.');
         } else {
           setError('Veriler yüklenirken beklenmeyen bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
         }
@@ -46,11 +89,32 @@ export default function FotoGalleryPage() {
         setIsLoading(false);
       }
     };
+
+
+  useEffect(() => {
+    if (!router.isReady) return;
+
     fetchData();
+    pagesFetchData();
   }, [nid, currentPage, router.isReady]);
 
+  
+
   const handleChangePage = (event, value) => {
-    router.push(`/medyagaleri/videogaleri/kategori/${nid}?page=${value}`, undefined, { shallow: true });
+    scrollToTop(() => {
+      router.push(`${path.split('?')[0]}?page=${value}`, undefined, { shallow: true });
+    })
+  };
+
+
+  const scrollToTop = (callback) => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Kaydırmanın tamamlanması için yaklaşık süre
+    setTimeout(() => {
+      if (callback) {
+        callback();
+      }
+    }, 500); // 500 milisaniye kaydırmanın tamamlanması için varsayılan süre
   };
 
 
@@ -63,16 +127,13 @@ export default function FotoGalleryPage() {
         <link rel="icon" href="/kuramerlogo.png" />
       </Head>
 
-
-      <BaslikGorsel metin={"Video Galerisi"} />
-
-
+      <BaslikGorselCompenent data={pages} catgoriItem={catgoriItem} detayItems={detayItems} isPagesLoading={isPagesLoading}/>
       <div className={styles.galleryContainer}>
         {isLoading ? (
           <div className={styles.loader}><CircularProgress /></div>
-        ) : error ? (
+        ) : error || errorPage ? (
           <div className={styles.errorMessage}>
-           {error}
+           {error || errorPage}
           </div>
         ) : videos.length > 0 ? (
           videos.map((video, index) => (

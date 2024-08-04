@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 const titleStyle = {
   fontSize: '20px',
-  fontFamily: 'sans-serif',
+  fontFamily: 'Playfair Display, serif', // Noktalı virgül yerine virgül kullanılmalı.
   fontWeight: 550,
   color: 'black',
   overflow: 'hidden',
@@ -20,9 +20,11 @@ const titleStyle = {
   marginBottom: 2,
 };
 
+
 const textStyle = {
   fontSize: '15px',
   color: 'black',
+  fontFamily: 'Playfair Display, serif', 
   marginBottom: '8px',
   '@media (max-width: 768px)': {
     fontSize: '14px',
@@ -56,6 +58,7 @@ const summaryStyle = {
   fontSize: '15px',
   color: '#000',
   whiteSpace: 'pre-line',
+  fontFamily: 'Playfair Display, serif', 
 };
 
 const readMoreStyle = {
@@ -66,11 +69,14 @@ const readMoreStyle = {
   textDecoration: 'underline',
 };
 
-function KitapCard({ kitap }) {
+function KitapCard({ kitap,path,activeTab }) {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [windowWidth, setWindowWidth] = useState(0);
 
-  const linkTo = `/yayinlar/kitaplar/${kitap.slug}`;
+  const basePath = path.includes('?') ? path.split('?')[0] : path;
+
+
+  const linkTo = `${basePath}/${activeTab}/${kitap.slug}`;
 
 
   const isTabletView = windowWidth < 600;

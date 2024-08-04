@@ -5,11 +5,9 @@ import useWindowSize from './useWindowSize';
 import styles from '../styles/Navbar.module.css';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
 import {API_ROUTES} from "../utils/constants"
 
 const Navbar = () => {
-  const router = useRouter();
   const [width] = useWindowSize();
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuItems, setMenuItems] = useState([]);
@@ -30,6 +28,7 @@ const Navbar = () => {
       const response = await axios.get(API_ROUTES.MENU_ACTIVE);
       const sortedMenuItems = response.data.sort((a, b) => a.order - b.order);
       setMenuItems(sortedMenuItems);
+
     } catch (error) {
       console.error("Hata oluştu:", error);
     }
@@ -40,7 +39,7 @@ const Navbar = () => {
   }, []);
 
   const handleSubMenuExpand = (itemId) => {
-    if (menuItems.some(item => item.parent === itemId)) {
+    if (menuItems.some(item => item.parent?.id === itemId)) {
       setActiveSubMenu(activeSubMenu === itemId ? null : itemId);
     }
   };
@@ -55,7 +54,7 @@ const Navbar = () => {
   const renderSubMenu = (parentId) => {
     return (
       <ul className={styles.subMenu}>
-        {menuItems.filter(item => item.parent === parentId).map(subItem => (
+        {menuItems.filter(item => item.parent?.id === parentId).map(subItem => (
           <li key={subItem.id} className={styles.subNavItem}>
             {subItem.url ? (
               <Link href={subItem.url}>
@@ -77,6 +76,7 @@ const Navbar = () => {
   const renderSubMenu2 = (parentId) => {
     // Ana öğenin kendisini bulun
     const parentItem = menuItems.find(item => item.id === parentId);
+
   
     return (
       <ul className={styles.navMenu}>
@@ -98,7 +98,7 @@ const Navbar = () => {
         )}
   
         {/* Alt öğelerin listesi */}
-        {menuItems.filter(item => item.parent === parentId).map(item => (
+        {menuItems.filter(item => item.parent?.id === parentId).map(item => (
           <li key={item.id} className={styles.navItem}>
             {item.url ? (
               <Link href={item.url}>
@@ -138,7 +138,7 @@ const Navbar = () => {
               <ul className={styles.navMenu}>
                 {menuItems.filter(item => !item.parent).map(item => {
                   // Alt öğesi olup olmadığını kontrol et
-                  const hasSubItems = menuItems.some(subItem => subItem.parent === item.id);
+                  const hasSubItems = menuItems.some(subItem => subItem.parent?.id === item.id);
 
                   return hasSubItems ? (
                     // Alt öğesi varsa genişletme/daraltma fonksiyonunu tetikle
@@ -151,11 +151,19 @@ const Navbar = () => {
                   ) : (
                     // Alt öğesi yoksa doğrudan Link ile yönlendir
                     <li key={item.id} className={styles.navItem}>
-                      <Link href={item.url}>
-                        <div className={styles.linkMobilContainer} onClick={() => setMenuOpen(false)} >{item.title}</div>
-                      </Link>
+                      {item.url ? (
+                        <Link href={item.url}>
+                          <div className={styles.linkMobilContainer} onClick={() => setMenuOpen(false)}>
+                            {item.title}
+                          </div>
+                        </Link>
+                      ) : (
+                        <div className={styles.linkMobilContainer} onClick={() => setMenuOpen(false)}>
+                          {item.title}
+                        </div>
+                      )}
                     </li>
-                  );
+                                      );
                 })}
               </ul>
             ) : (
@@ -194,6 +202,12 @@ const Navbar = () => {
 };
 
 export default Navbar;
+
+
+
+
+
+
 
 
 

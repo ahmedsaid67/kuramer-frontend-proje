@@ -1,25 +1,122 @@
-// TemelKonuKavramlar.js
+
 import React, { useState, useEffect } from 'react';
 import { Button, Tab, Tabs, Typography } from '@mui/material';
-import Image from 'next/image';
 import TabPanel from '../../compenent/TabPanel';
 import styles from '../../styles/Kutuphane.module.css';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import BaslikGorsel from '../../compenent/BaslikGorsel';
-
+import BaslikGorselCompenent from '../../compenent/BaslikGorselCompenent';
+import CircularProgress from '@mui/material/CircularProgress'; 
+import { API_ROUTES } from '../../utils/constants';
+import axios from 'axios';
 
 function Index() {
   const [kutuphaneGorseller, setKutuphaneGorseller] = useState([]);
   const [isModalOpen, setModalOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
-  const [activeTab, setActiveTab] = useState('kutuphane');
   const router = useRouter();
   const [orientation, setOrientation] = useState('vertical'); // Default olarak 'vertical'
 
   const [isScrolTab, setIsScrolTab] = useState(false);
   const [variant, setVariant] = useState('fullWidth');
 
+  const [errorPage, setErrorPage] = useState(null);
+  const [isPagesLoading, setPagesIsLoading] = useState(true); // Yükleme durumu için state
+
+
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [itemsError, setItemsError] = useState(null);
+  const path = router.asPath;
+
+  const [tab1,setTab1]=useState({})
+  const [tab2,setTab2]=useState({})
+  const [tab3,setTab3]=useState({})
+  const [tab4,setTab4]=useState({})
+
+  useEffect(() => {
+    const menuFetch = async () => {
+      setLoading(true); // Yükleniyor durumunu başlat
+      setItemsError(null); // Hata durumunu sıfırla
+
+      try {
+        
+        const parts = path.split('?');
+        const firstPart = `${parts[0]}`; // Bu, '/kurumsal' ya da '/kuran-i-kerim' olacaktır
+        const response = await axios.post(API_ROUTES.MENU_ALT_OGE, { url: firstPart });
+        setItems(response.data.items);
+      } catch (error) {
+        setItemsError('Veriler yüklenirken beklenmeyen bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
+        console.error('Error fetching menu items:', error); // Hata detayını konsola yazdır
+      } finally {
+        setLoading(false); // Yükleme tamamlandı
+      }
+    };
+
+    menuFetch();
+  }, []);
+
+
+
+  const pagesFetchData = async (page) => {
+    setPagesIsLoading(true);
+    setErrorPage(null);
+  
+    try {
+      const url = path.split('&')[0];
+
+  
+      if (url === items[0].url) {
+        // Check if tab1 has data, otherwise fetch it
+        if (!Object.keys(tab1).length > 0) {
+          const response1 = await axios.post(API_ROUTES.SAYFALAR_GET_GORSEL, { url: url });
+          setTab1(response1.data); // Store the fetched data in tab1
+
+        }
+      } else if (url === items[1].url) {
+        // Check if tab2 has data, otherwise fetch it
+        if (!Object.keys(tab2).length > 0) {
+          const response2 = await axios.post(API_ROUTES.SAYFALAR_GET_GORSEL, { url: url });
+          setTab2(response2.data); // Store the fetched data in tab2
+        }
+      } else if (url === items[2].url) {
+        // Check if tab3 has data, otherwise fetch it
+        if (!Object.keys(tab3).length > 0) {
+          const response3 = await axios.post(API_ROUTES.SAYFALAR_GET_GORSEL, { url: url });
+          setTab3(response3.data); // Store the fetched data in tab3
+        }
+      } else if (url === items[3].url) {
+        // Check if tab4 has data, otherwise fetch it
+        if (!Object.keys(tab4).length > 0) {
+          const response4 = await axios.post(API_ROUTES.SAYFALAR_GET_GORSEL, { url: url });
+          setTab4(response4.data); // Store the fetched data in tab4
+        }
+      }
+  
+    } catch (error) {
+      setErrorPage('Veriler yüklenirken beklenmeyen bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
+      console.log("error:", error);
+    } finally {
+      setPagesIsLoading(false); // Yükleme işlemi tamamlandığında veya hata oluştuğunda
+    }
+  };
+
+
+  const getDataForBaslikGorsel = () => {
+    const url = path.split('&')[0];
+    switch (url) {
+      case items[0].url:
+        return tab1;
+      case items[1].url:
+        return tab2;
+      case items[2].url:
+        return tab3;
+      case items[3].url:
+        return tab4;
+      default:
+        return {};
+    }
+  };
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -39,21 +136,27 @@ function Index() {
     fetchData();
   }, []);
 
+
+
   useEffect(() => {
-    if (router.query.tab) {
-      setActiveTab(router.query.tab);
-    } else {
-      setActiveTab('kutuphane');
+    if (items.length>0) {
+      const urls = items.map(item => item.url);
+      if (!urls.includes(path.replace(/&page=\d+/, ''))) {
+        router.push('/hata-sayfasi');
+      }else{
+        pagesFetchData();
+
+      }
+      
     }
-  }, [router.query.tab]);
+  }, [items,path]);
 
 
-  
 
   const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
-    router.push(`/kutuphane?tab=${newValue}`, undefined, { shallow: true });
+    router.push(newValue, undefined, { shallow: true });
   };
+
 
   const handleImageClick = (index) => {
     setSelectedImageIndex(index);
@@ -126,6 +229,7 @@ function Index() {
   }, []); 
 
 
+
   return (
     <>
       <Head>
@@ -133,236 +237,143 @@ function Index() {
         <link rel="icon" href="/kuramerlogo.png" />
       </Head>
 
-      <BaslikGorsel metin={"Kütüphane"} />
+      { loading   ? (
+          <div className={styles.loaderMain}>
+          <CircularProgress /> 
+          </div>)
+          : itemsError || errorPage  ? (
+          <div className={styles.errorMessage}>{itemsError || errorPage}</div>
+        )
+        : items.length > 0 ? (
+        
+        <>
 
-      
-
-
-      <div className={styles.mainContainer}>
-        <div className={styles.leftContainer}>
-        <Tabs
-           orientation={orientation}
-           variant={isScrolTab ? variant : "standard"}
-           scrollButtons={isScrolTab ? "auto" : false}
-           value={activeTab}
-           onChange={handleTabChange}
-           className={styles.verticalTabs}
-           aria-label="Vertical tabs example"
-           centered={!isScrolTab}
-        >
-
-          <Tab 
-            label={
-              <Typography sx={{
-                fontWeight: 'bold',
-                '@media (max-width: 767px)': {
-                  fontSize: '13px', 
-                },
-                '@media (min-width: 768px) and (max-width: 1100px)': {
-                  fontSize: '13px', 
-                },
-                '@media (min-width: 1101px)': {
-                  fontSize: '14px', 
-                },
-              }}>
-                KÜTÜPHANE
-              </Typography>
-            }
-            value="kutuphane"
-            sx={{
-              borderBottom: 1,
-              borderColor: 'divider',
-              color: 'black',
-              '&.Mui-selected': {
-                color: 'black', 
-              },
-            }}
-          />
-          <Tab sx={{
-              borderBottom: 1,
-              borderColor: 'divider',
-              color: 'black',
-              '&.Mui-selected': {
-                color: 'black', // Seçili Tab için de metin rengi siyah olarak ayarlanır
-              },
-            }}
-            label={
-              <Typography sx={{
-                fontWeight: 'bold',
-                // Ekran genişliğine göre fontSize ayarları
-                // Direkt ekran genişliği değerlerine göre ayarlar
-                '@media (max-width: 767px)': {
-                  fontSize: '13px', // 767px ve altı için
-                },
-                '@media (min-width: 768px) and (max-width: 1100px)': {
-                  fontSize: '13px', // 768px ile 1100px arası için
-                },
-                '@media (min-width: 1101px)': {
-                  fontSize: '14px', // 1101px ve üzeri için
-                },
-              }}>
-                KURAMER KÜTÜPHANE PROGRAMI
-              </Typography>
-            }
-            value="kuramer-kutuphane"
-
-          />
-          <Tab sx={{
-              borderBottom: 1,
-              borderColor: 'divider',
-              color: 'black',
-              '&.Mui-selected': {
-                color: 'black', // Seçili Tab için de metin rengi siyah olarak ayarlanır
-              },
-            }}
-            label={
-              <Typography sx={{
-                fontWeight: 'bold',
-                // Ekran genişliğine göre fontSize ayarları
-                // Direkt ekran genişliği değerlerine göre ayarlar
-                '@media (max-width: 767px)': {
-                  fontSize: '13px', // 767px ve altı için
-                },
-                '@media (min-width: 768px) and (max-width: 1100px)': {
-                  fontSize: '13px', // 768px ile 1100px arası için
-                },
-                '@media (min-width: 1101px)': {
-                  fontSize: '14px', // 1101px ve üzeri için
-                },
-              }}>
-                KURAMER VERİTABANI
-              </Typography>
-            }
-            value="kuramer-veritabani"
-
-          />
-          <Tab sx={{
-              borderBottom: 1,
-              borderColor: 'divider',
-              color: 'black',
-              '&.Mui-selected': {
-                color: 'black', // Seçili Tab için de metin rengi siyah olarak ayarlanır
-              },
-            }}
-            label={
-              <Typography sx={{
-                fontWeight: 'bold',
-                // Ekran genişliğine göre fontSize ayarları
-                // Direkt ekran genişliği değerlerine göre ayarlar
-                '@media (max-width: 767px)': {
-                  fontSize: '13px', // 767px ve altı için
-                },
-                '@media (min-width: 768px) and (max-width: 1100px)': {
-                  fontSize: '13px', // 768px ile 1100px arası için
-                },
-                '@media (min-width: 1101px)': {
-                  fontSize: '14px', // 1101px ve üzeri için
-                },
-              }}>
-                LİTERATÜR VE ARŞİVLEME ÇALIŞMALARI
-              </Typography>
-            }
-            value="literatur-arsiv-calismalari"
+        <BaslikGorselCompenent data={getDataForBaslikGorsel()} altPage={false} dinamicPage={{}} isPagesLoading={isPagesLoading}/>
 
 
-          />
-        </Tabs>
-
-        </div>
+        <div className={styles.mainContainer}>
+          <div className={styles.leftContainer}>
+            <Tabs
+            orientation={orientation}
+            variant={isScrolTab ? "scrollable" : "standard"}
+            scrollButtons={isScrolTab ? "auto" : false}
+            value={path.replace(/&page=\d+/, '')}
+            onChange={handleTabChange}
+            className={styles.verticalTabs}
+            aria-label="Vertical tabs example"
+            centered={!isScrolTab}
+            >
+              {items.map((kategori,key) => (
+                <Tab sx={{
+                  borderBottom: 1,
+                  borderColor: 'divider',
+                  color: 'black',
+                  '&.Mui-selected': {
+                    color: 'black', 
+                  },
+                }} key={key} label={<Typography component="span" sx={{
+                  fontWeight: 'bold',
+                  textTransform: 'none',
+                }}>{kategori.title}</Typography>} value={kategori.url} />
+              ))}
+            </Tabs>
+          </div>
 
         <div className={styles.rightContainer}>
           <div className={styles.verticalTabsContent}>
-          <TabPanel value={activeTab} index="kutuphane">
-              <h2>Kütüphane</h2>
-              <p>
-                Hoş geldiniz. KURAMER Kütüphane bölümü; KURAMER Kütüphane Programı, 
-                Veritabanı ve Literatür ile Arşivleme Çalışmaları başlıklarını içermektedir. 
-                Bu bölüm, Kur'an bilimleri araştırmalarınızı destekleyecek şekilde düzenlenmiştir.
-              </p>
-      
-            </TabPanel>
-            <TabPanel value={activeTab} index="kuramer-kutuphane">
-              <h2>KURAMER Kütüphane Programı</h2>
-              <p>
-                KURAMER KÜTÜPHANE PROGRAMI klasik İslami eserlerin metin, PDF, Yazma, Resim, Ses ve Video formatlarında tek bir ortamda toplanması, 
-                yönetimi, paylaşımı ve kullanımı ile kişisel veya çok kullanıcılı olarak istifade edilmesi amacıyla geliştirilmektedir. 
-                İslam’ın temel kaynaklarına erişimin hızlandırılması, pratik kullanımı ve bu kaynaklar kullanılarak yapılacak olan ilmi 
-                çalışmaların en az zaman harcanarak yapılması için KURAMER KÜTÜPHANE PROGRAMI, mümkün olduğu kadar basit bir kaynak yönetimi 
-                sistemi hedeflemiştir. Bu çerçevede farklı ortamlarda (metin, PDF, yazma, resim ses/video) olabilecek kaynaklarda aynı mantık 
-                çerçevesinde bir kullanım altyapısı ve ara yüzü oluşturulmaya çalışılmıştır. Bir eserin hem metin hem PDF hem de yazma nüshasının 
-                aynı anda incelenebileceği ve alıntılanabileceği bir yapıya sahip program tahkik hatalarının tespitinde oldukça önemli bir araç 
-                haline gelmektedir.
-              </p>
-              <p>
-                KURAMER KÜTÜPHANE PROGRAMI sadece kaynakları sunmakla yetinmeyip aynı zamanda ilmi çalışma hazırlama sistemine de sahiptir. 
-                Bu sistemin temel amacı, ilim adamlarının kıymetli vakitlerini alıntı yapma, fiş hazırlama, dipnot gösterme, içindekiler ve 
-                bibliyografya oluşturma gibi ayrıntılarla uğraştırmadan program üzerinde çalışmasını yaptıktan sonra bunları otomatik olarak 
-                oluşturduğu Word belgesine aktarmaktır. Sistem, müellifin alıntı yaptığı kaynakları veya alıntıları hangi formatta olursa olsun 
-                (Metin, PDF, Yazma Eser) otomatik yönetmekte ve Word belgesi olarak yazım işlemi için hazırlamaktadır.
-              </p>
-              <p>
-                KURAMER KÜTÜPHANE PROGRAMI arama, bulma ve bulunan sonuçların kullanımı, saklanması veya Word belgesine aktarımı açısından da 
-                oldukça pratik özelliklere sahiptir. Sadece kaynaklarda değil, çalışmalar ve alıntılarda da aramalar yapılabilmektedir. Program 
-                PDF/A formatındaki metin ihtiva eden kaynaklarda ve yirmi bine yakın makalede de arama yapabilmektedir.
-              </p>
-              <p>
-                KURAMER KÜTÜPHANE PROGRAMI ilk aşamada sadece KURAMER bünyesinde görev alan ilim adamlarının istifadesine sunulmuştur. 
-                Bir nevi test aşaması da sayılabilecek bir süreç sonunda kademeli olarak diğer ilim adamlarının, araştırmacıların ve 
-                öğrencilerin hizmetine sunulması için çalışılmaktadır.
-              </p>
-              
-              <div className={styles.imageGallery}>
-                {kutuphaneGorseller.map((image, index) => (
-                  <div key={index} className={styles.thumbnailContainer} onClick={() => handleImageClick(index)}>
-                    <img src={`${image}`} alt={`Kutuphane-${index}`} />
-                  </div>
-                ))}
-              </div>
+          <TabPanel value={path} index={items[0].url}>
 
-              {isModalOpen && selectedImageIndex !== null && (
-                <div className={styles.modalOverlay} onClick={handleCloseModal}>
-                  <div className={styles.modalContent}>
-                  <img
-                      src={kutuphaneGorseller[selectedImageIndex]}
-                      alt={`Kutuphane-${selectedImageIndex}`}
-                      style={{ width: "100%", height: 'auto' }}
-                    />
-                  </div>
+              {isPagesLoading ? (
+                <div className={styles.loader}>
+                  <CircularProgress />
                 </div>
-              )}
+              ) : errorPage ? (
+                <div className={styles.errorMessage}>
+                  {errorPage}
+                </div>
+              ) : (
+                <div className={styles.icerik} dangerouslySetInnerHTML={{ __html: tab1?.icerik }} />
+              ) 
+              }
+      
+            </TabPanel>
+            <TabPanel value={path} index={items[1].url}>
+              {isPagesLoading ? (
+                <div className={styles.loader}>
+                  <CircularProgress />
+                </div>
+              ) : errorPage ? (
+                <div className={styles.errorMessage}>
+                  {errorPage}
+                </div>
+              ) : (
+                <>
+                <div className={styles.icerik} dangerouslySetInnerHTML={{ __html: tab2?.icerik }} />
 
+                <div className={styles.imageGallery}>
+                  {kutuphaneGorseller.map((image, index) => (
+                    <div key={index} className={styles.thumbnailContainer} onClick={() => handleImageClick(index)}>
+                      <img src={`${image}`} alt={`Kutuphane-${index}`} />
+                    </div>
+                  ))}
+                </div>
+                {isModalOpen && selectedImageIndex !== null && (
+                  <div className={styles.modalOverlay} onClick={handleCloseModal}>
+                    <div className={styles.modalContent}>
+                    <img
+                        src={kutuphaneGorseller[selectedImageIndex]}
+                        alt={`Kutuphane-${selectedImageIndex}`}
+                        style={{ width: "100%", height: 'auto' }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </>
+              ) 
+              }
+            
             </TabPanel>
 
 
-            <TabPanel value={activeTab} index="kuramer-veritabani">
-              <h2>KURAMER Veritabanı</h2>
-              <p>
-              Ülkemizde, diğer İslâm ülkelerinde ve Batı'da, Merkez'in faaliyet alanına giren konularda neşredilen 
-              kitap, tez, makale ve süreli yayınların taranmasıyla 
-              kapsamlı bir veri tabanı oluşturmak, Merkez'in temel hedeflerinden biridir.
-              </p>
+            <TabPanel value={path} index={items[2].url}>
+              {isPagesLoading ? (
+                <div className={styles.loader}>
+                  <CircularProgress />
+                </div>
+              ) : errorPage ? (
+                <div className={styles.errorMessage}>
+                  {errorPage}
+                </div>
+              ) : (
+                <div className={styles.icerik} dangerouslySetInnerHTML={{ __html: tab3?.icerik }} />
+              ) 
+              }
       
             </TabPanel>
 
-            <TabPanel value={activeTab} index="literatur-arsiv-calismalari">
-              <h2>Literatür ve Arşivleme Çalışmaları</h2>
-              <p>
-              Araştırmaların sağlam bir zeminde yürütülebilmesi için öncelikli olarak Mushaf tarihi, Dil, Tarih, Dinler Tarihi, Hadis, Sîret, Akâid, Tefsir, Fıkıh, 
-              Kelâm/İslâm Felsefesi, Ahlâk gibi alanlarla ilgili temel kaynakların tespit ve teminine başlanmış, bu nedenle Kur’an ile ilgili bir 
-              ihtisas kütüphanesi yanında kapsamlı bir dijital veri tabanı oluşturma yoluna gidilmiştir. Bunun için İSAM Kütüphanesi, Index Islamicus, Şâmile ve diğer 
-              kütüphaneler taranarak tüm dillerdeki Kur’an araştırmaları 
-              tespitine öncelik verilmiş, buna paralel olarak imkânlar ölçüsünde bunların fiziki veya sanal ortamda teminine başlanmıştır.
-              </p>
-              <p>
-              Ülkemizde, diğer İslâm ülkelerinde ve Batı’da, Merkez’in faaliyet alanına giren konularda neşredilen kitap, tez, makale ve süreli yayınların taranmasıyla 
-              kapsamlı bir veri tabanı oluşturmak, Merkezin temel hedeflerinden biridir. Kur’an eksenli bütün ilmî çalışmaları ihtiva eden bu kütüphane ve dokümantasyon 
-              birikimi, Merkez’de yürütülen çalışma ve projelerin zeminini teşkil edecek, ayrıca bu alanda araştırma yapmak isteyenlerin de hizmetine açılacaktır. 
-              </p>
+            <TabPanel value={path} index={items[3].url}>
+              {isPagesLoading ? (
+                <div className={styles.loader}>
+                  <CircularProgress />
+                </div>
+              ) : errorPage ? (
+                <div className={styles.errorMessage}>
+                  {errorPage}
+                </div>
+              ) : (
+                <div className={styles.icerik} dangerouslySetInnerHTML={{ __html: tab4?.icerik }} />
+              ) 
+              }
               
             </TabPanel>
           </div>
         </div>
       </div>
+      </>
+      ): (
+        <div className={styles.noDataMessage}>Kayıtlı Öge verisi bulunmamaktadır.</div>
+      )
+    }
     </>
   );
 }

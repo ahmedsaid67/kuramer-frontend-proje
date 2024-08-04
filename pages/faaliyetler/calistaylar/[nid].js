@@ -9,7 +9,7 @@ import { useRouter } from 'next/router';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useState,useEffect } from 'react';
 import Head from 'next/head'
-
+import BaslikGorselCompenent from '../../../compenent/BaslikGorselCompenentDetail';
 
 const iconStyle = {
   width: '20px',
@@ -108,9 +108,15 @@ const Calistay = () => {
 
 
   const router = useRouter();
-  const asPath = router.asPath;
+  const { asPath, isReady } = router;
   const nidMatch = asPath.match(/-(\d+)$/); // Regex ile URL'den id'yi çıkarma
   const nid = nidMatch ? nidMatch[1] : null;
+
+  const [detayItems,setDetayItems] = useState({})
+  const [catgoriItem, setcatgoriItem] = useState({});
+  const [pages, setPages] = useState([]);
+  const [isPagesLoading, setIsPagesLoading] = useState(true);
+  const [errorPage, setErrorPage] = useState(null);
 
   const formatDateWithoutTimeZone = (dateString) => {
     const options = { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' };
@@ -118,18 +124,42 @@ const Calistay = () => {
     return new Intl.DateTimeFormat('tr-TR', options).format(date);
   };
 
-  useEffect(() => {
+
+  const pagesFetchData = async () => {
+    setIsPagesLoading(true);
+    try {
+      const cleanedPath = asPath.split('?')[0];
+      const pathSegments = cleanedPath.split('/').filter(Boolean);
+      const categoriPart = `${pathSegments.slice(0, 1).join('/')}`;
+      const lastPart = `${pathSegments.slice(1, 2).join('/')}`;
+      const url= `/${categoriPart}?tab=${lastPart}`
+
+      const response1 = await axios.post(API_ROUTES.SAYFALAR_GET_GORSEL, { url: url });
+      //console.log("res:",response1)
+      setPages(response1.data);
+      setErrorPage(null);
+    } catch (error) {
+      setErrorPage('Veriler yüklenirken beklenmeyen bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
+      console.log("error:", error);
+    } finally {
+      setIsPagesLoading(false);
+    }
+  };
+
+
     const fetchKonferans = async () => {
-      if (!router.isReady) return; // Router henüz hazır değilse bekleyin
       setIsLoading(true);
       try {
         const apiRoute = API_ROUTES.CALISTAYLAR_DETAIL.replace('id', nid); 
         const response = await axios.get(apiRoute);
         setCalistay(response.data);
         setError(null);
+
+        setDetayItems({ name:response.data.baslik, url: asPath})
+
       } catch (error) {
         if (error.response && error.response.status === 404) {
-          setError("Aradığınız çalıştay bulunamadı.");
+          setError("Aradığınız sayfa bulunamadı. Bir hata oluşmuş olabilir veya sayfa kaldırılmış olabilir.");
         } else {
           setError("Bir şeyler ters gitti. Daha sonra tekrar deneyiniz.");
         }
@@ -137,10 +167,14 @@ const Calistay = () => {
       } finally {
         setIsLoading(false);
       }
-    };
+    }
   
-    fetchKonferans();
-  }, [router.asPath]); 
+    useEffect(() => {
+      if (!isReady) return;
+  
+      fetchKonferans();
+      pagesFetchData();
+    }, [isReady, nid]);
   
   
   const handleCloseViewer = () => {
@@ -165,26 +199,11 @@ const Calistay = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <>
-       <Head>
-        <title>Çalıştay | Kuramer</title>
-        <link rel="icon" href="/kuramerlogo.png" />
-      </Head>
 
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-              <CircularProgress />
-      </div>
-      
-      </>
-      
-    );
-  }
  
 
 
-  if (error) {
+  if (error || errorPage) {
     return (
       <>
        <Head>
@@ -202,7 +221,7 @@ const Calistay = () => {
         fontFamily: 'Arial, sans-serif',
         backgroundColor: '#f0f0f0',
       }}>
-        {error}
+        {error || errorPage}
       </div>
       </>
       
@@ -210,31 +229,6 @@ const Calistay = () => {
   }
 
 
-  if (!calistay) {
-    return (
-      <>
-      <Head>
-        <title>Çalıştay | Kuramer</title>
-        <link rel="icon" href="/kuramerlogo.png" />
-      </Head>
-
-
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        fontSize: '24px',
-        color: '#343434',
-        fontFamily: 'Arial, sans-serif',
-        backgroundColor: '#f0f0f0',
-      }}>
-        Çalıştay bulunamadı.
-      </div>
-      </>
-      
-    );
-  }
 
   return (
     <>
@@ -242,124 +236,109 @@ const Calistay = () => {
         <title>Çalıştay | Kuramer</title>
         <link rel="icon" href="/kuramerlogo.png" />
     </Head>
-    <Container maxWidth="md" style={{ marginTop: 40, marginBottom: 40 }}>
-      <Paper elevation={3} style={{ padding: 20 }}>
-        <Grid container spacing={3}>
-          {/* Sol tarafta görsel */}
-          <Grid item xs={12} md={6}>
-            <img
-              src={calistay.kapak_fotografi}
-              alt={calistay.baslik}
-              style={{ width: '100%', height: 'auto' }}
-            />
-          </Grid>
 
-          {/* Sağ tarafta detaylar */}
-          <Grid item xs={12} md={6} container direction="column" justifyContent="center">
-            <Typography variant="h6" sx={titleStyle}>
-              {calistay.baslik}
-            </Typography>
-
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <img src="/icons/calendar.png" alt="Tarih" style={iconStyle} />
-              <Typography variant="subtitle1" sx={dateStyle}>
-              {formatDateWithoutTimeZone(calistay.tarih)}
-              </Typography>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 10 }}>
-              <img src="/icons/location.png" alt="Yer" style={iconStyle} />
-              <Typography variant="subtitle1" sx={placeStyle}>
-                {calistay.konum}
-              </Typography>
-            </div>
-          </Grid>
-
-          {/* Butonlar */}
-          <Grid item xs={12} container direction="column" justifyContent="center">
-            {calistay.pdf_dosya && (
-              <Button
-                variant="text"
-                color="primary"
-                sx={buttonStyle}
-                href={calistay.pdf_dosya}
-                target="_blank"
-              >
-                Programı İndir
-              </Button>
-            )}
-
-            {calistay.album && (
-              <div onClick={() => handleAlbumClick(calistay.album)}>
-                <Button variant="text" color="primary" sx={buttonStyle}>
-                  Albümü Görüntüle
-                </Button>
-              </div>
-            )}
-
-            {calistay.yayin && (
-              <Button
-                variant="text"
-                color="primary"
-                sx={buttonStyle}
-                href={calistay.yayin.url}
-                target="_blank"
-              >
-                Etkinlik Kaydını İzle
-              </Button>
-            )}
-          </Grid>
-        </Grid>
-      </Paper>
-
-      {message && (
-        <div style={infoMessageStyle}>
-          Albümde herhangi bir resim bulunmamaktadır.
+    {isLoading ? (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+          }}
+        >
+          <CircularProgress />
         </div>
+      ) : (
+        <>
+        <BaslikGorselCompenent data={pages} catgoriItem={catgoriItem} detayItems={detayItems} isPagesLoading={isPagesLoading}/>
+        <Container maxWidth="md" style={{ marginTop: 40, marginBottom: 40 }}>
+          <Paper elevation={3} style={{ padding: 20 }}>
+            <Grid container spacing={3}>
+              {/* Sol tarafta görsel */}
+              <Grid item xs={12} md={6}>
+                <img
+                  src={calistay.kapak_fotografi}
+                  alt={calistay.baslik}
+                  style={{ width: '100%', height: 'auto' }}
+                />
+              </Grid>
+
+              {/* Sağ tarafta detaylar */}
+              <Grid item xs={12} md={6} container direction="column" justifyContent="center">
+                <Typography variant="h6" sx={titleStyle}>
+                  {calistay.baslik}
+                </Typography>
+
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <img src="/icons/calendar.png" alt="Tarih" style={iconStyle} />
+                  <Typography variant="subtitle1" sx={dateStyle}>
+                  {formatDateWithoutTimeZone(calistay.tarih)}
+                  </Typography>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: 10 }}>
+                  <img src="/icons/location.png" alt="Yer" style={iconStyle} />
+                  <Typography variant="subtitle1" sx={placeStyle}>
+                    {calistay.konum}
+                  </Typography>
+                </div>
+              </Grid>
+
+              {/* Butonlar */}
+              <Grid item xs={12} container direction="column" justifyContent="center">
+                {calistay.pdf_dosya && (
+                  <Button
+                    variant="text"
+                    color="primary"
+                    sx={buttonStyle}
+                    href={calistay.pdf_dosya}
+                    target="_blank"
+                  >
+                    Programı İncele
+                  </Button>
+                )}
+
+                {calistay.album && (
+                  <div onClick={() => handleAlbumClick(calistay.album)}>
+                    <Button variant="text" color="primary" sx={buttonStyle}>
+                      Albümü Görüntüle
+                    </Button>
+                  </div>
+                )}
+
+                {calistay.yayin && (
+                  <Button
+                    variant="text"
+                    color="primary"
+                    sx={buttonStyle}
+                    href={calistay.yayin.url}
+                    target="_blank"
+                  >
+                    Etkinlik Kaydını İzle
+                  </Button>
+                )}
+              </Grid>
+            </Grid>
+          </Paper>
+
+          {message && (
+            <div style={infoMessageStyle}>
+              Albümde herhangi bir resim bulunmamaktadır.
+            </div>
+          )}
+          {errorAlbum && (
+            <div style={errorMessageStyle}>
+              Albüm resimleri yüklenirken bir hata oluştu.
+            </div>
+          )}
+          {viewerOpen && (
+            <PhotoGalleryViewer images={selectedAlbum?.images || []} onClose={handleCloseViewer} />
+          )}
+        </Container>
+        </>
       )}
-      {errorAlbum && (
-        <div style={errorMessageStyle}>
-          Albüm resimleri yüklenirken bir hata oluştu.
-        </div>
-      )}
-      {viewerOpen && (
-        <PhotoGalleryViewer images={selectedAlbum?.images || []} onClose={handleCloseViewer} />
-      )}
-    </Container>
     </>
   );
 };
-
-export async function getServerSideProps(context) {
-  try {
-    
-    const nid = extractIdFromUrl(context.req.url);
-
-    const apiRoute = API_ROUTES.CALISTAYLAR_DETAIL.replace('id', nid);
-    const calistayResponse = await axios.get(apiRoute);
-    const calistay = calistayResponse.data;
-
-    // Diğer işlemleri yapabilirsiniz
-
-    return { props: { calistay } };
-  } catch (error) {
-    console.error('calistay detayları yüklenirken hata:', error);
-    return { props: { calistay: null, error: error.message } };
-  }
-}
-
-const extractIdFromUrl = (url) => {
-  const segments = url.split('/'); // URL'yi böl
-  const lastSegment = segments[segments.length - 1]; // En son segmenti al
-  const match = lastSegment.match(/(\d+)$/); // Regex ile sonundaki sayıyı bul
-  return match ? parseInt(match[1], 10) : null;
-};
-
-const formatDateWithoutTimeZone = (dateString) => {
-  const options = { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' };
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('tr-TR', options).format(date);
-};
-
 
 export default Calistay;

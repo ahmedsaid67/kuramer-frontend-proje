@@ -35,105 +35,115 @@ const MenuListItems = [
   },
   {
     id: 4,
-    text: 'Başlık Görsel',
-    url: '/panel/baslik-gorsel',
+    text: 'Sayfalar',
+    url: '/panel/sayfalar',
+  },
+  {
+    id: 44444444,
+    text: 'Ana Sayfa Bileşenleri',
+    url: '/panel/home-page-compenents',
   },
   {
     id: 5,
-    text: 'Personeller',
-    children: [
-      { id: 51, text: 'Personel Türü', url: '/panel/personeller/personel-turu' },
-      { id: 52, text: 'Personeller', url: '/panel/personeller/personeller' },
-    ],
+    text: 'Medya ve Kuruluşlar',
+    url: '/panel/sosyal-medya',
   },
   {
     id: 6,
-    text: 'Yayınlar',
+    text: 'Personeller',
     children: [
-      {
-        id: 61,
-        text: 'Kitaplar',
-        children: [
-          { id: 611, text: 'Kitap Serileri', url: '/panel/yayinlar/kitaplar/kitap-kategori' },
-          { id: 612, text: 'Kitaplar', url: '/panel/yayinlar/kitaplar/kitaplar' },
-        ],
-      },
-        
-      { id: 62, text: 'Broşürler', url: '/panel/yayinlar/brosurler' },
-      { id: 63, text: 'Bültenler', url: '/panel/yayinlar/bultenler' },
-
-        
-      
+      { id: 61, text: 'Personel Türü', url: '/panel/personeller/personel-turu' },
+      { id: 62, text: 'Personeller', url: '/panel/personeller/personeller' },
     ],
   },
   {
     id: 7,
-    text: 'Temel Konu ve Kavramlar',
+    text: 'Yayınlar',
     children: [
-      { id: 71, text: 'Temel Konular', url: '/panel/temel-konu-ve-kavramlar/temel-konular' },
-      { id: 72, text: 'Temel Kavramlar', url: '/panel/temel-konu-ve-kavramlar/temel-kavramlar' },
+      {
+        id: 71,
+        text: 'Kitaplar',
+        children: [
+          { id: 711, text: 'Kitap Serileri', url: '/panel/yayinlar/kitaplar/kitap-kategori' },
+          { id: 712, text: 'Kitaplar', url: '/panel/yayinlar/kitaplar/kitaplar' },
+        ],
+      },
+        
+      { id: 72, text: 'Broşürler', url: '/panel/yayinlar/brosurler' },
+      { id: 73, text: 'Bültenler', url: '/panel/yayinlar/bultenler' },
+
+        
+      
     ],
   },
   {
     id: 8,
+    text: 'Temel Konu ve Kavramlar',
+    children: [
+      { id: 81, text: 'Temel Konular', url: '/panel/temel-konu-ve-kavramlar/temel-konular' },
+      { id: 82, text: 'Temel Kavramlar', url: '/panel/temel-konu-ve-kavramlar/temel-kavramlar' },
+    ],
+  },
+  {
+    id: 9,
     text: 'Yayınlarımızdan Seçmeler',
     url: '/panel/yayinlarimizdan-secmeler',
   },
   {
-    id: 9,
-    text: 'Kuran-ı Kerim',
+    id: 10,
+    text: "Kur'an-ı Kerim",
     children: [
       {
-        id: 91,
+        id: 101,
         text: 'Mushaflar',
         children: [
-          { id: 911, text: 'Mushaf Kategorileri', url: '/panel/kurani-kerim/mushaf-kategorileri' },
-          { id: 912, text: 'Mushaflar', url: '/panel/kurani-kerim/mushaflar' },
+          { id: 1011, text: 'Mushaf Kategorileri', url: '/panel/kurani-kerim/mushaf-kategorileri' },
+          { id: 1012, text: 'Mushaflar', url: '/panel/kurani-kerim/mushaflar' },
         ],
       },
 
-        { id: 921, text: 'Mushaf Farkları', url: '/panel/kurani-kerim/mushaf-farklari' },
+      { id: 102, text: 'Mushaf Farkları', url: '/panel/kurani-kerim/mushaf-farklari' },
 
       
     ],
   },
   {
-    id: 10,
+    id: 11,
     text: 'Faaliyetler',
     children: [
-      { id: 101, text: 'Sempozyumlar', url: '/panel/faaliyetler/sempozyumlar' },
-      { id: 102, text: 'Çalıştaylar', url: '/panel/faaliyetler/calistaylar' },
-      { id: 103, text: 'Konferanslar', url: '/panel/faaliyetler/konferanslar' },
-      { id: 104, text: 'Araştırmalar', url: '/panel/faaliyetler/arastirmalar' },
-      { id: 105, text: 'Eğitimler', url: '/panel/faaliyetler/egitimler' },
+      { id: 111, text: 'Sempozyumlar', url: '/panel/faaliyetler/sempozyumlar' },
+      { id: 112, text: 'Çalıştaylar', url: '/panel/faaliyetler/calistaylar' },
+      { id: 113, text: 'Konferanslar', url: '/panel/faaliyetler/konferanslar' },
+      { id: 114, text: 'Araştırmalar', url: '/panel/faaliyetler/arastirmalar' },
+      { id: 115, text: 'Eğitimler', url: '/panel/faaliyetler/egitimler' },
     ],
   },
   {
-    id: 11,
+    id: 12,
     text: 'Medya Galeri',
     children: [
       {
-        id: 111,
+        id: 121,
         text: 'Basında Biz',
         children: [
-          { id: 1111, text: 'Yazılı Basın', url: '/panel/medya-galeri/basinda-biz/yazili-basin' },
-          { id: 1112, text: 'Görsel Basın', url: '/panel/medya-galeri/basinda-biz/gorsel-basin' },
+          { id: 1211, text: 'Yazılı Basın', url: '/panel/medya-galeri/basinda-biz/yazili-basin' },
+          { id: 1212, text: 'Görsel Basın', url: '/panel/medya-galeri/basinda-biz/gorsel-basin' },
         ],
       },
       {
-        id: 112,
+        id: 122,
         text: 'Fotoğraf Galerisi',
         children: [
-          { id: 1121, text: 'Fotoğraf Galerisi Kategorisi', url: '/panel/medya-galeri/foto/foto-galeri-kategori' },
-          { id: 1122, text: 'Fotoğtaf Galerisi', url: '/panel/medya-galeri/foto/foto-galeri' },
+          { id: 1221, text: 'Fotoğraf Galerisi Kategorisi', url: '/panel/medya-galeri/foto/foto-galeri-kategori' },
+          { id: 1222, text: 'Fotoğtaf Galerisi', url: '/panel/medya-galeri/foto/foto-galeri' },
         ],
       },
       {
-        id: 113,
+        id: 123,
         text: 'Video Galeri',
         children: [
-          { id: 1131, text: 'Video Galeri Kategorisi', url: '/panel/medya-galeri/video/video-galeri-kategori' },
-          { id: 1132, text: 'Videolar', url: '/panel/medya-galeri/video/video-galeri' },
+          { id: 1231, text: 'Video Galeri Kategorisi', url: '/panel/medya-galeri/video/video-galeri-kategori' },
+          { id: 1232, text: 'Videolar', url: '/panel/medya-galeri/video/video-galeri' },
         ],
       },
     ],

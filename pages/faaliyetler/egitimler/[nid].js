@@ -9,6 +9,7 @@ import { useRouter } from 'next/router';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useState,useEffect } from 'react';
 import Head from 'next/head'
+import BaslikGorselCompenent from '../../../compenent/BaslikGorselCompenentDetail';
 
 const iconStyle = {
   width: '20px',
@@ -107,6 +108,13 @@ const Egitim = () => {
 
   const router = useRouter();
   const nid = router.query.nid
+  const { asPath, isReady } = router;
+
+  const [detayItems,setDetayItems] = useState({})
+  const [catgoriItem, setcatgoriItem] = useState({});
+  const [pages, setPages] = useState([]);
+  const [isPagesLoading, setIsPagesLoading] = useState(true);
+  const [errorPage, setErrorPage] = useState(null);
 
   const formatDateWithoutTimeZone = (dateString) => {
       const options = { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' };
@@ -114,31 +122,59 @@ const Egitim = () => {
       return new Intl.DateTimeFormat('tr-TR', options).format(date);
   };
 
-  useEffect(() => {
+
+  const pagesFetchData = async () => {
+    setIsPagesLoading(true);
+    try {
+      const cleanedPath = asPath.split('?')[0];
+      const pathSegments = cleanedPath.split('/').filter(Boolean);
+      const categoriPart = `${pathSegments.slice(0, 1).join('/')}`;
+      const lastPart = `${pathSegments.slice(1, 2).join('/')}`;
+      const url= `/${categoriPart}?tab=${lastPart}`
+
+      const response1 = await axios.post(API_ROUTES.SAYFALAR_GET_GORSEL, { url: url });
+      //console.log("res:",response1)
+      setPages(response1.data);
+      setErrorPage(null);
+    } catch (error) {
+      setErrorPage('Veriler yüklenirken beklenmeyen bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
+      console.log("error:", error);
+    } finally {
+      setIsPagesLoading(false);
+    }
+  };
+
+
+
     
-      const fetchKonferans = async () => {
-        if (!router.isReady) return; // Router henüz hazır değilse bekleyin
+  const fetchKonferans = async () => {
         setIsLoading(true);
         try {
           const apiRoute = API_ROUTES.EGITIMLER_DETAIL.replace('slug', nid);
           const response = await axios.get(apiRoute);
           setEgitim(response.data);
+          setDetayItems({ name:response.data.baslik, url: asPath})
           setError(null)
         } catch (error) {
           if (error.response && error.response.status === 404) {
-            setError("Aradığınız eğitim bulunamadı.")
+            setError("Aradığınız sayfa bulunamadı. Bir hata oluşmuş olabilir veya sayfa kaldırılmış olabilir.")
           }else{
           setError("Bir şeyler ters gitti. Daha sonra tekrar deneyiniz.")}
           console.error('Eğitim detayları yüklenirken hata:', error);
         } finally {
           setIsLoading(false);
         }
-      };
+  };
 
-      fetchKonferans();
 
-  }, [nid]);
-  
+  useEffect(() => {
+    if (!isReady) return;
+
+    fetchKonferans();
+    pagesFetchData();
+  }, [isReady, nid]);
+    
+
   const handleCloseViewer = () => {
     setViewerOpen(false);
   };
@@ -164,24 +200,7 @@ const Egitim = () => {
 
   
 
-  if (isLoading) {
-    return (
-      <>
-      <Head>
-        <title>Eğitim | Kuramer</title>
-        <link rel="icon" href="/kuramerlogo.png" />
-      </Head>
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-              <CircularProgress />
-      </div>
-      </>
-      
-    );
-  }
- 
-
-
-  if (error) {
+  if (error || errorPage) {
     
     return (
       <>
@@ -200,7 +219,7 @@ const Egitim = () => {
         fontFamily: 'Arial, sans-serif',
         backgroundColor: '#f0f0f0',
       }}>
-        {error}
+        {error || errorPage}
       </div>
       </>
       
@@ -208,30 +227,6 @@ const Egitim = () => {
   }
 
 
-  if (!egitim) {
-    return (
-      <>
-      <Head>
-        <title>Eğitim | Kuramer</title>
-        <link rel="icon" href="/kuramerlogo.png" />
-      </Head>
-
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        fontSize: '24px',
-        color: '#343434',
-        fontFamily: 'Arial, sans-serif',
-        backgroundColor: '#f0f0f0',
-      }}>
-        Egitim bulunamadı.
-      </div>
-      
-      </>     
-    );
-  }
 
 
   return (
@@ -240,92 +235,109 @@ const Egitim = () => {
         <title>Eğitim | Kuramer</title>
         <link rel="icon" href="/kuramerlogo.png" />
     </Head>
-    <Container maxWidth="md" style={{ marginTop: 40, marginBottom: 40 }}>
-      <Paper elevation={3} style={{ padding: 20 }}>
-        <Grid container spacing={3}>
-          {/* Sol tarafta görsel */}
-          <Grid item xs={12} md={6}>
-            <img
-              src={egitim.kapak_fotografi}
-              alt={egitim.baslik}
-              style={{ width: '100%', height: 'auto' }}
-            />
-          </Grid>
 
-          {/* Sağ tarafta detaylar */}
-          <Grid item xs={12} md={6} container direction="column" justifyContent="center">
-            <Typography variant="h6" sx={titleStyle}>
-              {egitim.baslik}
-            </Typography>
+    {isLoading ? (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+          }}
+        >
+          <CircularProgress />
+        </div>
+      ) : (
+        <>
+        <BaslikGorselCompenent data={pages} catgoriItem={catgoriItem} detayItems={detayItems} isPagesLoading={isPagesLoading}/>
+          <Container maxWidth="md" style={{ marginTop: 40, marginBottom: 40 }}>
+            <Paper elevation={3} style={{ padding: 20 }}>
+              <Grid container spacing={3}>
+                {/* Sol tarafta görsel */}
+                <Grid item xs={12} md={6}>
+                  <img
+                    src={egitim.kapak_fotografi}
+                    alt={egitim.baslik}
+                    style={{ width: '100%', height: 'auto' }}
+                  />
+                </Grid>
 
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <img src="/icons/quill.png" alt="Tarih" style={iconStyle} />
-              <Typography variant="subtitle1" sx={authorStyle}>
-                {egitim.egitmen}
-              </Typography>
-            </div>
+                {/* Sağ tarafta detaylar */}
+                <Grid item xs={12} md={6} container direction="column" justifyContent="center">
+                  <Typography variant="h6" sx={titleStyle}>
+                    {egitim.baslik}
+                  </Typography>
 
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <img src="/icons/calendar.png" alt="Tarih" style={iconStyle} />
-              <Typography variant="subtitle1" sx={dateStyle}>
-              {formatDateWithoutTimeZone(egitim.tarih)}
-              </Typography>
-            </div>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <img src="/icons/quill.png" alt="Tarih" style={iconStyle} />
+                    <Typography variant="subtitle1" sx={authorStyle}>
+                      {egitim.egitmen}
+                    </Typography>
+                  </div>
 
-          </Grid>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <img src="/icons/calendar.png" alt="Tarih" style={iconStyle} />
+                    <Typography variant="subtitle1" sx={dateStyle}>
+                    {formatDateWithoutTimeZone(egitim.tarih)}
+                    </Typography>
+                  </div>
 
-          {/* Butonlar */}
-          <Grid item xs={12} container direction="column" justifyContent="center">
-            {egitim.pdf_dosya && (
-              <Button
-                variant="text"
-                color="primary"
-                sx={buttonStyle}
-                href={egitim.pdf_dosya}
-                target="_blank"
-              >
-                Programı İndir
-              </Button>
-            )}
+                </Grid>
 
-            {egitim.album && (
-              <div onClick={() => handleAlbumClick(egitim.album)}>
-                <Button variant="text" color="primary" sx={buttonStyle} component="a">
-                  Albümü Görüntüle
-                </Button>
+                {/* Butonlar */}
+                <Grid item xs={12} container direction="column" justifyContent="center">
+                  {egitim.pdf_dosya && (
+                    <Button
+                      variant="text"
+                      color="primary"
+                      sx={buttonStyle}
+                      href={egitim.pdf_dosya}
+                      target="_blank"
+                    >
+                      Programı İncele
+                    </Button>
+                  )}
+
+                  {egitim.album && (
+                    <div onClick={() => handleAlbumClick(egitim.album)}>
+                      <Button variant="text" color="primary" sx={buttonStyle} component="a">
+                        Albümü Görüntüle
+                      </Button>
+                    </div>
+                  )}
+
+                  {egitim.yayin && (
+                    <Button
+                      variant="text"
+                      color="primary"
+                      sx={buttonStyle}
+                      href={egitim.yayin.url}
+                      target="_blank"
+                    >
+                      Etkinlik Kaydını İzle
+                    </Button>
+                  )}
+                </Grid>
+              </Grid>
+            </Paper>
+            {message && (
+              <div style={infoMessageStyle}>
+                Albümde herhangi bir resim bulunmamaktadır.
               </div>
             )}
-
-            {egitim.yayin && (
-              <Button
-                variant="text"
-                color="primary"
-                sx={buttonStyle}
-                href={egitim.yayin.url}
-                target="_blank"
-              >
-                Etkinlik Kaydını İzle
-              </Button>
+            {errorAlbum && (
+              <div style={errorMessageStyle}>
+                Albüm resimleri yüklenirken bir hata oluştu.
+              </div>
             )}
-          </Grid>
-        </Grid>
-      </Paper>
-      {message && (
-        <div style={infoMessageStyle}>
-          Albümde herhangi bir resim bulunmamaktadır.
-        </div>
-      )}
-      {errorAlbum && (
-        <div style={errorMessageStyle}>
-          Albüm resimleri yüklenirken bir hata oluştu.
-        </div>
-      )}
-      {viewerOpen && (
-        <PhotoGalleryViewer images={selectedAlbum?.images || []} onClose={handleCloseViewer} />
-      )}
-    </Container>
+            {viewerOpen && (
+              <PhotoGalleryViewer images={selectedAlbum?.images || []} onClose={handleCloseViewer} />
+            )}
+          </Container>
 
-    
+          
+          </>
+      )}
     </>
   );
 };

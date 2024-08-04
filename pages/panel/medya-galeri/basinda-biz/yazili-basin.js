@@ -45,6 +45,12 @@ export default function YaziliBasin() {
     const [uyariMesaji, setUyariMesaji] = useState("");
     const [uyariMesajiEkle, setUyariMesajiEkle] = useState("");
     const [isSaving, setIsSaving] = useState(false);
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [selectedIds, setSelectedIds] = useState([]);
+
+
+    const [warningDialogOpen, setWarningDialogOpen] = useState(false);
+
 
 
     const user = useSelector((state) => state.user);
@@ -207,42 +213,70 @@ export default function YaziliBasin() {
           setSelectedRows({});
         }
     };
-    const handleDeleteSelected = () => {
-        setDeleteError('');
-        const selectedIds = Object.keys(selectedRows).filter(id => selectedRows[id]);
-      
-        axios.post(API_ROUTES.YAZILI_BASIN_DELETE, { ids: selectedIds })
-          .then(() => axios.get(API_ROUTES.YAZILI_BASIN))
-          .then(response => {
-            const newTotalCount = response.data.count;
-            const newTotalPages = Math.ceil(newTotalCount / 10);
-            setTotalPages(newTotalPages);
-      
-            let updatedPage = currentPage;
-            if (currentPage > newTotalPages) {
-              updatedPage = Math.max(newTotalPages, 1); // Eğer yeni toplam sayfa sayısı 0 ise, 1'e ayarla
-            } else if (currentPage === newTotalPages && response.data.results.length === 0 && currentPage > 1) {
-              updatedPage = currentPage - 1; // Son sayfada veri kalmadıysa bir önceki sayfaya git
-            }
-      
-            setCurrentPage(updatedPage);
-      
-            if (updatedPage !== currentPage) {
-              return axios.get(API_ROUTES.YAZILI_BASIN_PAGINATIONS.replace("currentPage",updatedPage))
-            } else {
-              return response;
-            }
-          })
-          .then(response => {
-            setData(response.data.results);
+
+    const handleCloseWarningDialog = () => {
+      setWarningDialogOpen(false);
+    };
+
+
+    const handleOpenDeleteConfirm = () => {
+      const ids = Object.keys(selectedRows).filter(id => selectedRows[id]);
+      if (ids.length === 0) {
+        // Hiçbir öğe seçilmemişse uyarı diyalogunu aç
+        setWarningDialogOpen(true);
+      } else {
+        // Seçili öğeler varsa onay penceresini aç
+        setSelectedIds(ids);
+        setDeleteConfirmOpen(true);
+      }
+    };
+  
+    const handleCloseDeleteConfirm = () => {
+      setDeleteConfirmOpen(false);
+    };
+
+
+
+    const handleConfirmDelete = () => {
+      setDeleteError('');
+      axios.post(API_ROUTES.YAZILI_BASIN_DELETE, { ids: selectedIds })
+        .then(() => {
+          return axios.get(API_ROUTES.YAZILI_BASIN);
+        })
+        .then((response) => {
+          const newTotalCount = response.data.count;
+          const newTotalPages = Math.ceil(newTotalCount / 10);
+          setTotalPages(newTotalPages);
+    
+          let updatedPage = currentPage;
+          if (newTotalPages < currentPage) {
+            updatedPage = newTotalPages;
+          }
+    
+          if (newTotalPages === 0) {
+            setCurrentPage(1);
+            setData([]);
             setSelectedRows({});
-          })
-          .catch(error => {
-            console.error('Toplu silme işlemi sırasında hata oluştu:', error);
-            setDeleteError('Veriler silinirken bir hata oluştu. Lütfen tekrar deneyin.');
-          });
-      };
-      
+            setDeleteConfirmOpen(false);
+          } else {
+            setCurrentPage(updatedPage);
+            return axios.get(API_ROUTES.YAZILI_BASIN_PAGINATIONS.replace('currentPage', updatedPage));
+          }
+        })
+        .then((response) => {
+          if (response) {
+            setData(response.data.results);
+          }
+          setSelectedRows({});
+          setDeleteConfirmOpen(false);
+        })
+        .catch((error) => {
+          console.error('Toplu silme işlemi sırasında hata oluştu:', error);
+          setDeleteError('Veriler silinirken bir hata oluştu. Lütfen tekrar deneyin.');
+          setDeleteConfirmOpen(false);
+        });
+    };
+
     
     
       if (isLoading) {
@@ -344,7 +378,7 @@ export default function YaziliBasin() {
                       variant="contained"
                       size="small"
                       startIcon={<DeleteIcon />}
-                      onClick={handleDeleteSelected}
+                      onClick={handleOpenDeleteConfirm}
                       style={{ backgroundColor: "#d32f2f", color: '#fff', marginBottom: "10px", textTransform: 'none', fontSize: '0.75rem' }}
                     >
                       Sil
@@ -410,6 +444,7 @@ export default function YaziliBasin() {
                     >
                       Ekle
                     </Button>
+
                   </div>
                   {data.length > 0 && (
                     <Pagination
@@ -491,7 +526,7 @@ export default function YaziliBasin() {
             </div>
 
             
-            <FormControlLabel control={<Checkbox checked={selectedItem ? selectedItem.durum : false} onChange={(e) => setSelectedItem({ ...selectedItem, durum: e.target.checked })} />} label="Durum" />
+            <FormControlLabel control={<Checkbox checked={selectedItem ? selectedItem.durum : false} onChange={(e) => setSelectedItem({ ...selectedItem, durum: e.target.checked })} />} label="Aktif" />
           </DialogContent>
           {saveError && <p style={{ color: 'red', marginLeft: '25px' }}>{saveError}</p>}
           {uyariMesaji && <p style={{ color: 'red', marginLeft: '25px' }}>{uyariMesaji}</p>}
@@ -574,7 +609,7 @@ export default function YaziliBasin() {
     
         <FormControlLabel
           control={<Checkbox checked={newItem.durum || false} onChange={(e) => setNewItem({ ...newItem, durum: e.target.checked })} />}
-          label="Durum"
+          label="Aktif"
         />
       </DialogContent>
      
@@ -588,13 +623,42 @@ export default function YaziliBasin() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={handleCloseDeleteConfirm}
+      >
+        <DialogTitle>Silme Onayı</DialogTitle>
+        <DialogContent>
+          <Typography>Seçili öğeleri silmek istediğinizden emin misiniz?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteConfirm} color="primary">
+            İPTAL
+          </Button>
+          <Button onClick={handleConfirmDelete} color="primary" autoFocus>
+            SİL
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={warningDialogOpen}
+        onClose={handleCloseWarningDialog}
+      >
+        <DialogTitle>Uyarı</DialogTitle>
+        <DialogContent>
+          <Typography>Silmek için önce bir öğe seçmelisiniz.</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseWarningDialog} color="primary">
+            Tamam
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+
     </>
-
-
-
-
-
-    
 
 
         </>
