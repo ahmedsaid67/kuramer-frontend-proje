@@ -1,0 +1,155 @@
+/* Overlay to cover the entire screen */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #000; /* Solid black background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1100; /* Ensure it's above other content */
+  overflow: hidden; /* Prevent scrolling */
+}
+
+/* Container for the popup content */
+.popupContainer {
+  position: relative;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  background: #000; /* Black background for content area */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Nav bar at the top of the popup */
+.navBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.9); /* Slightly darker background for visibility */
+  transition: opacity 0.3s;
+  z-index: 1110; /* Ensure nav bar is above other content */
+}
+
+/* Hide the nav bar and progress bar */
+.hideNav {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Show the nav bar and progress bar */
+.showNav {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Style for the close button and fullscreen button */
+.closeButton, .fullscreenButton {
+  color: #fff; /* White color for the buttons */
+  background: transparent;
+  border: none;
+  font-size: 24px; /* Larger size for better visibility */
+  cursor: pointer;
+}
+
+/* Style for zoom buttons */
+.zoomButton {
+  color: #fff; /* White color for zoom buttons */
+  background: transparent;
+  border: none;
+  font-size: 24px; /* Larger size for better visibility */
+  cursor: pointer;
+}
+
+/* Title of the book */
+.bookTitle {
+  color: #fff; /* White color for the title */
+  font-size: 1em; /* Larger font size for better visibility */
+  margin-left: 20px; /* Margin to ensure it is properly spaced from the left edge */
+}
+
+/* Slider container */
+.slider {
+  width: 100%;
+  height: 100%; /* Adjust height to avoid overlap with nav bar and progress bar */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative; /* Ensure arrows are positioned correctly */
+  overflow: hidden; /* Prevent overflow */
+}
+
+/* Container for the image */
+.imageContainer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden; /* Hide overflowed part of the image */
+}
+
+/* Center images within the slider */
+.pageImage {
+  display: block;
+  max-width: 100%; /* Limit width to container width */
+  max-height: 100vh; /* Limit height to container height */
+  object-fit: contain; /* Maintain aspect ratio */
+  margin: auto; /* Center horizontally and vertically */
+  transition: transform 0.3s; /* Smooth zoom transition */
+}
+
+/* Style for the next and previous arrows */
+.nextArrow,
+.prevArrow {
+  background: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
+  border-radius: 50%;
+  width: 60px; /* Increase size for better visibility */
+  height: 60px; /* Increase size for better visibility */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #000; /* Black color for arrow icons */
+  position: absolute;
+  z-index: 1110; /* Ensure arrows are above other content */
+  font-size: 30px; /* Larger arrow icons */
+  transition: opacity 0.3s;
+}
+
+/* Custom arrow icons */
+.nextArrow {
+  right: 20px; /* Position to the right side */
+}
+
+.prevArrow {
+  left: 20px; /* Position to the left side */
+}
+
+/* Progress bar container */
+.progressBarContainer {
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.8); /* Slightly transparent black background for the progress bar */
+}
+
+/* Style for the progress bar */
+.progressBar {
+  height: 5px; /* Height of the progress bar */
+  background: #555; /* Background color for the progress bar */
+  transition: width 0.3s; /* Smooth transition for the progress bar */
+}

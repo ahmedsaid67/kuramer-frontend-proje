@@ -21,7 +21,7 @@ import { useRouter } from 'next/router';
 import { useSelector } from 'react-redux';
 import { API_ROUTES } from '../../../utils/constants';
 import { formatISO } from 'date-fns';
-
+import {TextEditor} from '../../../compenent/Editor';
 
 const StyledTableCell = styled(TableCell)({
     fontWeight: 'bold',
@@ -50,6 +50,7 @@ export default function Sempozyumlar() {
       tarih:"",
       konum:"",
       kapakFotografi: null,
+      icerik:"",
       pdfDosya: null,
       yayin: null,
       album:null,
@@ -113,6 +114,7 @@ export default function Sempozyumlar() {
       setHasError(false);
       try {
         const response = await axios.get(API_ROUTES.VIDEO_GALERI_LIST)
+        
         setVideoGaleri(response.data);
       } catch (error) {
         setHasError(true);
@@ -175,6 +177,7 @@ export default function Sempozyumlar() {
       setHasError(false);
       try {
         const response = await axios.get(API_ROUTES.CALISTAYLAR_PAGINATIONS.replace("currentPage",currentPage))
+        console.log(response);
         setData(response.data.results);
         setTotalPages(Math.ceil(response.data.count / 10));
       } catch (error) {
@@ -214,6 +217,7 @@ export default function Sempozyumlar() {
             baslik: '',
             tarih:"",
             konum:"",
+            icerik:"",
             kapakFotografi: null,
             pdfDosya: null,
             yayin:null,
@@ -242,7 +246,7 @@ export default function Sempozyumlar() {
     
       const handleSave = (editedItem) => {
   
-        if (!editedItem.baslik || !editedItem.kapak_fotografi || !editedItem.pdf_dosya || !editedItem.tarih || !editedItem.konum ) {
+        if (!editedItem.baslik || !editedItem.kapak_fotografi ||  !editedItem.tarih || !editedItem.konum ) {
           setUyariMesaji("Lütfen tüm alanları doldurunuz.");
           return;
         }
@@ -255,12 +259,13 @@ export default function Sempozyumlar() {
           formData.append('kapak_fotografi', editedItem["kapak_fotografi_file"]);
         }
 
-        if (typeof editedItem["pdf_dosya"] === "object") {
+        if ( editedItem["pdf_dosya"] &&  typeof editedItem["pdf_dosya"] === "object") {
           formData.append("pdf_dosya", editedItem["pdf_dosya"]);
         }
 
         formData.append("durum", editedItem["durum"]);
         formData.append("baslik", editedItem["baslik"]);
+        formData.append("icerik", editedItem["icerik"]);
         formData.append("tarih", editedItem["tarih"]);
         formData.append("konum", editedItem["konum"]);
 
@@ -280,6 +285,7 @@ export default function Sempozyumlar() {
         axios.put(API_ROUTES.CALISTAYLAR_DETAIL.replace("id",editedItem.id), formData)
           .then(response => {
             const updatedData = data.map(item => item.id === editedItem.id ? response.data : item);
+            console.log(updatedData);
             setData(updatedData);
             handleClose();
             setSaveError("");  // Hata mesajını temizle
@@ -298,7 +304,7 @@ export default function Sempozyumlar() {
     
       const handleAddNewItem = () => {
 
-        if (!newItem.baslik || !newItem.kapakFotografi || !newItem.pdfDosya || !newItem.tarih || !newItem.konum ) {
+        if (!newItem.baslik || !newItem.kapakFotografi || !newItem.tarih || !newItem.konum ) {
 
           setUyariMesajiEkle("Lütfen tüm alanları doldurunuz.");
           return;
@@ -310,8 +316,12 @@ export default function Sempozyumlar() {
         formData.append("durum", newItem["durum"]);
         formData.append("baslik", newItem["baslik"]);
         formData.append("tarih", newItem["tarih"]);
+        formData.append("icerik", newItem["icerik"]);
         formData.append("konum", newItem["konum"]);
-        formData.append("pdf_dosya", newItem["pdfDosya"]);
+
+        if (newItem.pdfDosya){
+          formData.append("pdf_dosya", newItem["pdfDosya"]);
+          }
         if (newItem.yayin){
           formData.append("yayin_id", newItem.yayin.id);
         }
@@ -622,6 +632,10 @@ export default function Sempozyumlar() {
         setNewItem({ ...newItem, album: null });
         setEkleSecilenAlbumId(null)
       };
+
+      const removePdf = () => {
+        setNewItem({...newItem, pdfDosya: null});
+      }
   
 
 
@@ -730,6 +744,7 @@ export default function Sempozyumlar() {
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>PDF Dosya</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Yayın</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Albüm</TableCell>
+                        
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Durum</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Detaylar</TableCell>
                       </TableRow>
@@ -905,7 +920,7 @@ export default function Sempozyumlar() {
                     {selectedItem && selectedItem.pdf_dosya ? (
                         <>
                             <Typography variant="subtitle1" style={{ marginBottom: '10px', position: 'absolute', top: 0, left: 10 }}>
-                                PDF Dosyası:
+                                PDF Dosyası  (İsteğe Bağlı):
                             </Typography>
                             <div
                                 style={{
@@ -939,7 +954,7 @@ export default function Sempozyumlar() {
                     ) : (
                         <>
                         <Typography variant="subtitle1" style={{ marginBottom: '10px', position: 'absolute', top: 0, left: 10 }}>
-                                PDF Dosyası:
+                                PDF Dosyası (İsteğe Bağlı):
                         </Typography>
                         <label htmlFor="pdf_dosyaInput">
                             <IconButton
@@ -1050,7 +1065,15 @@ export default function Sempozyumlar() {
                 </div>
             </div>
 
-            
+             {/* icerik*/}
+             {selectedItem && (
+              <>
+                <Typography variant="subtitle1" style={{ marginBottom: '10px', marginTop:'10px'}}>
+                  İçerik (isteğe bağlı) :
+                </Typography>
+                <TextEditor selectedItem={selectedItem} setSelectedItem={setSelectedItem}/>
+              </>
+            )}
 
             <FormControlLabel control={<Checkbox checked={selectedItem ? selectedItem.durum : false} onChange={(e) => setSelectedItem({ ...selectedItem, durum: e.target.checked })} />} label="Aktif" />
           </DialogContent>
@@ -1259,7 +1282,7 @@ export default function Sempozyumlar() {
           {!newItem.pdfDosya ? (
             <>
             <Typography variant="subtitle1"  style={{ marginBottom: '10px', position: 'absolute', top: 0, left: 10 }}>
-                    PDF Dosyası:
+                    PDF Dosyası (İsteğe Bağlı):
             </Typography>
             <label htmlFor="pdf_dosyaInput">
               <IconButton
@@ -1273,7 +1296,7 @@ export default function Sempozyumlar() {
           ) : (
             <>
             <Typography variant="subtitle1"  style={{ marginBottom: '10px', position: 'absolute', top: 0, left: 10 }}>
-                    PDF Dosyası:
+                    PDF Dosyası (İsteğe Bağlı):
             </Typography>
             <div
                                 style={{
@@ -1401,7 +1424,14 @@ export default function Sempozyumlar() {
                 </div>
             </div>
 
-
+            {newItem && (
+              <>
+                <Typography variant="subtitle1" style={{ marginBottom: '10px', marginTop:'10px'}}>
+                  İçerik (isteğe bağlı):
+                </Typography>
+                <TextEditor selectedItem={newItem} setSelectedItem={setNewItem}/>
+              </>
+            )}
 
         <FormControlLabel
           control={<Checkbox checked={newItem.durum || false} onChange={(e) => setNewItem({ ...newItem, durum: e.target.checked })} />}

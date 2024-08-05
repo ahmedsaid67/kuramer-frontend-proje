@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { AppBar, Box,Toolbar,Divider, IconButton, Typography, List, ListItem, ListItemText, Drawer, CssBaseline } from '@mui/material';
+import { useDispatch } from 'react-redux';
+import { AppBar, Box, Toolbar, IconButton, Typography, List, ListItem, ListItemText, CssBaseline, CircularProgress } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import Head from 'next/head';
 import styles from '../styles/Sidebar.module.css';
-import { useSelector,useDispatch } from 'react-redux';
-import { submitLogout } from '../context/features/auth/loginSlice';
-import CircularProgress from '@mui/material/CircularProgress';
-import Head from 'next/head'
 
 
-const drawerWidth = 240;
+const drawerWidth = 270;
 
 const MenuListItems = [
  
@@ -32,16 +32,6 @@ const MenuListItems = [
     id: 3,
     text: 'Popup',
     url: '/panel/popup',
-  },
-  {
-    id: 4,
-    text: 'Sayfalar',
-    url: '/panel/sayfalar',
-  },
-  {
-    id: 44444444,
-    text: 'Ana Sayfa Bileşenleri',
-    url: '/panel/home-page-compenents',
   },
   {
     id: 5,
@@ -151,21 +141,21 @@ const MenuListItems = [
   // Diğer öğeleri de benzer şekilde ekleyebilirsiniz.
 ];
 
-function NestedList({ children }) {
+const NestedList = ({ children }) => {
   const router = useRouter();
+  const dispatch = useDispatch();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeMainTab, setActiveMainTab] = useState(null);
   const [activeSubTab, setActiveSubTab] = useState(null);
   const [activeSubSubTab, setActiveSubSubTab] = useState(null);
+  const [expandedMainTabs, setExpandedMainTabs] = useState({});
   const [selectedSubItems, setSelectedSubItems] = useState([]);
   const [selectedSubSubItems, setSelectedSubSubItems] = useState([]);
-  const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(false);
 
-
   useEffect(() => {
-    const handleStart = (url) => setIsLoading(true);
-    const handleComplete = (url) => setIsLoading(false);
+    const handleStart = () => setIsLoading(true);
+    const handleComplete = () => setIsLoading(false);
 
     router.events.on('routeChangeStart', handleStart);
     router.events.on('routeChangeComplete', handleComplete);
@@ -179,10 +169,9 @@ function NestedList({ children }) {
   }, [router]);
 
   useEffect(() => {
-    // URL yolu üzerinden aktif öğeleri belirle
     const path = router.pathname;
     let activeMainItem, activeSubItem, activeSubSubItem;
-  
+
     MenuListItems.forEach(item => {
       if (item.url === path) {
         activeMainItem = item;
@@ -201,10 +190,10 @@ function NestedList({ children }) {
         });
       });
     });
-  
-    // Bulunan aktif öğelere göre state'i güncelle
+
     if (activeMainItem) {
       setActiveMainTab(activeMainItem.id);
+      setExpandedMainTabs(prev => ({ ...prev, [activeMainItem.id]: true }));
       setSelectedSubItems(activeMainItem.children || []);
     }
     if (activeSubItem) {
@@ -216,258 +205,214 @@ function NestedList({ children }) {
     }
   }, [router.pathname]);
 
-
-  const logout=()=>{
-    dispatch(submitLogout())
-  }
-
-
-  
-  
-
-  
-  
+  const logout = () => {
+    dispatch(submitLogout());
+  };
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
   const handleMainTabChange = (item) => {
-    setActiveMainTab(item.id);
-    setSelectedSubItems(item.children || []);
-  
-    if (item.children && item.children.length > 0) {
-      // İlk alt öğeyi aktif yap
-      const firstSubItem = item.children[0];
-      setActiveSubTab(firstSubItem.id);
-      setSelectedSubSubItems(firstSubItem.children || []);
-  
-      // İlk alt öğenin alt öğeleri varsa, onların da ilkini aktif yap
-      if (firstSubItem.children && firstSubItem.children.length > 0) {
-        setActiveSubSubTab(firstSubItem.children[0].id);
-      } else {
-        setActiveSubSubTab(null);
-      }
-  
-      // Yönlendirme işlemi
-      if (firstSubItem.url) {
-        router.push(firstSubItem.url);
-      } else if (firstSubItem.children && firstSubItem.children.length > 0 && firstSubItem.children[0].url) {
-        router.push(firstSubItem.children[0].url);
-      }
-    } else {
+    const isExpanded = expandedMainTabs[item.id];
+    setExpandedMainTabs(prev => ({ ...prev, [item.id]: !isExpanded }));
+    
+    if (!isExpanded) {
+      setActiveMainTab(item.id);
+      setSelectedSubItems(item.children || []);
+      setActiveSubTab(null);
+      setSelectedSubSubItems([]);
       if (item.url) {
         router.push(item.url);
       }
-      // Alt öğeler için aktiflikleri temizle
+    } else {
+      setActiveMainTab(null);
+      setSelectedSubItems([]);
       setActiveSubTab(null);
       setSelectedSubSubItems([]);
     }
   };
-  
-  
-  const handleSubTabChange = (subItem, parentItemId) => {
-    // Mevcut aktif alt öğeyi ve alt-alt öğelerini güncelle
-    setActiveSubTab(subItem.id);
-    setSelectedSubSubItems(subItem.children || []);
-    // Mevcut aktif ana öğeyi güncelle
-    if (parentItemId && parentItemId !== activeMainTab) {
-      setActiveMainTab(parentItemId);
-      const parentItem = MenuListItems.find(item => item.id === parentItemId);
-      setSelectedSubItems(parentItem.children || []);
-    }
-    // İlk alt-alt öğeyi aktif yap
-    if (subItem.children && subItem.children.length > 0) {
-      setActiveSubSubTab(subItem.children[0].id);
-      // İlk alt-alt öğenin sayfasına yönlendir
-      if (subItem.children[0].url) {
-        router.push(subItem.children[0].url);
-      }
+
+  const handleSubTabChange = (item) => {
+    if (item.url) {
+      router.push(item.url);
     } else {
-      // Alt-alt öğeler yoksa, mevcut alt öğenin sayfasına yönlendir
-      if (subItem.url) {
-        setActiveSubSubTab(null);
-        router.push(subItem.url);
-      }
+      setActiveSubTab((prev) => (prev === item.id ? null : item.id));
+      setSelectedSubSubItems(item.children || []);
     }
   };
   
-  
-  const handleSubSubTabChange = (subSubItem) => {
-    setActiveSubSubTab(subSubItem.id);
-    
-    // Alt-alt öğenin ebeveynini bul
-    const parentSubItem = selectedSubItems.find(item => item.children?.some(child => child.id === subSubItem.id));
-    if (parentSubItem) {
-      setActiveSubTab(parentSubItem.id);
-  
-      // Eğer bu alt öğenin de ebeveyni varsa onu da bul ve aktif yap
-      const mainParentItem = MenuListItems.find(item => item.children?.some(child => child.id === parentSubItem.id));
-      if (mainParentItem) {
-        setActiveMainTab(mainParentItem.id);
-      }
-    }
-  
-    // Yönlendirme
-    if (subSubItem.url) {
-      router.push(subSubItem.url);
+
+  const handleSubSubTabChange = (item) => {
+    if (item.url) {
+      router.push(item.url);
+    } else {
+      setActiveSubSubTab(item.id);
     }
   };
-
-
-
-  
-
-
-  
-
-  const renderSubItems = () => (
-    
-    <Box sx={{ width: drawerWidth }}>
-      <Typography 
-        variant="h6" // Daha büyük bir başlık boyutu
-        noWrap
-        component="div"
-        style={{
-          fontWeight: 'bold', // Kalın yazı tipi
-          color: '#1976d2', // Dikkat çekici bir renk
-          fontSize: "16px",
-          marginBottom:"20px",
-          marginTop:"20px",
-
-        }}
-      >
-        {activeMainTab && MenuListItems.find(item => item.id === activeMainTab).text}
-      </Typography>
-      <List>
-        {selectedSubItems.map((subItem) => (
-          <React.Fragment key={subItem.id}>
-            <ListItem 
-              
-              onClick={() => handleSubTabChange(subItem)}
-              className={styles.nested}
-            >
-              <ListItemText 
-                primary={
-                  <Typography 
-                    variant="subtitle1" 
-                    style={{ 
-                      color: activeSubTab === subItem.id ? '#000000' : 'inherit', // Seçili ise koyu renk
-                      fontWeight: activeSubTab === subItem.id ? '700' : 'normal', // Seçili ise kalın font
-                      fontSize: "14px",
-                    }}
-                  >
-                    {subItem.text}
-                  </Typography>
-                }
-              />
-            </ListItem>
-            <List component="div" disablePadding className={styles.nestedList}>
-              {subItem.children?.map((subSubItem) => (
-                <ListItem 
-                  key={subSubItem.id}
-                  onClick={() => handleSubSubTabChange(subSubItem)}
-                  className={styles.nestedSubList}
-                >
-                  <ListItemText 
-                    primary={
-                      <Typography 
-                        variant="subtitle1" 
-                        style={{ 
-                          color: activeSubSubTab === subSubItem.id ? '#000000' : 'inherit', // Seçili ise koyu renk
-                          fontWeight: activeSubSubTab === subSubItem.id ? '700' : 'normal', // Seçili ise kalın font
-                          fontSize: "14px",
-                        }}
-                      >
-                        {subSubItem.text}
-                      </Typography>
-                    }
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </React.Fragment>
-        ))}
-      </List>
-    </Box>
-    
-    
-  );
-
-
-
-
-  
-  
 
   return (
     <>
-    <Head>
-                <title>Panel | Kuramer</title>
-                <link rel="icon" href="/kuramerlogo.png" />
-    </Head>
-    
-    
-    <Box sx={{ display: 'flex' }}>
-      <CssBaseline />
-      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ marginRight: 2, display: { sm: 'none' } }}
+      <Head>
+        <title>Kuramer Panel</title>
+      </Head>
+      <Box sx={{ display: 'flex' }}>
+        <CssBaseline />
+        <AppBar position="fixed" sx={{ width: '100%', ml: { sm: `${drawerWidth}px` }, backgroundColor: 're', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)' }}>
+          <Toolbar>
+            <Typography variant="h6" noWrap component="div">
+              Kuramer
+            </Typography>
+            <Box sx={{ flexGrow: 1 }} />
+            <IconButton color="inherit" onClick={logout}>
+              <LogoutIcon />
+            </IconButton>
+          </Toolbar>
+        </AppBar>
+        <Box
+          component="nav"
+          sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 }, height:'100vh', position:'sticky', top:'0' }}
+        >
+          <Toolbar />
+          <Box
+            sx={{ overflowY: 'auto', height: 'calc(100vh - 64px)', bgcolor: '#3a3b3c', color: 'white' }}
           >
-            
-          </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Kuramer Panel
-          </Typography>
-          <IconButton
-            color="inherit"
-            aria-label="logout"
-            onClick={logout}
-          >
-            <LogoutIcon/>
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-      <div className={styles.sidebar}>
-        <div className={styles.toolbar}></div>
-        <div className={styles.drawerContent}>
-          <ul className={styles.menuList}>
-            {MenuListItems.map((item) => (
-              <li
-                key={item.id}
-                className={`${styles.menuItem} ${activeMainTab === item.id ? styles.active : ''}`}
-                onClick={() => handleMainTabChange(item)}
+            <List>
+              {MenuListItems.map(item => (
+                <React.Fragment key={item.id}>
+                  <ListItem
+                    button
+                    onClick={() => handleMainTabChange(item)}
+                    sx={{
+                      backgroundColor: '#3a3b3c',
+                      
+                      '&:hover': {
+                        backgroundColor: '#5a5a5a',
+                      },
+                      ...(activeMainTab === item.id && {
+                        backgroundColor: '#4a4a4a',
+                        borderLeft: '4px solid #507dac',
+                      })
+                    }}
+                  >
+                    <ListItemText
+                      primary={item.text}
+                      sx={{ color: 'white' }}
+                      primaryTypographyProps={{ fontSize: '0.9em' }}
+                    />
+                    {item.children && (
+                      <IconButton
+                        edge="end"
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMainTabChange(item);
+                        }}
+                      >
+                        {expandedMainTabs[item.id] ? <ExpandLessIcon sx={{ color: 'white' }} /> : <ExpandMoreIcon sx={{ color: 'white' }} />}
+                      </IconButton>
+                    )}
+                  </ListItem>
+                  {expandedMainTabs[item.id] && item.children && (
+                    <List component="div" disablePadding>
+                      {item.children.map(subItem => (
+                        <React.Fragment key={subItem.id}>
+                          <ListItem
+                            button
+                            onClick={() => handleSubTabChange(subItem)}
+                            sx={{
+                              pl: 4,
+                              backgroundColor: '#3a3b3c',
+                              '&:hover': {
+                                backgroundColor: '#5a5a5a'
+                              },
+                              ...(activeSubTab === subItem.id && {
+                                backgroundColor: '#4a4a4a',
+                                borderLeft: '4px solid #507dac',
+                                fontWeight: 'bold'
+                              })
+                            }}
+                          >
+                            <ListItemText
+                              primary={subItem.text}
+                              sx={{ color: 'white' }}
+                              primaryTypographyProps={{ fontSize: '0.9em' }}
+                            />
+                            {subItem.children && (
+                              <IconButton
+                                edge="end"
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSubTabChange(subItem);
+                                }}
+                              >
+                                {activeSubTab === subItem.id && subItem.children.length ? <ExpandLessIcon sx={{ color: 'white' }} /> : <ExpandMoreIcon sx={{ color: 'white' }} />}
+                              </IconButton>
+                            )}
+                          </ListItem>
+                          {activeSubTab === subItem.id && subItem.children && (
+                            <List component="div" disablePadding>
+                              {subItem.children.map(subSubItem => (
+                                <ListItem
+                                  button
+                                  key={subSubItem.id}
+                                  onClick={() => handleSubSubTabChange(subSubItem)}
+                                  sx={{
+                                    pl: 8,
+                                    backgroundColor: '#3a3b3c',
+                                    '&:hover': {
+                                      backgroundColor: '#5a5a5a'
+                                    },
+                                    ...(activeSubSubTab === subSubItem.id && {
+                                      backgroundColor: '#4a4a4a',
+                                      borderLeft: '4px solid #507dac',
+                                      fontWeight: 'bold'
+                                    })
+                                  }}
+                                >
+                                  <ListItemText
+                                    primary={subSubItem.text}
+                                    sx={{ color: 'white' }}
+                                    primaryTypographyProps={{ fontSize: '0.85em' }}
+                                  />
+                                </ListItem>
+                              ))}
+                            </List>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </List>
+                  )}
+                </React.Fragment>
+              ))}
+            </List>
+          </Box>
+        </Box>
+        <Box
+          component="main"
+          sx={{ flexGrow: 1, bgcolor: '#f5f5f5', p: 3 }}
+        >
+          <Toolbar />
+          <Box sx={{ position: 'relative', width: '100%' }}>
+            {isLoading && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                }}
               >
-                {item.text}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-      <Box component="main" sx={{ flexGrow: 1 }}>
-      <Toolbar />
-      <div className={styles.rightbar}>
-        <div className={styles.tabContainer}>
-          {renderSubItems()}
-        </div>
-
-        <div className={styles.content}>
-            {isLoading ? (
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
                 <CircularProgress />
-              </div>
-            ) : children }
-        </div>
-      </div>
-    </Box>
-    </Box>
+              </Box>
+            )}
+            {children}
+          </Box>
+        </Box>
+      </Box>
     </>
   );
-}
+};
 
 export default NestedList;

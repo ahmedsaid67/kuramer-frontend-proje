@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Container, Typography, Paper,Pagination, Table,Tooltip, TableBody, TableCell, TableHead, TableRow, Button, Dialog, DialogTitle, DialogContent, TextField, Checkbox, FormControlLabel, DialogActions } from '@mui/material';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Container, Typography, Paper,Pagination, Table,Tooltip, TableBody, TableCell, TableHead, TableRow, Button, Dialog, DialogTitle, DialogContent, TextField, Checkbox, FormControlLabel, DialogActions ,Box} from '@mui/material';
 import { styled } from '@mui/material/styles';
 import DeleteIcon from '@mui/icons-material/Delete';
 import InfoIcon from '@mui/icons-material/Info';
@@ -38,6 +38,8 @@ const CustomPopper = styled('div')({
 });
 
 
+
+
 export default function Mushaflar() {
     const [data, setData] = useState([]);
     const [open, setOpen] = useState(false);
@@ -70,12 +72,32 @@ export default function Mushaflar() {
 
     const [warningDialogOpen, setWarningDialogOpen] = useState(false);
 
+    const [filteredData, setFilteredData] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [displayedData, setDisplayedData] = useState([]);
+
+    
+
+    const [albumImages, setAlbumImages] = useState([]);
+    const [removedImageIds, setRemovedImageIds] = useState([]);
+    const [createImageAlbum, setCreateImageAlbum] = useState([]);
+    const imagesCount = useMemo(() => {
+      return albumImages.length + (createImageAlbum ? createImageAlbum.length : 0);
+  }, [albumImages, createImageAlbum]);
 
 
     const user = useSelector((state) => state.user);
     const router = useRouter();
 
 
+    const imgAlbumRemove = (imageId) => {
+      // Yeni dizi, seçilen ID'ye sahip olmayan tüm görselleri içerecek şekilde oluşturulur
+      const updatedImages = albumImages.filter(image => image.id !== imageId);
+      // albumImages state'ini güncelle
+      setAlbumImages(updatedImages);
+      setRemovedImageIds(prevIds => [...prevIds, imageId]);
+    };
 
 
 
@@ -107,14 +129,58 @@ export default function Mushaflar() {
       }
     }, [user]);
 
+    useEffect(() => {
+      const filtered = data.filter(item => item.ad.toLowerCase().includes(searchQuery.toLowerCase()));
+      setFilteredData(filtered);
+      // Sayfa numarasına göre kesme işlemi
+      const newDisplayedData = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+      setDisplayedData(newDisplayedData);
+
+      // Toplam sayfa sayısını güncelle
+      setTotalPages(Math.ceil(filtered.length / itemsPerPage));
+    }, [searchQuery, data, currentPage, itemsPerPage]);
+
+    const handleSearchChange = (event) => {
+      const { value } = event.target;
+      setSearchQuery(value);
+    };
+  
+    const handleItemsPerPageChange = async (event) => {
+      const newItemsPerPage = event.target.value;
+      setItemsPerPage(newItemsPerPage);
+    
+      // Verileri güncelle
+      try {
+        const response = await axios.get(API_ROUTES.KITAPLAR_GETFULL);
+        const totalCount = response.data.length || 0;
+        const totalPages = Math.ceil(totalCount / newItemsPerPage);
+    
+        // Mevcut sayfayı kontrol et ve uygun sayfayı ayarla
+        let updatedPage = currentPage;
+        if (totalPages < currentPage) {
+          updatedPage = totalPages > 0 ? totalPages : 1;
+        }
+    
+        // Verileri güncellenmiş sayfadan al
+        await fetchData(updatedPage);
+        
+        // Toplam sayfa sayısını güncelle
+        setTotalPages(totalPages);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+  
+  
+    
 
     const getData = async () => {
       setIsLoading(true); // Veri yükleme başlamadan önce
       setHasError(false);
       try {
-        const response = await axios.get(API_ROUTES.KITAPLAR_PAGINATIONS.replace("currentPage",currentPage))
-        setData(response.data.results);
-        setTotalPages(Math.ceil(response.data.count / 10));
+        const response = await axios.get(API_ROUTES.KITAPLAR_GETFULL)
+        setData(response.data);
+        setTotalPages(Math.ceil(response.data.count / itemsPerPage));
       } catch (error) {
         setHasError(true);
         // Opsiyonel: Hata detaylarını loglayabilir veya kullanıcıya gösterebilirsiniz.
@@ -122,6 +188,7 @@ export default function Mushaflar() {
         setIsLoading(false); // Veri yükleme tamamlandığında veya hata oluştuğunda
       }
     }
+
 
 
     useEffect(() => {
@@ -138,9 +205,15 @@ export default function Mushaflar() {
 
 
 
-    const handlePageChange = (event, value) => {
-        setCurrentPage(value);
-      };
+    const handlePageChange = (event, newPage) => {
+      setCurrentPage(newPage);
+      
+      // Sayfayı yumuşak bir şekilde yukarı kaydır
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    };
     
       const handleOpenAddDialog = () => {
         setOpenAddDialog(true);
@@ -168,6 +241,12 @@ export default function Mushaflar() {
         if (item.kitap_kategori){
           setSelectedKategori(item.kitap_kategori.id)
         }
+
+        axios.get(API_ROUTES.CONTENT_IMAGE_KATEGORI_FILTER.replace("seciliKategori", item.id)) 
+        .then(response => {
+            setAlbumImages(response.data);
+        })
+        .catch(error => setSaveError("Bir hata oluştu. Lütfen daha sonra tekrar deneyiniz."));
         
       };
       const handleClose = () => {
@@ -179,23 +258,20 @@ export default function Mushaflar() {
     
     
     
-      const handleSave = (editedItem,kategoriId) => {
-  
-        if (!editedItem.ad || !editedItem.kapak_fotografi || !editedItem.yazar || !editedItem.yayin_tarihi || !editedItem.sayfa_sayisi || !editedItem.isbn || !editedItem.ozet || !kategoriId   ) {
+      const handleSave = async (editedItem, kategoriId) => {
+        if (!editedItem.ad || !editedItem.kapak_fotografi || !editedItem.yazar || !editedItem.yayin_tarihi || !editedItem.sayfa_sayisi || !editedItem.isbn || !editedItem.ozet || !kategoriId) {
           setUyariMesaji("Lütfen tüm alanları doldurunuz.");
           return;
         }
         setUyariMesaji("");
-
+      
         const formData = new FormData();
-
+      
         // Kapak fotoğrafı için orijinal dosyayı kullan
         if (editedItem["kapak_fotografi_file"]) {
           formData.append('kapak_fotografi', editedItem["kapak_fotografi_file"]);
         }
-
-        
-
+      
         formData.append("ad", editedItem["ad"]);
         formData.append("yazar", editedItem["yazar"]);
         formData.append("yayin_tarihi", editedItem["yayin_tarihi"]);
@@ -203,76 +279,151 @@ export default function Mushaflar() {
         formData.append("isbn", editedItem["isbn"]);
         formData.append("ozet", editedItem["ozet"]);
         formData.append("durum", editedItem["durum"]);
-
         formData.append("kitap_kategori_id", kategoriId);
-
-        
-        
-        setIsSaving(true);
-        axios.put(API_ROUTES.KITAPLAR_DETAIL.replace("slug",editedItem.slug), formData)
-          .then(response => {
-            const updatedData = data.map(item => item.id === editedItem.id ? response.data : item);
-            setData(updatedData);
-            handleClose();
-            setSaveError("");  // Hata mesajını temizle
-          })
-          .catch(error => {
-            console.error('Güncelleme sırasında hata oluştu:', error);
-            setSaveError("Veri güncellenirken bir hata oluştu. Lütfen tekrar deneyiniz.");  // Hata mesajını ayarla
-          })
-          .finally(() => {
-            setIsSaving(false); // İşlem tamamlandığında veya hata oluştuğunda
-          });
-      };
-    
-    
-    
-    
-      const handleAddNewItem = (kategoriId) => {
-
-        if (!newItem.ad || !newItem.kapakFotografi || !newItem.yazar || !newItem.yayinTarihi || !newItem.sayfaSayisi || !newItem.isbn || !newItem.ozet || !kategoriId ) {
-          setUyariMesajiEkle("Lütfen tüm alanları doldurunuz.");
-          return;
-        }
-        setUyariMesajiEkle("");
-
-        const formData = new FormData();
-        formData.append('kapak_fotografi', newItem["kapakFotografi_file"]);
-
-        formData.append("ad", newItem["ad"]);
-        formData.append("yazar", newItem["yazar"]);
-        formData.append("yayin_tarihi", newItem["yayinTarihi"]);
-        formData.append("sayfa_sayisi", newItem["sayfaSayisi"]);
-        formData.append("isbn", newItem["isbn"]);
-        formData.append("ozet", newItem["ozet"]);
-        formData.append("durum", newItem["durum"])
-
-        formData.append("kitap_kategori_id", kategoriId);
-        
-        setIsSaving(true);
-        axios.post(API_ROUTES.KITAPLAR, formData)
-          .then(response => {
-            // Mevcut sayfayı yeniden yüklüyoru
-            return axios.get(API_ROUTES.KITAPLAR_PAGINATIONS.replace("currentPage",currentPage))
-          })
-          .then(response => {
-            setData(response.data.results);
-            setTotalPages(Math.ceil(response.data.count / 10));
       
-            
-            
-            handleCloseAddDialog();
-
-            
-          })
-          .catch(error => {
-            console.error('Yeni veri eklerken hata oluştu:', error);
-            setSaveError("Yeni veri eklemesi sırasında bir hata meydana geldi. Lütfen işleminizi tekrar gerçekleştirmeyi deneyiniz."); 
-          })
-          .finally(() => {
-            setIsSaving(false); // İşlem tamamlandığında veya hata oluştuğunda
-          })
+        setIsSaving(true);
+      
+        try {
+          // PUT isteği ile kitabı güncelle
+          const response = await axios.put(API_ROUTES.KITAPLAR_DETAIL.replace("slug", editedItem.slug), formData);
+      
+          const updatedData = data.map(item => item.id === editedItem.id ? response.data : item);
+          setData(updatedData);
+          handleClose();
+          setSaveError("");  // Hata mesajını temizle
+      
+          // Görselleri yükle
+          if (createImageAlbum.length > 0) {
+            const imagePromises = createImageAlbum.map((item) => {
+              const albumFormData = new FormData();
+              albumFormData.append("kitap_id", editedItem.id); // newKitapId yerine editedItem.id kullanabilirsiniz
+              albumFormData.append("image", item.backFile);
+      
+              for (let pair of albumFormData.entries()) {
+                console.log(pair[0] + ': ' + pair[1]);
+              }
+      
+              return axios.post(API_ROUTES.CONTENT_IMAGE, albumFormData);
+            });
+            await Promise.all(imagePromises);
+          }
+      
+          // Silinmiş görselleri işleme
+          if (removedImageIds.length > 0) {
+            const stringIds = removedImageIds.map(id => id.toString());
+            await axios.post(API_ROUTES.CONTENT_IMAGE_DELETE, { ids: stringIds });
+          }
+      
+        } catch (error) {
+          console.error('Güncelleme sırasında hata oluştu:', error);
+          setSaveError("Veri güncellenirken bir hata oluştu. Lütfen tekrar deneyiniz.");  // Hata mesajını ayarla
+        } finally {
+          setIsSaving(false); // İşlem tamamlandığında veya hata oluştuğunda
+        }
       };
+      
+    
+    
+      const handleFileAlbum = (event) => {
+        const file = event.target.files[0];
+      
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                setCreateImageAlbum(prevItem => ([
+                    ...prevItem,
+                    {frontFile: e.target.result, backFile: file}
+
+                    
+                ]));
+
+
+            };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+
+        } 
+
+    };
+
+    
+
+    const imgCreateAlbumRemove = (uiIndex) => {
+      // UI'da görseller ters sıralı gösteriliyorsa, gerçek index'i hesapla
+      const realIndex = createImageAlbum.length - 1 - uiIndex;
+    
+      // Güncellenmiş album dizisini oluştur
+      const updatedAlbum = createImageAlbum.filter((_, index) => index !== realIndex);
+    
+      // Album state'ini güncelle
+      setCreateImageAlbum(updatedAlbum);
+    };
+    
+    
+
+    
+    const handleAddNewItem = async (kategoriId) => {
+  if (!newItem.ad || !newItem.kapakFotografi || !newItem.yazar || !newItem.yayinTarihi || !newItem.sayfaSayisi || !newItem.isbn || !newItem.ozet || !kategoriId) {
+    setUyariMesajiEkle("Lütfen tüm alanları doldurunuz.");
+    return;
+  }
+
+  setUyariMesajiEkle("");
+
+  const formData = new FormData();
+  formData.append('kapak_fotografi', newItem["kapakFotografi_file"]);
+  formData.append("ad", newItem["ad"]);
+  formData.append("yazar", newItem["yazar"]);
+  formData.append("yayin_tarihi", newItem["yayinTarihi"]);
+  formData.append("sayfa_sayisi", newItem["sayfaSayisi"]);
+  formData.append("isbn", newItem["isbn"]);
+  formData.append("ozet", newItem["ozet"]);
+  formData.append("durum", newItem["durum"]);
+  formData.append("kitap_kategori_id", kategoriId);
+
+  for (let pair of formData.entries()) {
+    console.log(`${pair[0]}: ${pair[1]}`);
+  }
+
+  setIsSaving(true);
+
+  try {
+    const response = await axios.post(API_ROUTES.KITAPLAR, formData);
+
+    const newKitapId = response.data.id;
+    console.log("New Kitap ID:", newKitapId);
+
+    const paginationResponse = await axios.get(API_ROUTES.KITAPLAR_PAGINATIONS.replace("currentPage", currentPage));
+    setData(paginationResponse.data.results);
+    setTotalPages(Math.ceil(paginationResponse.data.count / 10));
+
+    if (createImageAlbum.length > 0) {
+      const imagePromises = createImageAlbum.map((item) => {
+        const albumFormData = new FormData();
+        albumFormData.append("kitap_id", newKitapId);
+        albumFormData.append("image", item.backFile);
+
+        for (let pair of albumFormData.entries()) {
+          console.log(pair[0] + ': ' + pair[1]);
+        }
+
+        return axios.post(API_ROUTES.CONTENT_IMAGE, albumFormData);
+      });
+      await Promise.all(imagePromises);
+    }
+
+    // handleCloseAddDialog();
+  } catch (error) {
+    console.error('Yeni veri eklerken hata oluştu:', error);
+    setSaveError("Yeni veri eklemesi sırasında bir hata meydana geldi. Lütfen işleminizi tekrar gerçekleştirmeyi deneyiniz.");
+  } finally {
+    setIsSaving(false);
+    handleCloseAddDialog();
+  }
+};
+
+    
+      
       
       
       
@@ -313,47 +464,63 @@ export default function Mushaflar() {
       setDeleteConfirmOpen(false);
     };
 
-
-
-    const handleConfirmDelete = () => {
+    const handleConfirmDelete = async () => {
       setDeleteError('');
-      axios.post(API_ROUTES.KITAPLAR_DELETE, { ids: selectedIds })
-        .then(() => {
-          return axios.get(API_ROUTES.KITAPLAR);
-        })
-        .then((response) => {
-          const newTotalCount = response.data.count;
-          const newTotalPages = Math.ceil(newTotalCount / 10);
-          setTotalPages(newTotalPages);
+      try {
+        // Seçilen kitapları sil
+        await axios.post(API_ROUTES.KITAPLAR_DELETE, { ids: selectedIds });
     
-          let updatedPage = currentPage;
-          if (newTotalPages < currentPage) {
-            updatedPage = newTotalPages;
-          }
+        // Güncellenmiş verileri al
+        const response = await axios.get(API_ROUTES.KITAPLAR_GETFULL);
+        const totalCount = response.data.length || 0;
+        const totalPages = Math.ceil(totalCount / itemsPerPage);
     
-          if (newTotalPages === 0) {
-            setCurrentPage(1);
-            setData([]);
-            setSelectedRows({});
-            setDeleteConfirmOpen(false);
-          } else {
-            setCurrentPage(updatedPage);
-            return axios.get(API_ROUTES.KITAPLAR_PAGINATIONS.replace('currentPage', updatedPage));
-          }
-        })
-        .then((response) => {
-          if (response) {
-            setData(response.data.results);
-          }
-          setSelectedRows({});
-          setDeleteConfirmOpen(false);
-        })
-        .catch((error) => {
-          console.error('Toplu silme işlemi sırasında hata oluştu:', error);
-          setDeleteError('Veriler silinirken bir hata oluştu. Lütfen tekrar deneyin.');
-          setDeleteConfirmOpen(false);
-        });
+        // Mevcut sayfayı kontrol et ve uygun sayfayı ayarla
+        let updatedPage = currentPage;
+        if (totalPages < currentPage) {
+          // Eğer mevcut sayfa toplam sayfadan büyükse, son sayfaya geç
+          updatedPage = totalPages > 0 ? totalPages : 1;
+        }
+    
+        // Güncellenmiş sayfanın verilerini al
+        await fetchData(updatedPage);
+    
+      } catch (error) {
+        console.error('Error deleting data:', error);
+        setDeleteError('Veriler silinirken bir hata oluştu. Lütfen tekrar deneyin.');
+      } finally {
+        setDeleteConfirmOpen(false);
+      }
     };
+    
+    
+    const fetchData = async (page) => {
+      setIsLoading(true);
+      try {
+        const response = await axios.get(API_ROUTES.KITAPLAR_GETFULL);
+        const dataItems = response.data || [];
+        const totalCount = dataItems.length || 0;
+        const totalPages = Math.ceil(totalCount / itemsPerPage);
+    
+        // Verileri ve toplam sayfa sayısını güncelle
+        setData(dataItems);
+        setTotalPages(totalPages);
+    
+        // Mevcut sayfayı kontrol et ve ayarla
+        if (page > totalPages) {
+          setCurrentPage(totalPages > 0 ? totalPages : 1);
+        } else {
+          setCurrentPage(page);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    
+    
 
 
 
@@ -465,122 +632,156 @@ export default function Mushaflar() {
     return(
         <>
              <>
-             <Container maxWidth="lg" style={{  position: 'relative' }}>
-                {deleteError && <div style={{ color: '#f44336', textAlign: 'center', marginBottom: '10px', fontSize: '0.75rem' }}>{deleteError}</div>}
-                <Paper elevation={2} style={{ padding: '15px', overflowX: 'auto', backgroundColor: 'white' }}>
-                  {data.length > 0 && (
-                    <Button
-                      variant="contained"
-                      size="small"
-                      startIcon={<DeleteIcon />}
-                      onClick={handleOpenDeleteConfirm}
-                      style={{ backgroundColor: "#d32f2f", color: '#fff', marginBottom: "10px", textTransform: 'none', fontSize: '0.75rem' }}
-                    >
-                      Sil
-                    </Button>
-                  )}
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow style={{ backgroundColor: '#1976d2' }}> 
-                        <TableCell padding="checkbox">
-                          <Checkbox
-                            onChange={handleSelectAllRows}
-                            checked={Object.keys(selectedRows).length > 0 && Object.keys(selectedRows).length === data.length}
-                            indeterminate={Object.keys(selectedRows).length > 0 && Object.keys(selectedRows).length < data.length}
-                            size="small"
-                            style={{ color: '#fff' }}  
-                          />
-                        </TableCell>
-                        <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Kitap Adı</TableCell>
-                        <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Yazar</TableCell>
-                        <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Yayın Tarihi</TableCell>
-                        <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Sayfa Sayısı</TableCell>
-                        <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Isbn</TableCell>
-                        <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Kapak Fotoğrafı</TableCell>
-                        <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Özet</TableCell>
-                        <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Kitap Serisi</TableCell>
-                        <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Durum</TableCell>
-                        <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Detaylar</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {data.map(row => (
-                        <TableRow key={row.id}>
-                          <TableCell padding="checkbox">
-                            <Checkbox
-                              checked={selectedRows[row.id] || false}
-                              onChange={() => handleSelectRow(row.id)}
-                              size="small"
-                            />
-                          </TableCell>
-                          <TableCell style={{ fontSize: '0.75rem', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            <Tooltip title={row.ad} placement="top">
-                              <span>{truncateText(row.ad, 6)}</span>
-                            </Tooltip>
-                          </TableCell>
-                          <TableCell style={{ fontSize: '0.75rem', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            <Tooltip title={row.yazar} placement="top">
-                              <span>{truncateText(row.yazar, 4)}</span>
-                            </Tooltip>
-                          </TableCell>
-                          <TableCell style={{ fontSize: '0.75rem' }}>{row.yayin_tarihi}</TableCell>
-                          <TableCell style={{ fontSize: '0.75rem' }}>{row.sayfa_sayisi}</TableCell>
-                          <TableCell style={{ fontSize: '0.75rem', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            <Tooltip title={row.isbn} placement="top">
-                              <span>
-                                {truncateText(row.isbn, 4)}
-                              </span>
-                            </Tooltip>
-                          </TableCell>
-                          <TableCell style={{ fontSize: '0.75rem' }}>{row.kapak_fotografi ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
-                          <TableCell style={{ fontSize: '0.75rem' }}>{row.ozet ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
-                          <TableCell style={{ fontSize: '0.75rem', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            <Tooltip title={row.kitap_kategori ? row.kitap_kategori.baslik : 'Mevcut Değil'} placement="top">
-                              <span>
-                                {truncateText(row.kitap_kategori ? row.kitap_kategori.baslik : 'Mevcut Değil', 9)}
-                              </span>
-                            </Tooltip>
-                          </TableCell>
-                          <TableCell style={{ fontSize: '0.75rem' }}>{row.durum ? 'Aktif' : 'Pasif'}</TableCell>
-                          <TableCell>
-                            <Button
-                              variant="contained"
-                              size="small"
-                              startIcon={<InfoIcon />}
-                              onClick={() => handleOpen(row)}
-                              style={{ backgroundColor: '#1976d2', color: '#fff', textTransform: 'none', fontSize: '0.75rem' }}
-                            >
-                              Detaylar
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                  <div style={{ textAlign: 'right', marginTop: '10px' }}>
-                    <Button
-                      variant="contained"
-                      size="small"
-                      style={{ backgroundColor: '#388e3c', color: '#fff', textTransform: 'none', fontSize: '0.75rem' }}
-                      onClick={handleOpenAddDialog}
-                      startIcon={<AddIcon />}
-                    >
-                      Ekle
-                    </Button>
+             <Container maxWidth="lg" style={{ position: 'relative' }}>
+                {deleteError && (
+                  <div style={{ color: '#f44336', textAlign: 'center', marginBottom: '10px', fontSize: '0.75rem' }}>
+                    {deleteError}
                   </div>
-                  {data.length > 0 && (
-                    <Pagination
-                      count={totalPages}
-                      page={currentPage}
-                      onChange={handlePageChange}
-                      variant="outlined"
-                      size="small"
-                      style={{ marginTop: '10px', display: 'flex', justifyContent: 'center' }}
-                    />
+                )}
+                <Paper elevation={2} style={{ padding: '15px', overflowX: 'auto', backgroundColor: 'white' }}>
+                  {isLoading ? (
+                    <Box display="flex" justifyContent="center" alignItems="center" height="300px">
+                      <CircularProgress />
+                    </Box>
+                  ) : (
+                    <>
+                      {data.length > 0 && (
+                        <Button
+                          variant="contained"
+                          size="small"
+                          startIcon={<DeleteIcon />}
+                          onClick={handleOpenDeleteConfirm}
+                          style={{ backgroundColor: "#d32f2f", color: '#fff', marginBottom: "10px", textTransform: 'none', fontSize: '0.75rem' }}
+                        >
+                          Sil
+                        </Button>
+                      )}
+                      <Box mb={2} display="flex" justifyContent="space-between" alignItems="center">
+                        <TextField
+                          variant="outlined"
+                          size="small"
+                          label="Kitap Arama"
+                          value={searchQuery}
+                          onChange={handleSearchChange}
+                          fullWidth
+                        />
+                        <FormControl variant="outlined" size="small" style={{ minWidth: 120, marginLeft: '10px' }}>
+                          <InputLabel>Sayfa Başına</InputLabel>
+                          <Select
+                            value={itemsPerPage}
+                            onChange={handleItemsPerPageChange}
+                            label="Sayfa Başına"
+                          >
+                            <MenuItem value={10}>10</MenuItem>
+                            <MenuItem value={30}>30</MenuItem>
+                            <MenuItem value={50}>50</MenuItem>
+                            <MenuItem value={100}>100</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Box>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow style={{ backgroundColor: '#1976d2' }}>
+                            <TableCell padding="checkbox">
+                              <Checkbox
+                                onChange={handleSelectAllRows}
+                                checked={Object.keys(selectedRows).length > 0 && Object.keys(selectedRows).length === data.length}
+                                indeterminate={Object.keys(selectedRows).length > 0 && Object.keys(selectedRows).length < data.length}
+                                size="small"
+                                style={{ color: '#fff' }}
+                              />
+                            </TableCell>
+                            <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Kitap Adı</TableCell>
+                            <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Yazar</TableCell>
+                            <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Yayın Tarihi</TableCell>
+                            <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Sayfa Sayısı</TableCell>
+                            <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Isbn</TableCell>
+                            <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Kapak Fotoğrafı</TableCell>
+                            <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Özet</TableCell>
+                            <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Kitap Serisi</TableCell>
+                            <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Durum</TableCell>
+                            <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Detaylar</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {displayedData.map(row => (
+                            <TableRow key={row.id}>
+                              <TableCell padding="checkbox">
+                                <Checkbox
+                                  checked={selectedRows[row.id] || false}
+                                  onChange={() => handleSelectRow(row.id)}
+                                  size="small"
+                                />
+                              </TableCell>
+                              <TableCell style={{ fontSize: '0.75rem', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                <Tooltip title={row.ad} placement="top">
+                                  <span>{truncateText(row.ad, 6)}</span>
+                                </Tooltip>
+                              </TableCell>
+                              <TableCell style={{ fontSize: '0.75rem', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                <Tooltip title={row.yazar} placement="top">
+                                  <span>{truncateText(row.yazar, 4)}</span>
+                                </Tooltip>
+                              </TableCell>
+                              <TableCell style={{ fontSize: '0.75rem' }}>{row.yayin_tarihi}</TableCell>
+                              <TableCell style={{ fontSize: '0.75rem' }}>{row.sayfa_sayisi}</TableCell>
+                              <TableCell style={{ fontSize: '0.75rem', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                <Tooltip title={row.isbn} placement="top">
+                                  <span>{truncateText(row.isbn, 4)}</span>
+                                </Tooltip>
+                              </TableCell>
+                              <TableCell style={{ fontSize: '0.75rem' }}>{row.kapak_fotografi ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
+                              <TableCell style={{ fontSize: '0.75rem' }}>{row.ozet ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
+                              <TableCell style={{ fontSize: '0.75rem', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                <Tooltip title={row.kitap_kategori ? row.kitap_kategori.baslik : 'Mevcut Değil'} placement="top">
+                                  <span>{truncateText(row.kitap_kategori ? row.kitap_kategori.baslik : 'Mevcut Değil', 9)}</span>
+                                </Tooltip>
+                              </TableCell>
+                              <TableCell style={{ fontSize: '0.75rem' }}>{row.durum ? 'Aktif' : 'Pasif'}</TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="contained"
+                                  size="small"
+                                  startIcon={<InfoIcon />}
+                                  onClick={() => handleOpen(row)}
+                                  style={{ backgroundColor: '#1976d2', color: '#fff', textTransform: 'none', fontSize: '0.75rem' }}
+                                >
+                                  Detaylar
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                      <div style={{ textAlign: 'right', marginTop: '10px' }}>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          style={{ backgroundColor: '#388e3c', color: '#fff', textTransform: 'none', fontSize: '0.75rem' }}
+                          onClick={handleOpenAddDialog}
+                          startIcon={<AddIcon />}
+                        >
+                          Ekle
+                        </Button>
+                      </div>
+                      {data.length > 0 && (
+                        <Pagination
+                          count={totalPages}
+                          page={currentPage}
+                          onChange={handlePageChange}
+                          variant="outlined"
+                          size="small"
+                          style={{ marginTop: '10px', display: 'flex', justifyContent: 'center' }}
+                        />
+                        
+                      )}
+                    </>
                   )}
                 </Paper>
+               
               </Container>
 
+{/* detaylar düzenleme */}
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
         <DialogTitle>
           Düzenleme
@@ -693,6 +894,69 @@ export default function Mushaflar() {
                 />
             </div>
 
+            {/* Görsel Galerisi */}
+            <div style={{ border: '2px dashed grey', margin: '20px 0', overflowX: 'auto', height: '300px', display: 'flex', justifyContent: 'center', position: 'relative' }}>
+                <Typography variant="subtitle1" style={{ marginBottom: '10px', position: 'absolute', top: 0, left: 10 }}>
+                    Galeri:
+                </Typography>
+                <div style={{ 
+                    display: 'flex',
+                    gap: '20px', // Öğeler arasındaki boşluk
+                    alignItems: 'center', 
+                    paddingLeft: imagesCount <= 2 ? 0 : "40px", 
+                    minWidth: imagesCount <= 2 ? 'fit-content' : '100%' 
+                }}>
+
+                    <div>
+                        {/* Gizli Dosya Input */}
+                        <input
+                            type="file"
+                            id="imageInput"
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            onChange={(e)=>handleFileAlbum(e)}
+                        />
+
+                        {/* Görsel Ekleme Butonunu Çevreleyen Stil */}
+                        <div style={{ border: '2px dashed grey', display: 'flex', justifyContent: 'center', alignItems: 'center', width: '120px', height: '150px'}}>
+                            <label htmlFor="imageInput">
+                            <IconButton
+                                style={{ color: 'green' }} // Yeşil renkli ikon
+                                component="span"
+                            >
+                                <AddPhotoAlternateIcon />
+                            </IconButton>
+                            </label>
+                        </div>
+                    </div>
+
+
+                    {/* createImageAlbum'dan Gelen Görseller */}
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        {createImageAlbum.length > 0 && [...createImageAlbum].reverse().map((item, index) => (
+                        <div key={index} style={{ border: '2px dashed grey', padding: '5px', width: '120px', height: '150px', position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                            <img src={item.frontFile} alt={`Albüm Görseli ${index}`} style={{ maxWidth: '100px', height: 'auto', maxHeight: '80px' }} />
+                            {/* Kapatma (Silme) İkonu */}
+                            <IconButton onClick={() => imgCreateAlbumRemove(index)} style={{ position: 'absolute', top: 0, right: 0, color: 'red' }}>
+                            <CloseIcon />
+                            </IconButton>
+                        </div>
+                        ))}
+                    </div>
+
+                    {albumImages.length > 0 &&  albumImages.map(image => (
+                    <div key={image.id} style={{ border: '2px dashed grey', padding: '5px', width: '120px', height: '150px', position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <img key={image.id} src={image.image} alt={`Görsel ${image.id}`} style={{ maxWidth: '100px', height: 'auto', maxHeight: '80px' }} />
+                        <IconButton onClick={()=>{imgAlbumRemove(image.id)}} style={{ position: 'absolute', top: 0, right: 0, color: 'red' }}>
+                          <CloseIcon />
+                        </IconButton>
+                    </div>
+                    ))}
+                    
+                </div>
+                
+            </div>
+
 
             <TextField
               label="Özet"
@@ -756,6 +1020,9 @@ export default function Mushaflar() {
         </IconButton>
       
       </DialogTitle>
+
+{/* kitap ekleme yeni */}
+
       <DialogContent>
         <TextField
           label="Kitap Adı"
@@ -865,6 +1132,59 @@ export default function Mushaflar() {
           style={{ display: 'none' }}
           onChange={(e) => handleFileChangeEkle(e, "kapakFotografi")}
         />
+
+        {/* Görsel Galerisi */}
+        <div style={{ border: '2px dashed grey', margin: '20px 0', overflowX: 'auto', height: '300px', display: 'flex', justifyContent: 'center', position: 'relative' }}>
+                <Typography variant="subtitle1" style={{ marginBottom: '10px', position: 'absolute', top: 0, left: 10 }}>
+                    Galeri:
+                </Typography>
+                <div style={{ 
+                    display: 'flex',
+                    gap: '20px', // Öğeler arasındaki boşluk
+                    alignItems: 'center', 
+                    
+                }}>
+
+                    <div>
+                        {/* Gizli Dosya Input */}
+                        <input
+                            type="file"
+                            id="imageInput"
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            onChange={(e)=>handleFileAlbum(e)}
+                        />
+
+                        {/* Görsel Ekleme Butonunu Çevreleyen Stil */}
+                        <div style={{ border: '2px dashed grey', display: 'flex', justifyContent: 'center', alignItems: 'center', width: '120px', height: '150px'}}>
+                            <label htmlFor="imageInput">
+                            <IconButton
+                                style={{ color: 'green' }} // Yeşil renkli ikon
+                                component="span"
+                            >
+                                <AddPhotoAlternateIcon />
+                            </IconButton>
+                            </label>
+                        </div>
+                    </div>
+
+
+                    {/* createImageAlbum'dan Gelen Görseller */}
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        {createImageAlbum.length > 0 && [...createImageAlbum].reverse().map((item, index) => (
+                        <div key={index} style={{ border: '2px dashed grey', padding: '5px', width: '120px', height: '150px', position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                            <img src={item.frontFile} alt={`Albüm Görseli ${index}`} style={{ maxWidth: '100px', height: 'auto', maxHeight: '80px' }} />
+                            {/* Kapatma (Silme) İkonu */}
+                            <IconButton onClick={() => imgAlbumRemove(index)} style={{ position: 'absolute', top: 0, right: 0, color: 'red' }}>
+                            <CloseIcon />
+                            </IconButton>
+                        </div>
+                        ))}
+                    </div>
+                    
+                </div>
+                
+            </div>
 
 
         <TextField

@@ -67,6 +67,11 @@ export const API_ROUTES = {
     KITAPLAR_DELETE : API_SERVER_URL + "/kitaplar/bulk_soft_delete/",
     KITAPLAR_KATEGORI_FILTER : API_SERVER_URL + `/kitaplar/?kategori=seciliKategori&page=currentPage`,
     KITAPLAR_KATEGORI_FILTER_PAGINATIONSUZ : API_SERVER_URL + `/kitaplar/?kategori=seciliKategori`,
+    KITAPLAR_GETFULL : API_SERVER_URL + "/kitaplar/get_full",
+
+    CONTENT_IMAGE : API_SERVER_URL + "/contentimage/",
+    CONTENT_IMAGE_DELETE : API_SERVER_URL + "/contentimage/bulk_soft_delete/",
+    CONTENT_IMAGE_KATEGORI_FILTER : API_SERVER_URL + "/contentimage/?kategori=seciliKategori",
 
 
     // TEMEL KONU VE KAVRAMLAR
@@ -277,6 +282,7 @@ export const API_ROUTES = {
     SAYFALAR_DETAIL : API_SERVER_URL + "/sayfalar/id/",
     SAYFALAR_DELETE : API_SERVER_URL + "/sayfalar/bulk_soft_delete/",
     SAYFALAR_GET_GORSEL: API_SERVER_URL + "/sayfalar/get-by-url/",
+    SAYFALAR_GET_FILTER: API_SERVER_URL + "/sayfalar/pages-filter/id/",
 
 
     // HOME PAGE COMPENENTS

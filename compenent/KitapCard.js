@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Grid, Container, Paper, CardContent, CardMedia, Typography } from '@mui/material';
+import { Card, Grid, Container, Paper, Typography } from '@mui/material';
 import Link from 'next/link';
 
 const titleStyle = {
   fontSize: '20px',
-  fontFamily: 'Playfair Display, serif', // Noktalı virgül yerine virgül kullanılmalı.
+  fontFamily: 'Playfair Display, serif',
   fontWeight: 550,
   color: 'black',
   overflow: 'hidden',
@@ -19,7 +19,6 @@ const titleStyle = {
   },
   marginBottom: 2,
 };
-
 
 const textStyle = {
   fontSize: '15px',
@@ -37,14 +36,14 @@ const textStyle = {
 const containerStyles = {
   paddingTop: 1,
   paddingBottom: 1,
-  marginBottom:1,
+  marginBottom: 1,
 };
 
 const imageStyle = {
-  width: '95%', // Görsel genişliği
+  width: '95%',
   height: 'auto',
-  maxWidth: '300px', // Maksimum genişlik
-  marginBottom: '16px', // Altında boşluk
+  maxWidth: '300px',
+  marginBottom: '16px',
 };
 
 const paperStyles = {
@@ -58,7 +57,7 @@ const summaryStyle = {
   fontSize: '15px',
   color: '#000',
   whiteSpace: 'pre-line',
-  fontFamily: 'Playfair Display, serif', 
+  fontFamily: 'Playfair Display, serif',
 };
 
 const readMoreStyle = {
@@ -69,27 +68,15 @@ const readMoreStyle = {
   textDecoration: 'underline',
 };
 
-function KitapCard({ kitap,path,activeTab }) {
-  const [isCollapsed, setIsCollapsed] = useState(true);
+function KitapCard({ kitap, path, activeTab }) {
   const [windowWidth, setWindowWidth] = useState(0);
 
   const basePath = path.includes('?') ? path.split('?')[0] : path;
-
-
   const linkTo = `${basePath}/${activeTab}/${kitap.slug}`;
-
-
-  const isTabletView = windowWidth < 600;
-  const isSmalScreen = windowWidth < 900;
-
-  const handleToggleCollapse = () => {
-    setIsCollapsed(!isCollapsed);
-  };
 
   const handleResize = () => {
     if (typeof window !== 'undefined') {
       setWindowWidth(window.innerWidth);
-      setIsCollapsed(true);
     }
   };
 
@@ -97,7 +84,7 @@ function KitapCard({ kitap,path,activeTab }) {
     if (typeof window !== 'undefined') {
       window.addEventListener('resize', handleResize);
 
-      // İlk değer ataması
+      // Initial value
       handleResize();
 
       return () => {
@@ -106,7 +93,7 @@ function KitapCard({ kitap,path,activeTab }) {
     }
   }, []);
 
-  let maxCharacters = 900;
+  let maxCharacters = 600;
 
   if (windowWidth < 640) {
     maxCharacters = 50;
@@ -140,7 +127,7 @@ function KitapCard({ kitap,path,activeTab }) {
             <Typography variant="subtitle1" color="body1" gutterBottom sx={textStyle}>
               <span style={{ fontWeight: 'bold' }}>Yazar:</span> {kitap.yazar}
             </Typography>
-            {isTabletView ? (
+            {windowWidth < 600 ? (
               <>
                 <Typography variant="subtitle1" color="body1" gutterBottom sx={textStyle}>
                   <span style={{ fontWeight: 'bold' }}>Yayın Tarihi:</span> {kitap.yayin_tarihi}
@@ -164,20 +151,16 @@ function KitapCard({ kitap,path,activeTab }) {
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={summaryStyle}>
                   <span style={{ fontWeight: 'bold' }}>Özet:</span>
-                  {isCollapsed ? kitap.ozet.slice(0, maxCharacters) + '...' : kitap.ozet}
-                  {kitap.ozet.length > maxCharacters && !isSmalScreen ? (
-                    <Typography component="span" sx={readMoreStyle} onClick={handleToggleCollapse}>
-                      {isTabletView ? ' Daha Fazla Göster' : (isCollapsed ? ' Daha Fazla Göster' : ' Daha Az Göster')}
-                    </Typography>
-                  ) : (
+                  {kitap.ozet.length > maxCharacters
+                    ? `${kitap.ozet.slice(0, maxCharacters)}...`
+                    : kitap.ozet}
+                  {kitap.ozet.length > maxCharacters && (
                     <Link href={linkTo} passHref>
                       <Typography component="span" sx={readMoreStyle}>
-                        {isTabletView ? ' Daha Fazla Göster' : (isCollapsed ? ' Daha Fazla Göster' : ' Daha Az Göster')}
+                        Detaylı İncele
                       </Typography>
                     </Link>
-                  )
-                  
-                  }
+                  )}
                 </Typography>
               </>
             )}
@@ -187,5 +170,5 @@ function KitapCard({ kitap,path,activeTab }) {
     </Container>
   );
 }
-  
-  export default KitapCard;
+
+export default KitapCard;

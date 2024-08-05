@@ -88,6 +88,7 @@ function Kitaplar() {
         if (tabUrlFriendly && !isValidTab) {
           router.push('/hata-sayfasi');
           const fakeInitialTab = categories.length > 0 ? convertToUrlFriendly(categories[0].baslik) : '';
+          
           setActiveTab(fakeInitialTab);
         } else {
           if (tabUrlFriendly) {
@@ -341,6 +342,8 @@ function Kitaplar() {
                         }}
                       />
                     </Stack>
+
+                    
                   )}
                 </TabPanel>
               ))}
