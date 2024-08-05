@@ -141,9 +141,13 @@ export const TextEditor = ({ selectedItem, setSelectedItem }) => {
           <button onClick={handleFontMenuOpen}>
             <FontAwesomeIcon icon={faFont} />
           </button>
+          <button onClick={() => editor.chain().focus().setColor('black').run()}>
+            <FontAwesomeIcon icon={faPalette} style={{ color: 'black' }} />
+          </button>
           <button onClick={() => editor.chain().focus().setColor('red').run()}>
             <FontAwesomeIcon icon={faPalette} style={{ color: 'red' }} />
           </button>
+          
           <button onClick={() => editor.chain().focus().setColor('blue').run()}>
             <FontAwesomeIcon icon={faPalette} style={{ color: 'blue' }} />
           </button>
