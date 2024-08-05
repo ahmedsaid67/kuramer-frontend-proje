@@ -63,20 +63,24 @@ const MenuPage = () => {
       const response = await axios.get(`${API_ROUTES.SAYFALAR_GET_FILTER.replace('id', id)}`);
       const data = response.data;
       console.log(data);
+  
       setStateValue(data.name || '');
       setImages(prevImages => ({
         ...prevImages,
         [id]: data.img || null
       }));
       setImagePreview(data.img); // İlk yüklemede resmi gösterir
-      setIcerik(data.icerik || ''); // Update icerik state
-      console.log(data.icerik);
+      console.log('Fetched icerik:', data.icerik);
       setIcerikVar(data.icerik_var || false); // Update icerik_var state
+      if(data.icerik_var){
+        setIcerik(data.icerik || ''); // Update icerik state
+      }
       setSelectedColor(data.renk);
     } catch (error) {
       console.error('Error fetching item details:', error);
     }
   };
+  
 
 
   useEffect(() => {
@@ -120,9 +124,17 @@ const MenuPage = () => {
     const item = menuItems.find(item => item.id === id);
     if (item && item.id !== 30) {
       setSelectedMainHeading(item);
+      
+      // Yeni öğe seçildiğinde eski state değerlerini sıfırla
+      setIcerik('');
+      setIcerikVar(false);
+      setImagePreview(null);
+      
       fetchItemDetails(item.id); // Fetch details when an item is selected
     }
   };
+  
+  
 
   const handleSave = () => {
     const updatedChanges = {};
@@ -423,14 +435,15 @@ const MenuPage = () => {
 
                 
 
-                {icerikVar && (
-                  <>
-                    <Typography variant="subtitle1" style={{ marginBottom: '10px', marginTop: '10px' }}>
-                      
-                    </Typography>
-                    <TextEditor selectedItem={{ icerik }} setSelectedItem={(data) => setIcerik(data.icerik)} />
-                  </>
-                )}
+              {icerikVar && (
+                <>
+                  <Typography variant="subtitle1" style={{ marginBottom: '10px', marginTop: '10px' }}>
+                    İçerik Başlığı
+                  </Typography>
+                  <TextEditor selectedItem={{ icerik }} setSelectedItem={(data) => setIcerik(data.icerik)} />
+                </>
+              )}
+
               </>
             )}
             <Container>
