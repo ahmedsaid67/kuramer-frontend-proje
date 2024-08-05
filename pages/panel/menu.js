@@ -119,12 +119,8 @@ const MenuPage = () => {
       ...prev,
       [id]: !prev[id]
     }));
-  
-    // Eğer ID 30'dan büyükse bir azalt
-    const adjustedId = id > 30 ? id - 1 : id;
-  
-    const item = menuItems.find(item => item.id === adjustedId);
-    if (item && adjustedId !== 30) {
+    const item = menuItems.find(item => item.id === id);
+    if (item && item.id !== 30) {
       setSelectedMainHeading(item);
       console.log(item.id);
       
@@ -136,7 +132,6 @@ const MenuPage = () => {
       fetchItemDetails(item.id); // Fetch details when an item is selected
     }
   };
-  
   
 
   const handleSave = () => {
@@ -176,8 +171,11 @@ const MenuPage = () => {
       return;
     }
   
-    const { id } = selectedMainHeading;
-  
+    let { id } = selectedMainHeading;
+
+    if (id > 30) {
+      id = id - 1;
+    }
   
     const formData = new FormData();
     formData.append('name', stateValue);
