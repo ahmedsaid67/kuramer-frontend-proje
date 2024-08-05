@@ -41,7 +41,6 @@ const MenuPage = () => {
       const newItems = response.data.sort((a, b) => a.order - b.order);
       setMenuItems(newItems);
       const firstMainItem = newItems.find(item => item.parent === null);
-      console.log(firstMainItem);
       if (firstMainItem) {
         if (firstMainItem) {
           setSelectedMainHeading(firstMainItem);
@@ -70,7 +69,6 @@ const MenuPage = () => {
         [id]: data.img || null
       }));
       setImagePreview(data.img); // İlk yüklemede resmi gösterir
-      console.log('Fetched icerik:', data.icerik);
       setIcerikVar(data.icerik_var || false); // Update icerik_var state
       if(data.icerik_var){
         setIcerik(data.icerik || ''); // Update icerik state
@@ -121,9 +119,14 @@ const MenuPage = () => {
       ...prev,
       [id]: !prev[id]
     }));
-    const item = menuItems.find(item => item.id === id);
-    if (item && item.id !== 30) {
+  
+    // Eğer ID 30'dan büyükse bir azalt
+    const adjustedId = id > 30 ? id - 1 : id;
+  
+    const item = menuItems.find(item => item.id === adjustedId);
+    if (item && adjustedId !== 30) {
       setSelectedMainHeading(item);
+      console.log(item.id);
       
       // Yeni öğe seçildiğinde eski state değerlerini sıfırla
       setIcerik('');
@@ -175,11 +178,6 @@ const MenuPage = () => {
   
     const { id } = selectedMainHeading;
   
-    // Logging state data for debugging
-    console.log("Selected Heading ID:", id);
-    console.log("State Value:", stateValue);
-    console.log("Image State:", images[id]);
-    console.log("Content State:", icerik);
   
     const formData = new FormData();
     formData.append('name', stateValue);
