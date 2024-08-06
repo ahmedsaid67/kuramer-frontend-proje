@@ -69,7 +69,7 @@ const EbookPopup = ({ isOpen, onClose, bookTitle, pageCount, images , currentPag
 
     if (!document.fullscreenElement) {
       element.requestFullscreen().catch(err => {
-        console.log(`An error occurred while trying to enable fullscreen mode: ${err.message}`);
+        console.log(`An error occur#fff while trying to enable fullscreen mode: ${err.message}`);
       });
     } else {
       document.exitFullscreen();
@@ -163,20 +163,20 @@ const EbookPopup = ({ isOpen, onClose, bookTitle, pageCount, images , currentPag
       <div className={styles.popupContainer}>
         <div className={`${styles.navBar} ${showNav ? styles.showNav : styles.hideNav}`}>
           <IconButton className={styles.closeButton} onClick={onClose}>
-            <CloseIcon />
+            <CloseIcon sx={{color: '#fff'}} />
           </IconButton>
-          <Typography variant="h6" className={styles.bookTitle}>
+          <Typography variant="h6" className={styles.bookTitle} sx={{color: '#fff'}}>
             {bookTitle}
           </Typography>
           <div className={styles.navButtons}>
             <IconButton className={styles.zoomButton} onClick={zoomIn}>
-              <ZoomInIcon />
+              <ZoomInIcon sx={{color: '#fff'}}/>
             </IconButton>
             <IconButton className={styles.zoomButton} onClick={zoomOut}>
-              <ZoomOutIcon />
+              <ZoomOutIcon sx={{color: '#fff'}}/>
             </IconButton>
             <IconButton className={styles.fullscreenButton} onClick={toggleFullscreen}>
-              <FullscreenIcon />
+              <FullscreenIcon sx={{color: '#fff'}} />
             </IconButton>
           </div>
         </div>

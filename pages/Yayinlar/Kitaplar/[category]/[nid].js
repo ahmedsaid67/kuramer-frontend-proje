@@ -8,6 +8,7 @@ import { useRouter } from 'next/router';
 import CircularProgress from '@mui/material/CircularProgress'; 
 import styles from '../../../../styles/Kitaplar.module.css';
 import EbookPopup from '../../../../compenent/EbookPopup';
+import BaslikGorselCompenent from '../../../../compenent/BaslikGorselCompenentDetail';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
@@ -115,6 +116,42 @@ function KitapDetay() {
   
   const [currentPage, setCurrentPage] = useState(1);
 
+  const { asPath, isReady } = router;
+  const nidMatch = asPath.match(/-(\d+)$/);
+  const nid = nidMatch ? nidMatch[1] : null;
+
+  const [pages, setPages] = useState([]);
+  const [isPagesLoading, setIsPagesLoading] = useState(true);
+  const [errorPage, setErrorPage] = useState(null);
+  const [detayItems,setDetayItems] = useState({})
+  const [catgoriItem, setcatgoriItem] = useState({});
+
+  const pagesFetchData = async () => {
+    setIsPagesLoading(true);
+    try {
+      const cleanedPath = asPath.split('?')[0];
+      const pathSegments = cleanedPath.split('/').filter(Boolean);
+      const fixedPart = `/${pathSegments.slice(0, 2).join('/')}`;
+
+
+      const response1 = await axios.post(API_ROUTES.SAYFALAR_GET_GORSEL, { url: fixedPart });
+      setPages(response1.data);
+      setErrorPage(null);
+    } catch (error) {
+      setErrorPage('Veriler yüklenirken beklenmeyen bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
+      console.log("error:", error);
+    } finally {
+      setIsPagesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!isReady) return;
+
+    pagesFetchData();
+  }, [isReady, nid]);
+
+
   const handleToggleCollapse = () => {
     setIsCollapsed(!isCollapsed);
     if (!isCollapsed) {
@@ -161,6 +198,14 @@ function KitapDetay() {
         if (kitap.ozet.length > 1200) {
           setIsCollapsed(true);
         }
+        const cleanedPath = asPath.split('?')[0];
+        const pathSegments = cleanedPath.split('/').filter(Boolean);
+        const fixedPart = `/${pathSegments.slice(0, 2).join('/')}`;
+        const sonPart = `/${pathSegments.slice(2, 3).join('/')}`;
+        const cleanPart = sonPart.replace(/\//g, '');
+        
+        setcatgoriItem({ name: kitap.kitap_kategori.baslik, url: `${fixedPart}?tab=${cleanPart}` });
+        setDetayItems({ name:kitap.ad, url: asPath})
 
         
 
@@ -204,7 +249,7 @@ function KitapDetay() {
         <title>{kitap?.ad} | Kuramer</title>
         <link rel="icon" href="/kuramerlogo.png" />
       </Head>
-
+      <BaslikGorselCompenent data={pages} catgoriItem={catgoriItem} detayItems={detayItems} isPagesLoading={isPagesLoading}/>
       <Container sx={containerStyles} maxWidth="lg">
         <Paper elevation={3} sx={paperStyles}>
           <Grid container spacing={3}>
