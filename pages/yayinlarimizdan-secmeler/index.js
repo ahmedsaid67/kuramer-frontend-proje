@@ -152,19 +152,22 @@ function YayinlarimizdanSecmeler() {
                 <div className={styles.textContainer}>
                   <div dangerouslySetInnerHTML={{ __html: pages?.icerik }} />
                 </div>
-                
-                {secmeYayinlar.length > 0 ? (
+                <div className={styles.cardContainer}>
+                {secmeYayinlar.length > 0 && (
                   
                   secmeYayinlar.map((yayin, index) => (
-                    <div className={styles.cardContainer}>
+                    
                     <CardOge path={path} key={index} yayin={yayin} />
-                    </div>
+                   
                   ))
                   
-                ) : (
-                  <div className={styles.noDataMessage}>Yayınlarımızdan Seçemlere dair mevcut bir içerik bulunmamaktadır.</div> // Veri yoksa bu mesaj gösterilir
+                )
+              }
+                </div>
+
+                {secmeYayinlar.length === 0 && (
+                   <div className={styles.noDataMessage}>Yayınlarımızdan Seçemlere dair mevcut bir içerik bulunmamaktadır.</div> // Veri yoksa bu mesaj gösterilir
                 )}
-              
   
               {!isLoading && !error && totalPages > 0 && (
                 <Stack spacing={2} alignItems="center" className={styles.paginationContainer}>
