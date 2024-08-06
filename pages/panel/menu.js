@@ -438,42 +438,50 @@ const MenuPage = () => {
               {icerikVar && (
                 <>
                   <Typography variant="subtitle1" style={{ marginBottom: '10px', marginTop: '10px' }}>
-                    İçerik Başlığı
+                    
                   </Typography>
                   <TextEditor selectedItem={{ icerik }} setSelectedItem={(data) => setIcerik(data.icerik)} />
                 </>
               )}
 
+        
+
+            
+                {selectedMainHeading.id !== 30 && (
+                  <Container>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, alignItems: 'center', textAlign: 'center', p: 2 }}>
+                      <FormControl component="fieldset">
+                        <FormLabel component="legend" sx={{ fontWeight: 'bold', color: 'black', mb: 1 }}>Renk Seçimi</FormLabel>
+                        <RadioGroup
+                          row
+                          value={selectedColor}
+                          onChange={handleChange}
+                          sx={{ display: 'flex', flexDirection: 'row' }}
+                        >
+                          <FormControlLabel
+                            value="beyaz"
+                            control={<Radio />}
+                            label="Beyaz"
+                            sx={{ mx: 2 }} // Butonlar arasında boşluk için
+                          />
+                          <FormControlLabel
+                            value="siyah"
+                            control={<Radio />}
+                            label="Siyah"
+                            sx={{ mx: 2 }} // Butonlar arasında boşluk için
+                          />
+                        </RadioGroup>
+                      </FormControl>
+                    </Box>
+                  </Container>
+                )}
+
+
+
               </>
+
             )}
-            {selectedMainHeading.id !== 30 && (
-              <Container>
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, alignItems: 'center', textAlign: 'center', p: 2 }}>
-                  <FormControl component="fieldset">
-                    <FormLabel component="legend" sx={{ fontWeight: 'bold', color: 'black', mb: 1 }}>Renk Seçimi</FormLabel>
-                    <RadioGroup
-                      row
-                      value={selectedColor}
-                      onChange={handleChange}
-                      sx={{ display: 'flex', flexDirection: 'row' }}
-                    >
-                      <FormControlLabel
-                        value="beyaz"
-                        control={<Radio />}
-                        label="Beyaz"
-                        sx={{ mx: 2 }} // Butonlar arasında boşluk için
-                      />
-                      <FormControlLabel
-                        value="siyah"
-                        control={<Radio />}
-                        label="Siyah"
-                        sx={{ mx: 2 }} // Butonlar arasında boşluk için
-                      />
-                    </RadioGroup>
-                  </FormControl>
-                </Box>
-              </Container>
-            )}
+            
 
           </Box>
           <Box 
