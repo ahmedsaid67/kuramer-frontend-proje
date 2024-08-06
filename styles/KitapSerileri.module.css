@@ -101,7 +101,7 @@
   }
 }
 
-@media screen and (min-width: 769px) and (max-width: 899px) {
+@media screen and (min-width: 768px) and (max-width: 900px) {
   .title {
     font-size: 20px;
   }
@@ -111,9 +111,14 @@
   .customNextArrow {
     right: -10px;
   }
+  .rightArrow, .leftArrow {
+    padding: 9px 14.5px; /* Adjust padding accordingly */
+    font-size: 16px;
+
+  }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .container {
     justify-content: flex-start;
   }
@@ -124,7 +129,7 @@
   }
 
   .customPrevArrow, .customNextArrow {
-    padding: 6px 12px;
+    padding: 6px 9px;
     font-size: 12px;
   }
 
