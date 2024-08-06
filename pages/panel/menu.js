@@ -17,6 +17,7 @@ const MenuPage = () => {
   const [alert, setAlert] = useState({ show: false, type: '', message: '' });
   const [expandedMenus, setExpandedMenus] = useState({});
   const [images, setImages] = useState({}); // Mapping from heading ID to image URL
+  const [getId, setId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [stateValue, setStateValue] = useState('');
@@ -61,8 +62,9 @@ const MenuPage = () => {
     try {
       const response = await axios.get(`${API_ROUTES.SAYFALAR_GET_FILTER.replace('id', id)}`);
       const data = response.data;
-      console.log(data);
+      
   
+      setId(data.id)
       setStateValue(data.name || '');
       setImages(prevImages => ({
         ...prevImages,
@@ -120,9 +122,8 @@ const MenuPage = () => {
       [id]: !prev[id]
     }));
     const item = menuItems.find(item => item.id === id);
-    if (item && item.id !== 30) {
+   
       setSelectedMainHeading(item);
-      console.log(item.id);
       
       // Yeni öğe seçildiğinde eski state değerlerini sıfırla
       setIcerik('');
@@ -130,7 +131,7 @@ const MenuPage = () => {
       setImagePreview(null);
       
       fetchItemDetails(item.id); // Fetch details when an item is selected
-    }
+    
   };
   
 
@@ -173,9 +174,7 @@ const MenuPage = () => {
   
     let { id } = selectedMainHeading;
 
-    if (id > 30) {
-      id = id - 1;
-    }
+   
   
     const formData = new FormData();
     formData.append('name', stateValue);
@@ -203,13 +202,14 @@ const MenuPage = () => {
     }
 
     formData.append('renk', selectedColor);
+
   
     setIsSaving(true);
     try {
-      const response = await axios.put(`${API_ROUTES.SAYFALAR_DETAIL.replace('id', id)}`, formData, {
+      const response = await axios.put(`${API_ROUTES.SAYFALAR_DETAIL.replace('id', getId)}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      
+
       const responsenew = await axios.get(API_ROUTES.MENU);
       const newItems = responsenew.data.sort((a, b) => a.order - b.order);
       setMenuItems(newItems);
@@ -388,6 +388,7 @@ const MenuPage = () => {
                   InputLabelProps={{ shrink: true }}
                   placeholder={`Başlık: ${selectedMainHeading.title}`}
                 />
+                {selectedMainHeading.id !== 30 && (
                 <Box 
                   sx={{ 
                     mb: 2, 
@@ -421,13 +422,16 @@ const MenuPage = () => {
                     </IconButton>
                   )}
                 </Box>
-                <input 
-                  id="image-input" 
-                  type="file" 
-                  accept="image/*"
-                  style={{ display: 'none' }} 
-                  onChange={handleImageChange}
-                />
+              )}
+              <input 
+                id="image-input" 
+                type="file" 
+                accept="image/*"
+                style={{ display: 'none' }} 
+                onChange={handleImageChange}
+              />
+
+                
 
                 
 
@@ -442,32 +446,35 @@ const MenuPage = () => {
 
               </>
             )}
-            <Container>
-                      <Box sx={{ display: 'flex', justifyContent: 'center',mt:2, alignItems: 'center',textAlign:'center', p: 2 }}>
-                        <FormControl component="fieldset">
-                          <FormLabel component="legend" sx={{fontWeight:'bold', color:'black', mb:1}}>Renk Seçimi</FormLabel>
-                          <RadioGroup
-                            row
-                            value={selectedColor}
-                            onChange={handleChange}
-                            sx={{ display: 'flex', flexDirection: 'row' }}
-                          >
-                            <FormControlLabel
-                              value="beyaz"
-                              control={<Radio />}
-                              label="Beyaz"
-                              sx={{ mx: 2 }} // Butonlar arasında boşluk için
-                            />
-                            <FormControlLabel
-                              value="siyah"
-                              control={<Radio />}
-                              label="Siyah"
-                              sx={{ mx: 2 }} // Butonlar arasında boşluk için
-                            />
-                          </RadioGroup>
-                        </FormControl>
-                      </Box>
-                    </Container>
+            {selectedMainHeading.id !== 30 && (
+              <Container>
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, alignItems: 'center', textAlign: 'center', p: 2 }}>
+                  <FormControl component="fieldset">
+                    <FormLabel component="legend" sx={{ fontWeight: 'bold', color: 'black', mb: 1 }}>Renk Seçimi</FormLabel>
+                    <RadioGroup
+                      row
+                      value={selectedColor}
+                      onChange={handleChange}
+                      sx={{ display: 'flex', flexDirection: 'row' }}
+                    >
+                      <FormControlLabel
+                        value="beyaz"
+                        control={<Radio />}
+                        label="Beyaz"
+                        sx={{ mx: 2 }} // Butonlar arasında boşluk için
+                      />
+                      <FormControlLabel
+                        value="siyah"
+                        control={<Radio />}
+                        label="Siyah"
+                        sx={{ mx: 2 }} // Butonlar arasında boşluk için
+                      />
+                    </RadioGroup>
+                  </FormControl>
+                </Box>
+              </Container>
+            )}
+
           </Box>
           <Box 
             sx={{ 
