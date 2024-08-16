@@ -65,16 +65,18 @@ const iconStyle = {
 };
 
 const titleStyle = {
-  fontSize: '24px',
-  fontWeight: 700,
-  color: '#333',
-  marginBottom: '15px',
-  overflow: 'hidden', // Prevents overflow
-  textOverflow: 'ellipsis', // Adds ellipsis if text overflows
-  whiteSpace: 'nowrap', // Prevents text wrapping
+  fontFamily: 'sans-serif',
+  fontWeight: 550,
+  color: '#343434',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  display: '-webkit-box',
+  WebkitBoxOrient: 'vertical',
+  marginLeft: '5px',
   '@media (max-width: 768px)': {
-    fontSize: '20px',
+    fontSize: '15px',
   },
+  marginBottom: 2,
 };
 
 
@@ -244,9 +246,13 @@ const Arastirma = () => {
               />
             </Grid>
             <Grid item xs={12} md={6} container direction="column" justifyContent="space-evenly">
-            <Typography variant="h6" sx={titleStyle}>
-              {arastirma.baslik}
-            </Typography>
+            
+
+            <div className={styles.content}>
+              <h1>
+                {arastirma.baslik}
+              </h1>
+            </div>
               
               <Grid>
               {arastirma.pdf_dosya && (
@@ -274,15 +280,15 @@ const Arastirma = () => {
 
           {arastirma.icerik && (
 
-<Grid item xs={12} container direction="column" justifyContent="center">
-  {arastirma.icerik && (
-    <div className={styles.icerik} style={{ marginTop: '20px'}}>
-      {renderContent(arastirma.icerik)}
-    </div>
-  )}
-</Grid>
+          <Grid item xs={12} container direction="column" justifyContent="center">
+            {arastirma.icerik && (
+              <div  style={{ marginTop: '20px'}}>
+                {renderContent(arastirma.icerik)}
+              </div>
+            )}
+          </Grid>
 
-)}
+          )}
           
         </Paper>
         {message && (

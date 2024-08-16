@@ -33,6 +33,13 @@ const MenuListItems = [
     text: 'Popup',
     url: '/panel/popup',
   },
+
+  {
+    id:4,
+    text: 'Ana Sayfa Bileşenleri',
+    url: '/panel/home-page-compenents',
+  }
+  ,
   {
     id: 5,
     text: 'Medya ve Kuruluşlar',

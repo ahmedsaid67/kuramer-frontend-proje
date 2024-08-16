@@ -9,6 +9,8 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Head from 'next/head'
 import BaslikGorselCompenent from '../../../compenent/BaslikGorselCompenentDetail';
 
+import styles from "../../../styles/Arastirmalar.module.css"
+
 const iconStyle = {
   width: '20px',
   height: '20px',
@@ -23,6 +25,26 @@ const buttonStyle = {
   textTransform: 'none',
   '@media (max-width: 768px)': {
     fontSize: '12px',
+  },
+};
+
+const linkStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  textDecoration: 'none',
+  color: '#333',
+  fontSize: '16px',
+  fontWeight: 'bold',
+  margin: '0',
+  padding: '10px 5px',
+  backgroundColor: '#fff',
+  boxShadow: 'none',
+  lineHeight: '1.5',
+  '&:hover': {
+    color: '#007bff',
+  },
+  '@media (maxWidth: 768px)': {
+    fontSize: '14px',
   },
 };
 
@@ -136,6 +158,37 @@ const Konferans = () => {
       const options = { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' };
       const date = new Date(dateString);
       return new Intl.DateTimeFormat('tr-TR', options).format(date);
+  };
+
+  const handleToggleExpanded = () => {
+    setIsExpanded(!isExpanded);
+    if (isExpanded) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const renderContent = (content) => {
+    if (content.length <= 500 || isExpanded) {
+      return (
+        <div>
+          <div className={styles.content}  dangerouslySetInnerHTML={{ __html: content }} />
+          {content.length > 500 && (
+            <div  onClick={handleToggleExpanded} className={styles.dahaFazla} style={{ textTransform: 'none',  color:"#1976d2", cursor: 'pointer'  }} >
+              {isExpanded ? 'Daha Az Göster' : 'Daha Fazla Göster'}
+            </div>
+          )}
+        </div>
+      );
+    } else {
+      return (
+        <div>
+          <div className={styles.content} dangerouslySetInnerHTML={{ __html: content.substring(0, 500) + '...' }} />
+          <div  onClick={handleToggleExpanded} className={styles.dahaFazla}  style={{ textTransform: 'none' , color:"#1976d2" , cursor: 'pointer' }} >
+            Daha Fazla Göster
+          </div>
+        </div>
+      );
+    }
   };
 
   const pagesFetchData = async () => {
@@ -273,7 +326,7 @@ const Konferans = () => {
       ) : (
         <>
         <BaslikGorselCompenent data={pages} catgoriItem={catgoriItem} detayItems={detayItems} isPagesLoading={isPagesLoading}/>
-    <Container maxWidth="md" style={{ marginTop: 40, marginBottom: 40 }}>
+    <Container maxWidth="lg" style={{ marginTop: 40, marginBottom: 40 }}>
       <Paper elevation={3} style={{ padding: 20 }}>
         <Grid container spacing={3}>
           {/* Sol tarafta görsel */}
@@ -286,11 +339,16 @@ const Konferans = () => {
           </Grid>
 
           {/* Sağ tarafta detaylar */}
-          <Grid item xs={12} md={6} container direction="column" justifyContent="center">
-            <Typography variant="h6" sx={titleStyle}>
-              {konferans.baslik}
-            </Typography>
+          <Grid item xs={12} md={6} container direction="column" justifyContent="space-evenly">
+            
 
+            <div className={styles.content}>
+              <h1>
+                {konferans.baslik}
+              </h1>
+            </div>
+
+          <Grid>
             <div style={{ display: 'flex', alignItems: 'center' }}>
               <img src="/icons/speaker.png" alt="Tarih" style={iconStyle} />
               <Typography variant="subtitle1" sx={speakerStyle}>
@@ -306,6 +364,8 @@ const Konferans = () => {
               </Typography>
             </div>
 
+           
+
             {konferans.konum && (
 
               <div style={{ display: 'flex', alignItems: 'center', marginBottom: 10 }}>
@@ -316,45 +376,46 @@ const Konferans = () => {
               </div>
 
             )}
+             </Grid>
+
+             <Grid>
+              {konferans.pdf_dosya && (
+                <a href={konferans.pdf_dosya} target="_blank" rel="noopener noreferrer" style={{ ...linkStyle, display: 'inline-flex', alignItems: 'center' }}>
+                  <FontAwesomeIcon icon={faSearch} style={iconStyle} />
+                  <span style={pStyle}>Programı İncele</span>
+                </a>
+              )}
+              {konferans.album && (
+                <a href="#" onClick={(e) => { e.preventDefault(); handleAlbumClick(konferans.album); }} style={linkStyle}>
+                  <FontAwesomeIcon icon={faSearch} style={iconStyle} />
+                  <span>Albümü Görüntüle</span>
+                </a>
+              )}
+              {konferans.yayin && (
+                <a href={konferans.yayin.url} target="_blank" rel="noopener noreferrer" style={{ ...linkStyle, display: 'inline-flex', alignItems: 'center' }}>
+                  <FontAwesomeIcon icon={faSearch} style={iconStyle} />
+                  <span>Etkinlik Kaydını İzle</span>
+                </a>
+              )}
+              </Grid>
 
             
           </Grid>
 
-          {/* Butonlar */}
-          <Grid item xs={12} container direction="column" justifyContent="center">
-            {konferans.pdf_dosya && (
-              <Button
-                variant="text"
-                color="primary"
-                sx={buttonStyle}
-                href={konferans.pdf_dosya}
-                target="_blank"
-              >
-                Programı İncele
-              </Button>
-            )}
-
-            {konferans.album && (
-              <div onClick={() => handleAlbumClick(konferans.album)}>
-                <Button variant="text" color="primary" sx={buttonStyle} component="a">
-                  Albümü Görüntüle
-                </Button>
-              </div>
-            )}
-
-            {konferans.yayin && (
-              <Button
-                variant="text"
-                color="primary"
-                sx={buttonStyle}
-                href={konferans.yayin.url} 
-                target="_blank"
-              >
-                Etkinlik Kaydını İzle
-              </Button>
-            )}
-          </Grid>
+          
         </Grid>
+
+        {konferans.icerik && (
+
+        <Grid item xs={12} container direction="column" justifyContent="center">
+          {konferans.icerik && (
+            <div  style={{ marginTop: '20px'}}>
+              {renderContent(konferans.icerik)}
+            </div>
+          )}
+        </Grid>
+
+        )}
       </Paper>
       {message && (
         <div style={infoMessageStyle}>

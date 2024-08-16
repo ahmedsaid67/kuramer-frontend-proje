@@ -6,7 +6,7 @@ import PhotoGalleryViewer from '../../../compenent/PhotoGalleryViewer';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalendar, faLocation, faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faCalendar, faLocation, faLocationDot, faSearch } from '@fortawesome/free-solid-svg-icons';
 
 import styles from "../../../styles/Arastirmalar.module.css"
 import { color, fontWeight } from '@mui/system';
@@ -40,11 +40,11 @@ const linkStyle = {
   padding: '10px 5px',
   backgroundColor: '#fff',
   boxShadow: 'none',
-  lineHeight: '1.5', // Metin yüksekliğini ayarlayarak boşlukları kontrol edin
+  lineHeight: '1.5',
   '&:hover': {
     color: '#007bff',
   },
-  '@media (max-width: 768px)': {
+  '@media (maxWidth: 768px)': {
     fontSize: '14px',
   },
 };
@@ -62,13 +62,19 @@ const iconStyle = {
 };
 
 const titleStyle = {
-  fontSize: '24px',
-  fontWeight: 700,
-  color: '#333',
-  marginBottom: '15px',
+  fontSize: '16px', // Font boyutunu küçült
+  fontFamily: 'sans-serif',
+  fontWeight: 550,
+  color: '#343434',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  display: '-webkit-box',
+  WebkitBoxOrient: 'vertical',
+  marginLeft: '5px',
   '@media (max-width: 768px)': {
-    fontSize: '20px',
+    fontSize: '15px',
   },
+  marginBottom: 2,
 };
 
 const dateStyle = {
@@ -232,9 +238,13 @@ const Calistay = () => {
               />
             </Grid>
             <Grid item xs={12} md={6} container direction="column" justifyContent="space-evenly">
-              <Typography variant="h6" sx={titleStyle}>
-                {calistay.baslik}
-              </Typography>
+              
+
+              <div className={styles.content}>
+                <h1>
+                  {calistay.baslik}
+                </h1>
+              </div>
               
               <Grid>
               <Typography variant="subtitle1" sx={dateStyle}>
@@ -242,7 +252,7 @@ const Calistay = () => {
                 {formatDateWithoutTimeZone(calistay.tarih)}
               </Typography>
               <Typography variant="subtitle1" sx={placeStyle}>
-              <FontAwesomeIcon icon={faLocation} style={iconStyle} />
+              <FontAwesomeIcon icon={faLocationDot} style={iconStyle} />
                 {calistay.konum}
               </Typography>
               </Grid>
@@ -271,15 +281,15 @@ const Calistay = () => {
 
           {calistay.icerik && (
 
-<Grid item xs={12} container direction="column" justifyContent="center">
-  {calistay.icerik && (
-    <div className={styles.icerik} style={{ marginTop: '20px'}}>
-      {renderContent(calistay.icerik)}
-    </div>
-  )}
-</Grid>
+          <Grid item xs={12} container direction="column" justifyContent="center">
+            {calistay.icerik && (
+              <div style={{ marginTop: '20px'}}>
+                {renderContent(calistay.icerik)}
+              </div>
+            )}
+          </Grid>
 
-)}
+          )}
           
         </Paper>
         {message && (

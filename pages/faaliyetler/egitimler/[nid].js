@@ -10,6 +10,10 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { useState,useEffect } from 'react';
 import Head from 'next/head'
 import BaslikGorselCompenent from '../../../compenent/BaslikGorselCompenentDetail';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCalendar, faFeather, faPenNib, faSearch } from '@fortawesome/free-solid-svg-icons';
+
+import styles from "../../../styles/Arastirmalar.module.css"
 
 const iconStyle = {
   width: '20px',
@@ -27,6 +31,31 @@ const buttonStyle = {
     fontSize: '12px',
   },
 };
+
+const linkStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  textDecoration: 'none',
+  color: '#333',
+  fontSize: '16px',
+  fontWeight: 'bold',
+  margin: '0',
+  padding: '10px 5px',
+  backgroundColor: '#fff',
+  boxShadow: 'none',
+  lineHeight: '1.5',
+  '&:hover': {
+    color: '#007bff',
+  },
+  '@media (maxWidth: 768px)': {
+    fontSize: '14px',
+  },
+};
+
+const pStyle = {
+  fontWeight:'bold',
+}
+
 
 const titleStyle = {
   fontSize: '16px', // Font boyutunu küçült
@@ -116,6 +145,38 @@ const Egitim = () => {
   const [isPagesLoading, setIsPagesLoading] = useState(true);
   const [errorPage, setErrorPage] = useState(null);
 
+
+  const handleToggleExpanded = () => {
+    setIsExpanded(!isExpanded);
+    if (isExpanded) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const renderContent = (content) => {
+    if (content.length <= 500 || isExpanded) {
+      return (
+        <div>
+          <div className={styles.content}  dangerouslySetInnerHTML={{ __html: content }} />
+          {content.length > 500 && (
+            <div  onClick={handleToggleExpanded} className={styles.dahaFazla} style={{ textTransform: 'none',  color:"#1976d2", cursor: 'pointer'  }} >
+              {isExpanded ? 'Daha Az Göster' : 'Daha Fazla Göster'}
+            </div>
+          )}
+        </div>
+      );
+    } else {
+      return (
+        <div>
+          <div className={styles.content} dangerouslySetInnerHTML={{ __html: content.substring(0, 500) + '...' }} />
+          <div  onClick={handleToggleExpanded} className={styles.dahaFazla}  style={{ textTransform: 'none' , color:"#1976d2" , cursor: 'pointer' }} >
+            Daha Fazla Göster
+          </div>
+        </div>
+      );
+    }
+  };
+  
   const formatDateWithoutTimeZone = (dateString) => {
       const options = { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' };
       const date = new Date(dateString);
@@ -250,7 +311,7 @@ const Egitim = () => {
       ) : (
         <>
         <BaslikGorselCompenent data={pages} catgoriItem={catgoriItem} detayItems={detayItems} isPagesLoading={isPagesLoading}/>
-          <Container maxWidth="md" style={{ marginTop: 40, marginBottom: 40 }}>
+          <Container maxWidth="lg" style={{ marginTop: 40, marginBottom: 40 }}>
             <Paper elevation={3} style={{ padding: 20 }}>
               <Grid container spacing={3}>
                 {/* Sol tarafta görsel */}
@@ -263,62 +324,71 @@ const Egitim = () => {
                 </Grid>
 
                 {/* Sağ tarafta detaylar */}
-                <Grid item xs={12} md={6} container direction="column" justifyContent="center">
-                  <Typography variant="h6" sx={titleStyle}>
+                <Grid item xs={12} md={6} container direction="column" justifyContent="space-evenly">
+  
+                  <div className={styles.content}>
+                  <h1>
                     {egitim.baslik}
-                  </Typography>
+                  </h1>
+                </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <img src="/icons/quill.png" alt="Tarih" style={iconStyle} />
-                    <Typography variant="subtitle1" sx={authorStyle}>
-                      {egitim.egitmen}
-                    </Typography>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <img src="/icons/calendar.png" alt="Tarih" style={iconStyle} />
-                    <Typography variant="subtitle1" sx={dateStyle}>
-                    {formatDateWithoutTimeZone(egitim.tarih)}
-                    </Typography>
-                  </div>
-
-                </Grid>
-
-                {/* Butonlar */}
-                <Grid item xs={12} container direction="column" justifyContent="center">
-                  {egitim.pdf_dosya && (
-                    <Button
-                      variant="text"
-                      color="primary"
-                      sx={buttonStyle}
-                      href={egitim.pdf_dosya}
-                      target="_blank"
-                    >
-                      Programı İncele
-                    </Button>
-                  )}
-
-                  {egitim.album && (
-                    <div onClick={() => handleAlbumClick(egitim.album)}>
-                      <Button variant="text" color="primary" sx={buttonStyle} component="a">
-                        Albümü Görüntüle
-                      </Button>
+                  <Grid>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <FontAwesomeIcon icon={faFeather} style={iconStyle} />
+                      <Typography variant="subtitle1" sx={authorStyle}>
+                        {egitim.egitmen}
+                      </Typography>
                     </div>
-                  )}
 
-                  {egitim.yayin && (
-                    <Button
-                      variant="text"
-                      color="primary"
-                      sx={buttonStyle}
-                      href={egitim.yayin.url}
-                      target="_blank"
-                    >
-                      Etkinlik Kaydını İzle
-                    </Button>
-                  )}
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <Typography variant="subtitle1" sx={dateStyle}>
+                      <FontAwesomeIcon icon={faCalendar} style={iconStyle} />
+                        {formatDateWithoutTimeZone(egitim.tarih)}
+                      </Typography>
+                    
+                    </div>
+
+                  </Grid>
+
+                  <Grid>
+                    {egitim.pdf_dosya && (
+                      <a href={egitim.pdf_dosya} target="_blank" rel="noopener noreferrer" style={{ ...linkStyle, display: 'inline-flex', alignItems: 'center' }}>
+                        <FontAwesomeIcon icon={faSearch} style={iconStyle} />
+                        <span style={pStyle}>Programı İncele</span>
+                      </a>
+                    )}
+                    {egitim.album && (
+                      <a href="#" onClick={(e) => { e.preventDefault(); handleAlbumClick(egitim.album); }} style={linkStyle}>
+                        <FontAwesomeIcon icon={faSearch} style={iconStyle} />
+                        <span>Albümü Görüntüle</span>
+                      </a>
+                    )}
+                    {egitim.yayin && (
+                      <a href={egitim.yayin.url} target="_blank" rel="noopener noreferrer" style={{ ...linkStyle, display: 'inline-flex', alignItems: 'center' }}>
+                        <FontAwesomeIcon icon={faSearch} style={iconStyle} />
+                        <span>Etkinlik Kaydını İzle</span>
+                      </a>
+                    )}
+                    </Grid>
+
                 </Grid>
+
+                
               </Grid>
+                  
+              {egitim.icerik && (
+
+              <Grid item xs={12} container direction="column" justifyContent="center">
+                {egitim.icerik && (
+                  <div style={{ marginTop: '20px'}}>
+                    {renderContent(egitim.icerik)}
+                  </div>
+                )}
+              </Grid>
+
+              )}
+
+
             </Paper>
             {message && (
               <div style={infoMessageStyle}>

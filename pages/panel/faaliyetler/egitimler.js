@@ -23,6 +23,8 @@ import PdfViewer from '../../../compenent/PdfViewer';
 import {TextEditor} from '../../../compenent/Editor';
 
 
+
+
 export default function Eğitimler() {
     const [data, setData] = useState([]);
     const [open, setOpen] = useState(false);
@@ -88,6 +90,30 @@ export default function Eğitimler() {
 
 
 
+    const normalizeText = (text) => {
+      return text
+        .toLowerCase()
+        .replace(/ı/g, 'i')
+        .replace(/ş/g, 's')
+        .replace(/ç/g, 'c')
+        .replace(/ğ/g, 'g')
+        .replace(/ü/g, 'u')
+        .replace(/ö/g, 'o');
+    };
+    
+        const [searchTerm, setSearchTerm] = useState(''); // Arama terimi için state
+    
+        // Arama sonucunu filtreleme
+        const filteredAlbums = fotoGaleri.filter((album) =>
+          normalizeText(album.baslik).includes(normalizeText(searchTerm))
+        );
+    
+        const [yayinSearchTerm, setYayinSearchTerm] = useState('');
+    
+        // Arama sonucunu filtreleme
+        const filteredYayinlar = videoGaleri.filter((yayin) =>
+          normalizeText(yayin.baslik).includes(normalizeText(yayinSearchTerm))
+        );
 
 
     const getResData = async () => {
@@ -1101,9 +1127,21 @@ export default function Eğitimler() {
                 <CloseIcon />
               </IconButton>
             </DialogTitle>
-            <DialogContent>
+            <TextField
+              label="Yayın Ara"
+              variant="outlined"
+              fullWidth
+              value={yayinSearchTerm}
+              onChange={(e) => setYayinSearchTerm(e.target.value)} // Arama terimini güncelle
+              style={{ marginBottom: '16px', zIndex: '10200', width: '95%', margin: '0 auto' }}
+            />
+            <DialogContent style={{
+                      height:'600px',
+                      overflowY: 'auto', // İçerik fazla olursa kaydırma sağlar
+                    }}
+            >
               <Grid container spacing={2}>
-                {videoGaleri.map((yayin) => (
+                {filteredYayinlar.map((yayin) => (
                   <Grid item xs={12} md={6} key={yayin.id}>
                     <ItemContainer>
                       <img src={yayin.kapak_fotografi} alt={yayin.baslik} />
@@ -1142,9 +1180,21 @@ export default function Eğitimler() {
                 <CloseIcon />
               </IconButton>
             </DialogTitle>
-            <DialogContent>
+            <TextField
+              label="Albüm Ara"
+              variant="outlined"
+              fullWidth
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)} // Arama terimini güncelle
+              style={{ marginBottom: '16px', zIndex: '10200', width: '95%', margin: '0 auto' }}
+            />
+            <DialogContent style={{
+                      height:'600px',
+                      overflowY: 'auto', // İçerik fazla olursa kaydırma sağlar
+                    }}
+            >
               <Grid container spacing={2}>
-                {fotoGaleri.map((album) => (
+                {filteredAlbums.map((album) => (
                   <Grid item xs={12} md={6} key={album.id}>
                     <ItemContainer>
                       <StyledImage src={album.kapak_fotografi} alt={album.baslik} />
@@ -1467,9 +1517,21 @@ export default function Eğitimler() {
                 <CloseIcon />
               </IconButton>
             </DialogTitle>
-            <DialogContent>
+            <TextField
+              label="Yayın Ara"
+              variant="outlined"
+              fullWidth
+              value={yayinSearchTerm}
+              onChange={(e) => setYayinSearchTerm(e.target.value)} // Arama terimini güncelle
+              style={{ marginBottom: '16px', zIndex: '10200', width: '95%', margin: '0 auto' }}
+            />
+            <DialogContent style={{
+                      height:'600px',
+                      overflowY: 'auto', // İçerik fazla olursa kaydırma sağlar
+                    }}
+            >
               <Grid container spacing={2}>
-                {videoGaleri.map((yayin) => (
+                {filteredYayinlar.map((yayin) => (
                   <Grid item xs={12} md={6} key={yayin.id}>
                     <ItemContainer>
                       <img src={yayin.kapak_fotografi} alt={yayin.baslik} />
@@ -1508,9 +1570,21 @@ export default function Eğitimler() {
                 <CloseIcon />
               </IconButton>
             </DialogTitle>
-            <DialogContent>
+            <TextField
+              label="Albüm Ara"
+              variant="outlined"
+              fullWidth
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)} // Arama terimini güncelle
+              style={{ marginBottom: '16px', zIndex: '10200', width: '95%', margin: '0 auto' }}
+            />
+            <DialogContent style={{
+                      height:'600px',
+                      overflowY: 'auto', // İçerik fazla olursa kaydırma sağlar
+                    }}
+            >
               <Grid container spacing={2}>
-                {fotoGaleri.map((album) => (
+                {filteredAlbums.map((album) => (
                   <Grid item xs={12} md={6} key={album.id}>
                     <ItemContainer>
                       <StyledImage src={album.kapak_fotografi} alt={album.baslik} />

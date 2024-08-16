@@ -1,86 +1,27 @@
-
-.content h2  {
-    font-size: 20px;
-    margin-bottom: 0.5rem;
-    
+.content{
+    line-height: 2.5rem;
 }
-
-.content h1  {
-    font-size: 22px;
-    margin-bottom: 0.5rem;
-    
-}
-
-.content h3  {
-    font-size: 18px;
-    margin-bottom: 0.5rem;
-    
-}
-
-
-
-.content h4  {
-    font-size: 16px;
-    margin-bottom: 0.5rem;
-    
-}
-.content h4  {
-    font-size: 15px;
-    margin-bottom: 0.4rem;
-    
-}
-.content h4  {
-    font-size: 14px;
-    margin-bottom: 0.3rem;
-    
-}
-
   
   @media (max-width: 768px) {
 
-
-    .dahaFazla{
-        font-size: 12px;
-    }
-
-    .content p  {
-        font-size: 12px;
-    }
-
     
     .content h2  {
-        font-size: 16px;
+        font-size: 20px;
         margin-bottom: 0.5rem;
         
     }
 
     .content h1  {
+        font-size: 22px;
+        margin-bottom: 0.5rem;
+        line-height: 1.5em;
+        
+    }
+
+    .content h3  {
         font-size: 18px;
         margin-bottom: 0.5rem;
         
     }
 
-    .content h3  {
-        font-size: 14px;
-        margin-bottom: 0.5rem;
-        
-    }
-
-
-
-    .content h4  {
-        font-size: 14px;
-        margin-bottom: 0.5rem;
-        
-    }
-    .content h5  {
-        font-size: 13px;
-        margin-bottom: 0.4rem;
-        
-    }
-    .content h6  {
-        font-size: 12px;
-        margin-bottom: 0.3rem;
-        
-}
   }
