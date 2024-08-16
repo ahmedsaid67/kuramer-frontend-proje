@@ -12,34 +12,16 @@ import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import { LocalizationProvider, DatePicker, DateTimePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import trLocale from 'date-fns/locale/tr'; // Türkçe yerelleştirme için
-import { parseISO } from 'date-fns';
 import { format } from 'date-fns';
 import Grid from '@mui/material/Grid';
 import { useRouter } from 'next/router';
 import { useSelector } from 'react-redux';
 import { API_ROUTES } from '../../../utils/constants';
-import { formatISO } from 'date-fns';
 
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import PdfViewer from '../../../compenent/PdfViewer';
+import {TextEditor} from '../../../compenent/Editor';
 
-
-const StyledTableCell = styled(TableCell)({
-    fontWeight: 'bold',
-    backgroundColor: '#f5f5f5',
-  });
-  
-  const StyledTableRow = styled(TableRow)({
-    '&:hover': {
-      backgroundColor: 'rgba(0, 0, 0, 0.04)',
-    },
-  });
-
-  const CustomPopper = styled('div')({
-    // Özelleştirilmiş stil tanımlamaları
-    width: '250px',
-    height: '300px',
-});
 
 export default function Eğitimler() {
     const [data, setData] = useState([]);
@@ -50,6 +32,7 @@ export default function Eğitimler() {
       baslik: '',
       tarih:"",
       egitmen:"",
+      icerik:"",
       pdfDosya: null,
       kapakFotografi: null,
       yayin: null,
@@ -214,6 +197,7 @@ export default function Eğitimler() {
             baslik: '',
             tarih:"",
             egitmen:"",
+            icerik:"",
             pdfDosya: null,
             kapakFotografi: null,
             yayin:null,
@@ -242,7 +226,7 @@ export default function Eğitimler() {
     
       const handleSave = (editedItem) => {
   
-        if (!editedItem.baslik || !editedItem.kapak_fotografi || !editedItem.tarih || !editedItem.egitmen || !editedItem.pdf_dosya ) {
+        if (!editedItem.baslik || !editedItem.kapak_fotografi || !editedItem.tarih || !editedItem.egitmen ) {
           setUyariMesaji("Lütfen tüm alanları doldurunuz.");
           return;
         }
@@ -255,16 +239,18 @@ export default function Eğitimler() {
           formData.append('kapak_fotografi', editedItem["kapak_fotografi_file"]);
         }
 
-        if (typeof editedItem["pdf_dosya"] === "object") {
+        if ( editedItem["pdf_dosya"] &&  typeof editedItem["pdf_dosya"] === "object") {
           formData.append("pdf_dosya", editedItem["pdf_dosya"]);
+        }else if (!editedItem["pdf_dosya"]){
+          formData.append("delete_pdf", true);
         }
 
-
+        formData.append("icerik", editedItem["icerik"]);
         formData.append("durum", editedItem["durum"]);
         formData.append("baslik", editedItem["baslik"]);
         formData.append("tarih", editedItem["tarih"]);
         formData.append("egitmen", editedItem["egitmen"]);
-        formData.append("icerik", editedItem["icerik"]);
+
 
         if (editedItem.yayin){
           formData.append("yayin_id", editedItem.yayin.id);
@@ -300,7 +286,7 @@ export default function Eğitimler() {
     
       const handleAddNewItem = () => {
 
-        if (!newItem.baslik || !newItem.kapakFotografi || !newItem.tarih || !newItem.egitmen || !newItem.pdfDosya) {
+        if (!newItem.baslik || !newItem.kapakFotografi || !newItem.tarih || !newItem.egitmen) {
 
           setUyariMesajiEkle("Lütfen tüm alanları doldurunuz.");
           return;
@@ -313,7 +299,12 @@ export default function Eğitimler() {
         formData.append("baslik", newItem["baslik"]);
         formData.append("tarih", newItem["tarih"]);
         formData.append("egitmen", newItem["egitmen"]);
-        formData.append("pdf_dosya", newItem["pdfDosya"]);
+        formData.append("icerik", newItem["icerik"]);
+
+        if (newItem.pdfDosya){
+          formData.append("pdf_dosya", newItem["pdfDosya"]);
+        }
+
         if (newItem.yayin){
           formData.append("yayin_id", newItem.yayin.id);
         }
@@ -691,6 +682,18 @@ export default function Eğitimler() {
 
 
 
+      const isContentEmpty = (content) => {
+        // Geçerli bir içerik olup olmadığını kontrol etmek için bir DOMParser kullanıyoruz
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(content, 'text/html');
+        
+        // İçeriği temizle ve boş olup olmadığını kontrol et
+        const textContent = doc.body.textContent || '';
+        return textContent.trim().length === 0;
+      };
+
+
+
 
     return(
         <>
@@ -728,6 +731,7 @@ export default function Eğitimler() {
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>PDF Dosya</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Yayın</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Albüm</TableCell>
+                        <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>İçerik</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Durum</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Detaylar</TableCell>
                       </TableRow>
@@ -757,6 +761,9 @@ export default function Eğitimler() {
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.pdf_dosya ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.yayin ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.album ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
+                          <TableCell style={{ fontSize: '0.75rem' }}>
+                            {row.icerik && !isContentEmpty(row.icerik) ? 'Mevcut' : 'Mevcut Değil'}
+                          </TableCell>
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.durum ? 'Aktif' : 'Pasif'}</TableCell>
                           <TableCell>
                             <Button
@@ -1051,6 +1058,18 @@ export default function Eğitimler() {
                     )}
                 </div>
             </div>
+
+
+
+             {/* icerik*/}
+             {selectedItem && (
+              <>
+                <Typography variant="subtitle1" style={{ marginBottom: '10px', marginTop:'10px'}}>
+                  İçerik (isteğe bağlı) :
+                </Typography>
+                <TextEditor selectedItem={selectedItem} setSelectedItem={setSelectedItem}/>
+              </>
+            )}
 
             
 
@@ -1406,6 +1425,16 @@ export default function Eğitimler() {
                     )}
                 </div>
             </div>
+
+
+            {newItem && (
+              <>
+                <Typography variant="subtitle1" style={{ marginBottom: '10px', marginTop:'10px'}}>
+                  İçerik (isteğe bağlı):
+                </Typography>
+                <TextEditor selectedItem={newItem} setSelectedItem={setNewItem}/>
+              </>
+            )}
 
 
 

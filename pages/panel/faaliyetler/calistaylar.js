@@ -259,9 +259,14 @@ export default function Sempozyumlar() {
           formData.append('kapak_fotografi', editedItem["kapak_fotografi_file"]);
         }
 
+
+
         if ( editedItem["pdf_dosya"] &&  typeof editedItem["pdf_dosya"] === "object") {
           formData.append("pdf_dosya", editedItem["pdf_dosya"]);
+        }else if (!editedItem["pdf_dosya"]){
+          formData.append("delete_pdf", true);
         }
+
 
         formData.append("durum", editedItem["durum"]);
         formData.append("baslik", editedItem["baslik"]);
@@ -703,6 +708,17 @@ export default function Sempozyumlar() {
         const date = new Date(dateString);
         return new Intl.DateTimeFormat('tr-TR', options).format(date);
       };
+
+
+      const isContentEmpty = (content) => {
+        // Geçerli bir içerik olup olmadığını kontrol etmek için bir DOMParser kullanıyoruz
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(content, 'text/html');
+        
+        // İçeriği temizle ve boş olup olmadığını kontrol et
+        const textContent = doc.body.textContent || '';
+        return textContent.trim().length === 0;
+      };
       
 
 
@@ -744,7 +760,7 @@ export default function Sempozyumlar() {
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>PDF Dosya</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Yayın</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Albüm</TableCell>
-                        
+                        <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>İçerik</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Durum</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Detaylar</TableCell>
                       </TableRow>
@@ -774,6 +790,9 @@ export default function Sempozyumlar() {
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.pdf_dosya ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.yayin ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.album ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
+                          <TableCell style={{ fontSize: '0.75rem' }}>
+                            {row.icerik && !isContentEmpty(row.icerik) ? 'Mevcut' : 'Mevcut Değil'}
+                          </TableCell>
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.durum ? 'Aktif' : 'Pasif'}</TableCell>
                           <TableCell>
                             <Button

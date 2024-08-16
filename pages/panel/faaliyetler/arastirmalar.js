@@ -228,8 +228,12 @@ export default function Arastirmalar() {
           formData.append('kapak_fotografi', editedItem["kapak_fotografi_file"]);
         }
 
+        // eklenen kısım
+
         if ( editedItem["pdf_dosya"] &&  typeof editedItem["pdf_dosya"] === "object") {
           formData.append("pdf_dosya", editedItem["pdf_dosya"]);
+        }else if (!editedItem["pdf_dosya"]){
+          formData.append("delete_pdf", true);
         }
 
 
@@ -662,6 +666,16 @@ export default function Arastirmalar() {
         return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
       }
 
+      const isContentEmpty = (content) => {
+        // Geçerli bir içerik olup olmadığını kontrol etmek için bir DOMParser kullanıyoruz
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(content, 'text/html');
+        
+        // İçeriği temizle ve boş olup olmadığını kontrol et
+        const textContent = doc.body.textContent || '';
+        return textContent.trim().length === 0;
+      };
+
 
     return(
         <>
@@ -721,7 +735,9 @@ export default function Arastirmalar() {
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.pdf_dosya ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.yayin ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.album ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
-                          <TableCell style={{ fontSize: '0.75rem' }}>{row.icerik ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
+                          <TableCell style={{ fontSize: '0.75rem' }}>
+                            {row.icerik && !isContentEmpty(row.icerik) ? 'Mevcut' : 'Mevcut Değil'}
+                          </TableCell>
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.durum ? 'Aktif' : 'Pasif'}</TableCell>
                           <TableCell>
                             <Button

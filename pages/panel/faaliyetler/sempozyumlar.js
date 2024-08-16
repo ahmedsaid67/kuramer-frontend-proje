@@ -21,6 +21,7 @@ import { useRouter } from 'next/router';
 import { useSelector } from 'react-redux';
 import { API_ROUTES } from '../../../utils/constants';
 import { formatISO } from 'date-fns';
+import {TextEditor} from '../../../compenent/Editor';
 
 
 
@@ -52,6 +53,7 @@ export default function Sempozyumlar() {
       konum:"",
       kapakFotografi: null,
       pdfDosya: null,
+      icerik:"",
       yayin: null,
       album:null,
       durum: true
@@ -211,6 +213,7 @@ export default function Sempozyumlar() {
             baslik: '',
             tarih:"",
             konum:"",
+            icerik:"",
             kapakFotografi: null,
             pdfDosya: null,
             yayin:null,
@@ -239,7 +242,7 @@ export default function Sempozyumlar() {
     
       const handleSave = (editedItem) => {
   
-        if (!editedItem.baslik || !editedItem.kapak_fotografi || !editedItem.pdf_dosya || !editedItem.tarih || !editedItem.konum ) {
+        if (!editedItem.baslik || !editedItem.kapak_fotografi || !editedItem.tarih || !editedItem.konum ) {
           setUyariMesaji("Lütfen tüm alanları doldurunuz.");
           return;
         }
@@ -252,12 +255,16 @@ export default function Sempozyumlar() {
           formData.append('kapak_fotografi', editedItem["kapak_fotografi_file"]);
         }
 
-        if (typeof editedItem["pdf_dosya"] === "object") {
+        if ( editedItem["pdf_dosya"] &&  typeof editedItem["pdf_dosya"] === "object") {
           formData.append("pdf_dosya", editedItem["pdf_dosya"]);
+
+        }else if (!editedItem["pdf_dosya"]){
+          formData.append("delete_pdf", true);
         }
 
         formData.append("durum", editedItem["durum"]);
         formData.append("baslik", editedItem["baslik"]);
+        formData.append("icerik", editedItem["icerik"]);
         formData.append("tarih", editedItem["tarih"]);
         formData.append("konum", editedItem["konum"]);
 
@@ -295,7 +302,7 @@ export default function Sempozyumlar() {
     
       const handleAddNewItem = () => {
 
-        if (!newItem.baslik || !newItem.kapakFotografi || !newItem.pdfDosya || !newItem.tarih || !newItem.konum ) {
+        if (!newItem.baslik || !newItem.kapakFotografi || !newItem.tarih || !newItem.konum ) {
 
           setUyariMesajiEkle("Lütfen tüm alanları doldurunuz.");
           return;
@@ -308,7 +315,12 @@ export default function Sempozyumlar() {
         formData.append("baslik", newItem["baslik"]);
         formData.append("tarih", newItem["tarih"]);
         formData.append("konum", newItem["konum"]);
-        formData.append("pdf_dosya", newItem["pdfDosya"]);
+        formData.append("icerik", newItem["icerik"]);
+
+        if (newItem.pdfDosya){
+          formData.append("pdf_dosya", newItem["pdfDosya"]);
+          }
+
         if (newItem.yayin){
           formData.append("yayin_id", newItem.yayin.id);
         }
@@ -691,6 +703,17 @@ export default function Sempozyumlar() {
       };
 
 
+      const isContentEmpty = (content) => {
+        // Geçerli bir içerik olup olmadığını kontrol etmek için bir DOMParser kullanıyoruz
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(content, 'text/html');
+        
+        // İçeriği temizle ve boş olup olmadığını kontrol et
+        const textContent = doc.body.textContent || '';
+        return textContent.trim().length === 0;
+      };
+
+
 
 
     return(
@@ -729,6 +752,7 @@ export default function Sempozyumlar() {
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>PDF Dosya</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Yayın</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Albüm</TableCell>
+                        <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>İçerik</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Durum</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Detaylar</TableCell>
                       </TableRow>
@@ -758,6 +782,9 @@ export default function Sempozyumlar() {
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.pdf_dosya ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.yayin ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.album ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
+                          <TableCell style={{ fontSize: '0.75rem' }}>
+                            {row.icerik && !isContentEmpty(row.icerik) ? 'Mevcut' : 'Mevcut Değil'}
+                          </TableCell>
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.durum ? 'Aktif' : 'Pasif'}</TableCell>
                           <TableCell>
                             <Button
@@ -1049,7 +1076,15 @@ export default function Sempozyumlar() {
                 </div>
             </div>
 
-            
+            {/* icerik*/}
+            {selectedItem && (
+              <>
+                <Typography variant="subtitle1" style={{ marginBottom: '10px', marginTop:'10px'}}>
+                  İçerik (isteğe bağlı) :
+                </Typography>
+                <TextEditor selectedItem={selectedItem} setSelectedItem={setSelectedItem}/>
+              </>
+            )}
 
             <FormControlLabel control={<Checkbox checked={selectedItem ? selectedItem.durum : false} onChange={(e) => setSelectedItem({ ...selectedItem, durum: e.target.checked })} />} label="Aktif" />
           </DialogContent>
@@ -1401,6 +1436,15 @@ export default function Sempozyumlar() {
                 </div>
             </div>
 
+
+            {newItem && (
+              <>
+                <Typography variant="subtitle1" style={{ marginBottom: '10px', marginTop:'10px'}}>
+                  İçerik (isteğe bağlı):
+                </Typography>
+                <TextEditor selectedItem={newItem} setSelectedItem={setNewItem}/>
+              </>
+            )}
 
 
         <FormControlLabel

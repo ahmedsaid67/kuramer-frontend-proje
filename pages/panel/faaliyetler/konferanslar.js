@@ -19,6 +19,8 @@ import { useRouter } from 'next/router';
 import { useSelector } from 'react-redux';
 import { API_ROUTES } from '../../../utils/constants';
 import { formatISO } from 'date-fns';
+import {TextEditor} from '../../../compenent/Editor';
+
 
 const StyledTableCell = styled(TableCell)({
     fontWeight: 'bold',
@@ -48,6 +50,7 @@ export default function Konferanslar() {
       konum:"",
       konusmaci:"",
       kapakFotografi: null,
+      icerik:"",
       yayin: null,
       album:null,
       durum: true
@@ -194,6 +197,7 @@ export default function Konferanslar() {
             konum:"",
             konusmaci:"",
             kapakFotografi: null,
+            icerik:"",
             yayin:null,
             album:null,
             durum: true
@@ -238,7 +242,7 @@ export default function Konferanslar() {
         formData.append("baslik", editedItem["baslik"]);
         formData.append("tarih", editedItem["tarih"]);
         formData.append("konusmaci", editedItem["konusmaci"]);
-
+        formData.append("icerik", editedItem["icerik"]);
         
         formData.append("konum", editedItem["konum"]);
 
@@ -290,7 +294,7 @@ export default function Konferanslar() {
         formData.append("tarih", newItem["tarih"]);
    
         formData.append("konum", newItem["konum"]);
-        
+        formData.append("icerik", newItem["icerik"]);
         
         formData.append("konusmaci", newItem["konusmaci"]);
         if (newItem.yayin){
@@ -647,7 +651,15 @@ export default function Konferanslar() {
       
 
 
-
+      const isContentEmpty = (content) => {
+        // Geçerli bir içerik olup olmadığını kontrol etmek için bir DOMParser kullanıyoruz
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(content, 'text/html');
+        
+        // İçeriği temizle ve boş olup olmadığını kontrol et
+        const textContent = doc.body.textContent || '';
+        return textContent.trim().length === 0;
+      };
 
     return(
         <>
@@ -685,6 +697,7 @@ export default function Konferanslar() {
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Kapak Fotoğrafı</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Yayın</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Albüm</TableCell>
+                        <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>İçerik</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Durum</TableCell>
                         <TableCell style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff' }}>Detaylar</TableCell>
                       </TableRow>
@@ -721,6 +734,9 @@ export default function Konferanslar() {
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.kapak_fotografi ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.yayin ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.album ? 'Mevcut' : 'Mevcut Değil'}</TableCell>
+                          <TableCell style={{ fontSize: '0.75rem' }}>
+                            {row.icerik && !isContentEmpty(row.icerik) ? 'Mevcut' : 'Mevcut Değil'}
+                          </TableCell>
                           <TableCell style={{ fontSize: '0.75rem' }}>{row.durum ? 'Aktif' : 'Pasif'}</TableCell>
                           <TableCell>
                             <Button
@@ -963,6 +979,16 @@ export default function Konferanslar() {
                     )}
                 </div>
             </div>
+
+            {/* icerik*/}
+            {selectedItem && (
+              <>
+                <Typography variant="subtitle1" style={{ marginBottom: '10px', marginTop:'10px'}}>
+                  İçerik (isteğe bağlı) :
+                </Typography>
+                <TextEditor selectedItem={selectedItem} setSelectedItem={setSelectedItem}/>
+              </>
+            )}
 
             
 
@@ -1262,6 +1288,16 @@ export default function Konferanslar() {
                     )}
                 </div>
             </div>
+
+
+            {newItem && (
+              <>
+                <Typography variant="subtitle1" style={{ marginBottom: '10px', marginTop:'10px'}}>
+                  İçerik (isteğe bağlı):
+                </Typography>
+                <TextEditor selectedItem={newItem} setSelectedItem={setNewItem}/>
+              </>
+            )}
 
 
 
