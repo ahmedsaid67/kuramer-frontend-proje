@@ -10,12 +10,17 @@ import Head from 'next/head'
 import BaslikGorselCompenent from '../../../compenent/BaslikGorselCompenentDetail';
 
 import styles from "../../../styles/Arastirmalar.module.css"
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCalendar, faLocationDot, faLocationPin, faMicrophone, faSearch } from '@fortawesome/free-solid-svg-icons';
 
 const iconStyle = {
-  width: '20px',
-  height: '20px',
-  marginRight: '5px',
+  fontSize: '17x',
+  fontWeight:'bold',
+  marginRight: '8px',
+  verticalAlign: 'middle',
+  color: '#333',
 };
+
 
 const buttonStyle = {
   fontSize: '14px',
@@ -81,7 +86,7 @@ const speakerStyle = {
 const dateStyle = {
   fontSize: '15px', // Font boyutunu küçült
   fontFamily: 'sans-serif',
-  color: '#343434',
+  color: '#333',
   display: 'flex',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
@@ -169,27 +174,13 @@ const Konferans = () => {
   };
 
   const renderContent = (content) => {
-    if (content.length <= 500 || isExpanded) {
+    
       return (
         <div>
           <div className={styles.content}  dangerouslySetInnerHTML={{ __html: content }} />
-          {content.length > 500 && (
-            <div  onClick={handleToggleExpanded} className={styles.dahaFazla} style={{ textTransform: 'none',  color:"#1976d2", cursor: 'pointer'  }} >
-              {isExpanded ? 'Daha Az Göster' : 'Daha Fazla Göster'}
-            </div>
-          )}
         </div>
       );
-    } else {
-      return (
-        <div>
-          <div className={styles.content} dangerouslySetInnerHTML={{ __html: content.substring(0, 500) + '...' }} />
-          <div  onClick={handleToggleExpanded} className={styles.dahaFazla}  style={{ textTransform: 'none' , color:"#1976d2" , cursor: 'pointer' }} >
-            Daha Fazla Göster
-          </div>
-        </div>
-      );
-    }
+    
   };
 
   const pagesFetchData = async () => {
@@ -340,7 +331,7 @@ const Konferans = () => {
           </Grid>
 
           {/* Sağ tarafta detaylar */}
-          <Grid item xs={12} md={6} container direction="column" justifyContent="space-evenly">
+          <Grid item xs={12} md={6} container direction="column" justifyContent="flex-start">
             
 
             <div className={styles.content}>
@@ -349,9 +340,9 @@ const Konferans = () => {
               </h1>
             </div>
 
-          <Grid>
+          <Grid mt={2}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
-              <img src="/icons/speaker.png" alt="Tarih" style={iconStyle} />
+            <FontAwesomeIcon icon={faMicrophone} style={iconStyle} />
               <Typography variant="subtitle1" sx={speakerStyle}>
                 {konferans.konusmaci}
               </Typography>
@@ -359,7 +350,7 @@ const Konferans = () => {
             
 
             <div style={{ display: 'flex', alignItems: 'center' }}>
-              <img src="/icons/calendar.png" alt="Tarih" style={iconStyle} />
+            <FontAwesomeIcon icon={faCalendar} style={iconStyle} />
               <Typography variant="subtitle1" sx={dateStyle}>
                 {formatDateWithoutTimeZone(konferans.tarih)}
               </Typography>
@@ -370,7 +361,7 @@ const Konferans = () => {
             {konferans.konum && (
 
               <div style={{ display: 'flex', alignItems: 'center', marginBottom: 10 }}>
-                <img src="/icons/location.png" alt="Yer" style={iconStyle} />
+                <FontAwesomeIcon icon={faLocationDot} style={iconStyle} />
                 <Typography variant="subtitle1" sx={placeStyle}>
                   {konferans.konum}
                 </Typography>
@@ -379,7 +370,7 @@ const Konferans = () => {
             )}
              </Grid>
 
-             <Grid>
+             <Grid mt={2}>
               {konferans.pdf_dosya && (
                 <a href={konferans.pdf_dosya} target="_blank" rel="noopener noreferrer" style={{ ...linkStyle, display: 'inline-flex', alignItems: 'center' }}>
                   <FontAwesomeIcon icon={faSearch} style={iconStyle} />

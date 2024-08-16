@@ -16,21 +16,13 @@ import { faCalendar, faFeather, faPenNib, faSearch } from '@fortawesome/free-sol
 import styles from "../../../styles/Arastirmalar.module.css"
 
 const iconStyle = {
-  width: '20px',
-  height: '20px',
-  marginRight: '5px',
+  fontSize: '17x',
+  fontWeight:'bold',
+  marginRight: '8px',
+  verticalAlign: 'middle',
+  color: '#333',
 };
 
-const buttonStyle = {
-  fontSize: '14px',
-  width: '100%',
-  borderRadius: 0, // Köşelerin kavisini kaldır
-  borderBottom: '1px solid #ccc', // Butonlar arasına çizgi ekle
-  textTransform: 'none',
-  '@media (max-width: 768px)': {
-    fontSize: '12px',
-  },
-};
 
 const linkStyle = {
   display: 'flex',
@@ -57,21 +49,6 @@ const pStyle = {
 }
 
 
-const titleStyle = {
-  fontSize: '16px', // Font boyutunu küçült
-  fontFamily: 'sans-serif',
-  fontWeight: 550,
-  color: '#343434',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  display: '-webkit-box',
-  WebkitBoxOrient: 'vertical',
-  marginLeft: '5px',
-  '@media (max-width: 768px)': {
-    fontSize: '15px',
-  },
-  marginBottom: 2,
-};
 
 const authorStyle = {
   fontSize: '15px', // Font boyutunu küçült
@@ -113,7 +90,7 @@ const infoMessageStyle = {
 const dateStyle = {
   fontSize: '15px', // Font boyutunu küçült
   fontFamily: 'sans-serif',
-  color: '#343434',
+  color: '#333',  
   display: 'flex',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
@@ -156,27 +133,13 @@ const Egitim = () => {
   };
 
   const renderContent = (content) => {
-    if (content.length <= 500 || isExpanded) {
+    
       return (
         <div>
           <div className={styles.content}  dangerouslySetInnerHTML={{ __html: content }} />
-          {content.length > 500 && (
-            <div  onClick={handleToggleExpanded} className={styles.dahaFazla} style={{ textTransform: 'none',  color:"#1976d2", cursor: 'pointer'  }} >
-              {isExpanded ? 'Daha Az Göster' : 'Daha Fazla Göster'}
-            </div>
-          )}
         </div>
       );
-    } else {
-      return (
-        <div>
-          <div className={styles.content} dangerouslySetInnerHTML={{ __html: content.substring(0, 500) + '...' }} />
-          <div  onClick={handleToggleExpanded} className={styles.dahaFazla}  style={{ textTransform: 'none' , color:"#1976d2" , cursor: 'pointer' }} >
-            Daha Fazla Göster
-          </div>
-        </div>
-      );
-    }
+    
   };
   
   const formatDateWithoutTimeZone = (dateString) => {
@@ -326,7 +289,7 @@ const Egitim = () => {
                 </Grid>
 
                 {/* Sağ tarafta detaylar */}
-                <Grid item xs={12} md={6} container direction="column" justifyContent="space-evenly">
+                <Grid item xs={12} md={6} container direction="column" justifyContent="flex-start">
   
                   <div className={styles.content}>
                   <h1>
@@ -334,7 +297,7 @@ const Egitim = () => {
                   </h1>
                 </div>
 
-                  <Grid>
+                  <Grid mt={2}> 
                     <div style={{ display: 'flex', alignItems: 'center' }}>
                     <FontAwesomeIcon icon={faFeather} style={iconStyle} />
                       <Typography variant="subtitle1" sx={authorStyle}>
@@ -352,7 +315,7 @@ const Egitim = () => {
 
                   </Grid>
 
-                  <Grid>
+                  <Grid mt={2}>
                     {egitim.pdf_dosya && (
                       <a href={egitim.pdf_dosya} target="_blank" rel="noopener noreferrer" style={{ ...linkStyle, display: 'inline-flex', alignItems: 'center' }}>
                         <FontAwesomeIcon icon={faSearch} style={iconStyle} />

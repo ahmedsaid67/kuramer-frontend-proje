@@ -3,8 +3,8 @@ import { Card, CardMedia, CardContent, Typography, Button } from '@mui/material'
 import Link from 'next/link';
 
 const cardStyle = {
-  maxWidth: 350,
-  minWidth: 350,
+  maxWidth: 325,
+  minWidth: 325,
   maxHeight: 500,
   minHeight: 300,
   border: '1px solid #ccc',

@@ -11,7 +11,7 @@ import styles from "../../../styles/Arastirmalar.module.css"
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendar, faLocation, faSearch } from '@fortawesome/free-solid-svg-icons';
-
+import BaslikGorselCompenent from '../../../compenent/BaslikGorselCompenentDetail';
 
 
 const buttonStyle = {
@@ -32,6 +32,7 @@ const buttonStyle = {
     fontSize: '14px',
   },
 };
+
 const linkStyle = {
   display: 'flex',
   alignItems: 'center',
@@ -43,53 +44,26 @@ const linkStyle = {
   padding: '10px 5px',
   backgroundColor: '#fff',
   boxShadow: 'none',
-  lineHeight: '1.5', // Metin yüksekliğini ayarlayarak boşlukları kontrol edin
+  lineHeight: '1.5',
   '&:hover': {
     color: '#007bff',
   },
-  '@media (max-width: 768px)': {
+  '@media (maxWidth: 768px)': {
     fontSize: '14px',
   },
 };
-
 const pStyle = {
   fontWeight:'bold',
+  color: '#333',
 }
 
 
 const iconStyle = {
-  fontSize: '16px',
+  color: '#333',
+  fontSize: '17x',
   fontWeight:'bold',
   marginRight: '8px',
   verticalAlign: 'middle',
-};
-
-const titleStyle = {
-  fontFamily: 'sans-serif',
-  fontWeight: 550,
-  color: '#343434',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  display: '-webkit-box',
-  WebkitBoxOrient: 'vertical',
-  marginLeft: '5px',
-  '@media (max-width: 768px)': {
-    fontSize: '15px',
-  },
-  marginBottom: 2,
-};
-
-
-const dateStyle = {
-  fontSize: '16px',
-  color: '#666',
-  marginBottom: '10px',
-};
-
-const placeStyle = {
-  fontSize: '16px',
-  color: '#666',
-  marginBottom: '10px',
 };
 
 
@@ -104,11 +78,19 @@ const Arastirma = () => {
   const [errorAlbum, setErrorAlbum] = useState(false);
   const [error,setError] = useState(null)
   const [isLoading, setIsLoading] = useState(true); // Yükleme durumu için state
-  const [isExpanded, setIsExpanded] = useState(false);
-
 
   const router = useRouter();
-  const nid = router.query.nid
+  const { asPath, isReady } = router;
+  const nidMatch = asPath.match(/-(\d+)$/); // Regex ile URL'den id'yi çıkarma
+  const nid = router.query.nid;
+
+  const [detayItems,setDetayItems] = useState({})
+  const [catgoriItem, setcatgoriItem] = useState({});
+  const [pages, setPages] = useState([]);
+  const [isPagesLoading, setIsPagesLoading] = useState(true);
+  const [errorPage, setErrorPage] = useState(null);
+
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const handleToggleExpanded = () => {
     setIsExpanded(!isExpanded);
@@ -118,52 +100,66 @@ const Arastirma = () => {
   };
 
   const renderContent = (content) => {
-    if (content.length <= 500 || isExpanded) {
+    
       return (
         <div>
           <div className={styles.content}  dangerouslySetInnerHTML={{ __html: content }} />
-          {content.length > 500 && (
-            <div  onClick={handleToggleExpanded} className={styles.dahaFazla} style={{ textTransform: 'none',  color:"#1976d2", cursor: 'pointer'  }} >
-              {isExpanded ? 'Daha Az Göster' : 'Daha Fazla Göster'}
-            </div>
-          )}
         </div>
       );
-    } else {
-      return (
-        <div>
-          <div className={styles.content} dangerouslySetInnerHTML={{ __html: content.substring(0, 500) + '...' }} />
-          <div  onClick={handleToggleExpanded} className={styles.dahaFazla}  style={{ textTransform: 'none' , color:"#1976d2" , cursor: 'pointer' }} >
-            Daha Fazla Göster
-          </div>
-        </div>
-      );
+    
+  };
+
+  const pagesFetchData = async () => {
+    setIsPagesLoading(true);
+    try {
+      const cleanedPath = asPath.split('?')[0];
+      const pathSegments = cleanedPath.split('/').filter(Boolean);
+      const categoriPart = `${pathSegments.slice(0, 1).join('/')}`;
+      const lastPart = `${pathSegments.slice(1, 2).join('/')}`;
+      const url= `/${categoriPart}?tab=${lastPart}`
+
+      const response1 = await axios.post(API_ROUTES.SAYFALAR_GET_GORSEL, { url: url });
+      //console.log("res:",response1)
+      setPages(response1.data);
+      setErrorPage(null);
+    } catch (error) {
+      setErrorPage('Veriler yüklenirken beklenmeyen bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
+      console.log("error:", error);
+    } finally {
+      setIsPagesLoading(false);
+    }
+  };
+
+  const fetchKonferans = async () => {
+    setIsLoading(true);
+    try {
+      const apiRoute = API_ROUTES.ARASTIRMALAR_DETAIL.replace('slug', nid); 
+      const response = await axios.get(apiRoute);
+      setArastirma(response.data);
+      setError(null);
+
+      //console.log("res:",response.data)
+
+      
+      setDetayItems({ name:response.data.baslik, url: asPath})
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        setError("Aradığınız sayfa bulunamadı. Bir hata oluşmuş olabilir veya sayfa kaldırılmış olabilir.");
+      } else {
+        setError("Bir şeyler ters gitti. Daha sonra tekrar deneyiniz.");
+      }
+      console.error('Sempozyum detayları yüklenirken hata:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    const fetchKonferans = async () => {
-      if (!router.isReady) return; // Router henüz hazır değilse bekleyin
-      setIsLoading(true);
-      try {
-        const apiRoute = API_ROUTES.ARASTIRMALAR_DETAIL.replace('slug', nid);
-        const response = await axios.get(apiRoute);
-        setArastirma(response.data); 
-        setError(null);
-      } catch (error) {
-        if (error.response && error.response.status === 404) {
-          setError("Aradığınız araştırma bulunamadı.");
-        } else {
-          setError("Bir şeyler ters gitti. Daha sonra tekrar deneyiniz.");
-        }
-        console.error('Araştırma detayları yüklenirken hata:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-  
-    fetchKonferans(); 
-  }, [nid]); 
+    if (!isReady) return;
+
+    fetchKonferans();
+    pagesFetchData();
+  }, [isReady, nid]);
   
 
   const handleCloseViewer = () => {
@@ -187,19 +183,7 @@ const Arastirma = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <>
-        <Head>
-          <title>Araştırmalar | Kuramer</title>
-          <link rel="icon" href="/kuramerlogo.png" />
-        </Head>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-          <CircularProgress />
-        </div>
-      </>
-    );
-  }
+ 
 
   if (error) {
     return (
@@ -235,6 +219,23 @@ const Arastirma = () => {
         <title>Araştırma | Kuramer</title>
         <link rel="icon" href="/kuramerlogo.png" />
       </Head>
+
+      {isLoading ? (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+          }}
+        >
+          <CircularProgress />
+        </div>
+      ) : (
+        <>
+        <BaslikGorselCompenent data={pages} catgoriItem={catgoriItem} detayItems={detayItems} isPagesLoading={isPagesLoading}/>
+
+
       <Container maxWidth="lg" style={{ marginTop: 40, marginBottom: 40 }}>
         <Paper elevation={3} style={{ padding: 20 }}>
           <Grid container spacing={3}>
@@ -245,16 +246,14 @@ const Arastirma = () => {
                 style={{ width: '100%', height: 'auto', borderRadius: '10px' }}
               />
             </Grid>
-            <Grid item xs={12} md={6} container direction="column" justifyContent="space-evenly">
-            
-
-            <div className={styles.content}>
-              <h1>
-                {arastirma.baslik}
-              </h1>
-            </div>
+            <Grid item xs={12} md={6} container direction="column" justifyContent="flex-start">
+              <div className={styles.content}>
+                <h1>
+                  {arastirma.baslik}
+                </h1>
+              </div>
               
-              <Grid>
+              <Grid mt={2}>
               {arastirma.pdf_dosya && (
                 <a href={arastirma.pdf_dosya} target="_blank" rel="noopener noreferrer" style={{ ...linkStyle, display: 'inline-flex', alignItems: 'center' }}>
                   <FontAwesomeIcon icon={faSearch} style={iconStyle} />
@@ -280,15 +279,15 @@ const Arastirma = () => {
 
           {arastirma.icerik && (
 
-          <Grid item xs={12} container direction="column" justifyContent="center">
-            {arastirma.icerik && (
-              <div  style={{ marginTop: '20px'}}>
-                {renderContent(arastirma.icerik)}
-              </div>
-            )}
-          </Grid>
+<Grid item xs={12} container direction="column" justifyContent="center">
+  {arastirma.icerik && (
+    <div className={styles.icerik} style={{ marginTop: '20px'}}>
+      {renderContent(arastirma.icerik)}
+    </div>
+  )}
+</Grid>
 
-          )}
+)}
           
         </Paper>
         {message && (
@@ -305,6 +304,8 @@ const Arastirma = () => {
           <PhotoGalleryViewer images={selectedAlbum?.images || []} onClose={handleCloseViewer} />
         )}
       </Container>
+      </>
+      )}
     </>
   );
 };

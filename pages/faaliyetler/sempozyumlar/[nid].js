@@ -14,42 +14,18 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import styles from "../../../styles/Arastirmalar.module.css"
 
 const iconStyle = {
-  width: '20px',
-  height: '20px',
-  marginRight: '5px',
+  color: '#333',
+  fontSize: '17x',
+  fontWeight:'bold',
+  marginRight: '8px',
+  verticalAlign: 'middle',
 };
 
-const buttonStyle = {
-  fontSize: '14px',
-  width: '100%',
-  borderRadius: 0, // Köşelerin kavisini kaldır
-  borderBottom: '1px solid #ccc', // Butonlar arasına çizgi ekle
-  textTransform: 'none',
-  '@media (max-width: 768px)': {
-    fontSize: '12px',
-  },
-};
-
-const titleStyle = {
-  fontSize: '16px', // Font boyutunu küçült
-  fontFamily: 'sans-serif',
-  fontWeight: 550,
-  color: '#343434',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  display: '-webkit-box',
-  WebkitBoxOrient: 'vertical',
-  '@media (max-width: 768px)': {
-    fontSize: '15px',
-  },
-  marginBottom: 2,
-  
-};
 
 const dateStyle = {
   fontSize: '15px', // Font boyutunu küçült
   fontFamily: 'sans-serif',
-  color: '#343434',
+  color: '#333',
   display: 'flex',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
@@ -64,7 +40,7 @@ const dateStyle = {
 const placeStyle = {
   fontSize: '15px', // Font boyutunu küçült
   fontFamily: 'sans-serif',
-  color: '#343434',
+  color: '#333',
   display: 'flex',
   alignItems: 'center',
   overflow: 'hidden',
@@ -156,27 +132,13 @@ const Sempozyum = () => {
   };
 
   const renderContent = (content) => {
-    if (content.length <= 500 || isExpanded) {
+    
       return (
         <div>
           <div className={styles.content}  dangerouslySetInnerHTML={{ __html: content }} />
-          {content.length > 500 && (
-            <div  onClick={handleToggleExpanded} className={styles.dahaFazla} style={{ textTransform: 'none',  color:"#1976d2", cursor: 'pointer'  }} >
-              {isExpanded ? 'Daha Az Göster' : 'Daha Fazla Göster'}
-            </div>
-          )}
         </div>
       );
-    } else {
-      return (
-        <div>
-          <div className={styles.content} dangerouslySetInnerHTML={{ __html: content.substring(0, 500) + '...' }} />
-          <div  onClick={handleToggleExpanded} className={styles.dahaFazla}  style={{ textTransform: 'none' , color:"#1976d2" , cursor: 'pointer' }} >
-            Daha Fazla Göster
-          </div>
-        </div>
-      );
-    }
+    
   };
 
   const formatDateWithoutTimeZone = (dateString) => {
@@ -329,7 +291,7 @@ const Sempozyum = () => {
               </Grid>
 
               {/* Sağ tarafta detaylar */}
-              <Grid item xs={12} md={6} container direction="column" justifyContent="space-evenly">
+              <Grid item xs={12} md={6} container direction="column" justifyContent="flex-start">
                 
                 <div className={styles.content}>
                   <h1>
@@ -337,7 +299,7 @@ const Sempozyum = () => {
                   </h1>
                 </div>
 
-                <Grid>
+                <Grid mt={1}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                 <FontAwesomeIcon icon={faCalendar} style={iconStyle} />
                   <Typography variant="subtitle1" sx={dateStyle}>
@@ -354,7 +316,7 @@ const Sempozyum = () => {
 
                 </Grid>
 
-                <Grid>
+                <Grid mt={1}>
                 {sempozyum.pdf_dosya && (
                   <a href={sempozyum.pdf_dosya} target="_blank" rel="noopener noreferrer" style={{ ...linkStyle, display: 'inline-flex', alignItems: 'center' }}>
                     <FontAwesomeIcon icon={faSearch} style={iconStyle} />

@@ -11,24 +11,9 @@ import { faCalendar, faLocation, faLocationDot, faSearch } from '@fortawesome/fr
 import styles from "../../../styles/Arastirmalar.module.css"
 import { color, fontWeight } from '@mui/system';
 
-const buttonStyle = {
-  fontSize: '16px',
-  width: '100%',
-  borderRadius: '0',
-  borderBottom: '1px solid #ccc',
-  boxshadow:'0',
-  textTransform: 'none',
-  margin: '10px 0',
-  padding: '10px 20px',
-  color: '#333',
-  backgroundColor: '#fff',
-  '&:hover': {
-    backgroundColor: '#fff',
-  },
-  '@media (max-width: 768px)': {
-    fontSize: '14px',
-  },
-};
+import BaslikGorselCompenent from '../../../compenent/BaslikGorselCompenentDetail';
+
+
 const linkStyle = {
   display: 'flex',
   alignItems: 'center',
@@ -53,13 +38,14 @@ const pStyle = {
   fontWeight:'bold',
 }
 
-
 const iconStyle = {
-  fontSize: '16px',
+  color: '#333',
+  fontSize: '17x',
   fontWeight:'bold',
   marginRight: '8px',
   verticalAlign: 'middle',
 };
+
 
 const titleStyle = {
   fontSize: '16px', // Font boyutunu küçült
@@ -79,13 +65,13 @@ const titleStyle = {
 
 const dateStyle = {
   fontSize: '16px',
-  color: '#666',
+  color: '#333',
   marginBottom: '10px',
 };
 
 const placeStyle = {
   fontSize: '16px',
-  color: '#666',
+  color: '#333',
   marginBottom: '10px',
 };
 
@@ -99,13 +85,22 @@ const Calistay = () => {
   const [selectedAlbum, setSelectedAlbum] = useState(null);
   const [message, setMessage] = useState(false);
   const [errorAlbum, setErrorAlbum] = useState(false);
-  const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [error,setError] = useState(null)
+  const [isLoading, setIsLoading] = useState(true); // Yükleme durumu için state
+
   const router = useRouter();
-  const asPath = router.asPath;
-  const nidMatch = asPath.match(/-(\d+)$/);
+  const { asPath, isReady } = router;
+  const nidMatch = asPath.match(/-(\d+)$/); // Regex ile URL'den id'yi çıkarma
   const nid = nidMatch ? nidMatch[1] : null;
+
+  const [detayItems,setDetayItems] = useState({})
+  const [catgoriItem, setcatgoriItem] = useState({});
+  const [pages, setPages] = useState([]);
+  const [isPagesLoading, setIsPagesLoading] = useState(true);
+  const [errorPage, setErrorPage] = useState(null);
+
+  const [isExpanded, setIsExpanded] = useState(false);
+
 
   const handleToggleExpanded = () => {
     setIsExpanded(!isExpanded);
@@ -115,52 +110,74 @@ const Calistay = () => {
   };
 
   const renderContent = (content) => {
-    if (content.length <= 500 || isExpanded) {
+    
       return (
         <div>
           <div className={styles.content}  dangerouslySetInnerHTML={{ __html: content }} />
-          {content.length > 500 && (
-            <div  onClick={handleToggleExpanded} className={styles.dahaFazla} style={{ textTransform: 'none',  color:"#1976d2", cursor: 'pointer'  }} >
-              {isExpanded ? 'Daha Az Göster' : 'Daha Fazla Göster'}
-            </div>
-          )}
         </div>
       );
-    } else {
-      return (
-        <div>
-          <div className={styles.content} dangerouslySetInnerHTML={{ __html: content.substring(0, 500) + '...' }} />
-          <div  onClick={handleToggleExpanded} className={styles.dahaFazla}  style={{ textTransform: 'none' , color:"#1976d2" , cursor: 'pointer' }} >
-            Daha Fazla Göster
-          </div>
-        </div>
-      );
-    }
+    
   };
 
-  useEffect(() => {
-    const fetchCalistay = async () => {
-      if (!router.isReady) return;
-      setIsLoading(true);
-      try {
-        const apiRoute = API_ROUTES.CALISTAYLAR_DETAIL.replace('id', nid);
-        const response = await axios.get(apiRoute);
-        setCalistay(response.data);
-        setError(null);
-      } catch (error) {
-        setError(error.response && error.response.status === 404 ? "Aradığınız çalıştay bulunamadı." : "Bir şeyler ters gitti. Daha sonra tekrar deneyiniz.");
-        console.error('Çalıştay detayları yüklenirken hata:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
 
-    fetchCalistay();
-  }, [router.asPath]);
 
   const handleCloseViewer = () => {
     setViewerOpen(false);
   };
+
+  const pagesFetchData = async () => {
+    setIsPagesLoading(true);
+    try {
+      const cleanedPath = asPath.split('?')[0];
+      const pathSegments = cleanedPath.split('/').filter(Boolean);
+      const categoriPart = `${pathSegments.slice(0, 1).join('/')}`;
+      const lastPart = `${pathSegments.slice(1, 2).join('/')}`;
+      const url= `/${categoriPart}?tab=${lastPart}`
+
+      const response1 = await axios.post(API_ROUTES.SAYFALAR_GET_GORSEL, { url: url });
+      //console.log("res:",response1)
+      setPages(response1.data);
+      setErrorPage(null);
+    } catch (error) {
+      setErrorPage('Veriler yüklenirken beklenmeyen bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
+      console.log("error:", error);
+    } finally {
+      setIsPagesLoading(false);
+    }
+  };
+
+  const fetchKonferans = async () => {
+    setIsLoading(true);
+    try {
+      const apiRoute = API_ROUTES.CALISTAYLAR_DETAIL.replace('id', nid); 
+      const response = await axios.get(apiRoute);
+     
+      setCalistay(response.data);
+      setError(null);
+
+      //console.log("res:",response.data)
+
+      
+      setDetayItems({ name:response.data.baslik, url: asPath})
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        setError("Aradığınız sayfa bulunamadı. Bir hata oluşmuş olabilir veya sayfa kaldırılmış olabilir.");
+      } else {
+        setError("Bir şeyler ters gitti. Daha sonra tekrar deneyiniz.");
+      }
+      console.error('Calistaylar detayları yüklenirken hata:', error);
+      console.log(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!isReady) return;
+
+    fetchKonferans();
+    pagesFetchData();
+  }, [isReady, nid]);
 
   const handleAlbumClick = async (selectedAlbum) => {
     try {
@@ -179,31 +196,31 @@ const Calistay = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <>
-        <Head>
-          <title>Çalıştay | Kuramer</title>
-          <link rel="icon" href="/kuramerlogo.png" />
-        </Head>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-          <CircularProgress />
-        </div>
-      </>
-    );
-  }
+ 
 
-  if (error) {
+  if (error || errorPage) {
     return (
       <>
-        <Head>
-          <title>Çalıştay | Kuramer</title>
-          <link rel="icon" href="/kuramerlogo.png" />
-        </Head>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '24px', color: '#343434', fontFamily: 'Arial, sans-serif', backgroundColor: '#f0f0f0' }}>
-          {error}
-        </div>
+      <Head>
+        <title>Sempozyum | Kuramer</title>
+        <link rel="icon" href="/kuramerlogo.png" />
+      </Head>
+
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        fontSize: '24px',
+        color: '#343434',
+        fontFamily: 'Arial, sans-serif',
+        backgroundColor: '#f0f0f0',
+      }}>
+        {error || errorPage}
+      </div>
+      
       </>
+      
     );
   }
 
@@ -227,6 +244,23 @@ const Calistay = () => {
         <title>Çalıştay | Kuramer</title>
         <link rel="icon" href="/kuramerlogo.png" />
       </Head>
+
+      {isLoading ? (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+          }}
+        >
+          <CircularProgress />
+        </div>
+      ) : (
+        <>
+
+  <BaslikGorselCompenent data={pages} catgoriItem={catgoriItem} detayItems={detayItems} isPagesLoading={isPagesLoading}/>
+
       <Container maxWidth="lg" style={{ marginTop: 40, marginBottom: 40 }}>
         <Paper elevation={3} style={{ padding: 20 }}>
           <Grid container spacing={3}>
@@ -237,7 +271,7 @@ const Calistay = () => {
                 style={{ width: '100%', height: 'auto', borderRadius: '10px' }}
               />
             </Grid>
-            <Grid item xs={12} md={6} container direction="column" justifyContent="space-evenly">
+            <Grid item xs={12} md={6} container direction="column" justifyContent="flex-start">
               
 
               <div className={styles.content}>
@@ -246,7 +280,7 @@ const Calistay = () => {
                 </h1>
               </div>
               
-              <Grid>
+              <Grid mt={2}>
               <Typography variant="subtitle1" sx={dateStyle}>
               <FontAwesomeIcon icon={faCalendar} style={iconStyle} />
                 {formatDateWithoutTimeZone(calistay.tarih)}
@@ -256,7 +290,7 @@ const Calistay = () => {
                 {calistay.konum}
               </Typography>
               </Grid>
-              <Grid>
+              <Grid mt={2}>
               {calistay.pdf_dosya && (
                 <a href={calistay.pdf_dosya} target="_blank" rel="noopener noreferrer" style={{ ...linkStyle, display: 'inline-flex', alignItems: 'center' }}>
                   <FontAwesomeIcon icon={faSearch} style={iconStyle} />
@@ -307,6 +341,8 @@ const Calistay = () => {
         )}
       </Container>
     </>
+      )}
+     </>
   );
 };
 
