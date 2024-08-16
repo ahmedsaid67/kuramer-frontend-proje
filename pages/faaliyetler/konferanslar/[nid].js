@@ -153,6 +153,7 @@ const Konferans = () => {
   const [isPagesLoading, setIsPagesLoading] = useState(true);
   const [errorPage, setErrorPage] = useState(null);
 
+  const [isExpanded, setIsExpanded] = useState(false);
   
   const formatDateWithoutTimeZone = (dateString) => {
       const options = { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' };

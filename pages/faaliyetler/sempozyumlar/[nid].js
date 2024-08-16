@@ -146,6 +146,7 @@ const Sempozyum = () => {
   const [isPagesLoading, setIsPagesLoading] = useState(true);
   const [errorPage, setErrorPage] = useState(null);
 
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const handleToggleExpanded = () => {
     setIsExpanded(!isExpanded);
