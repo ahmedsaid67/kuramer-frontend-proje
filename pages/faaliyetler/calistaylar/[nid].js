@@ -224,19 +224,7 @@ const Calistay = () => {
     );
   }
 
-  if (!calistay) {
-    return (
-      <>
-        <Head>
-          <title>Çalıştay | Kuramer</title>
-          <link rel="icon" href="/kuramerlogo.png" />
-        </Head>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '24px', color: '#343434', fontFamily: 'Arial, sans-serif', backgroundColor: '#f0f0f0' }}>
-          Çalıştay bulunamadı.
-        </div>
-      </>
-    );
-  }
+
 
   return (
     <>

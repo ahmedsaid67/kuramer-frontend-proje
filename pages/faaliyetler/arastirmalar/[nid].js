@@ -199,19 +199,6 @@ const Arastirma = () => {
     );
   }
 
-  if (!arastirma) {
-    return (
-      <>
-        <Head>
-          <title>Araştırma | Kuramer</title>
-          <link rel="icon" href="/kuramerlogo.png" />
-        </Head>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '24px', color: '#343434', fontFamily: 'Arial, sans-serif', backgroundColor: '#f0f0f0' }}>
-          Araştırma bulunamadı.
-        </div>
-      </>
-    );
-  }
 
   return (
     <>
