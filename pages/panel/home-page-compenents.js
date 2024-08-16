@@ -280,7 +280,7 @@ export default function Sayfalar() {
             <TextField
                 label="Sayfa İsmi"
                 value={selectedItem ? selectedItem.name : ''}
-                //onChange={(e) => setSelectedItem({ ...selectedItem, name: e.target.value })}
+              
                 fullWidth
                 margin="normal"
                 InputProps={{
@@ -291,23 +291,18 @@ export default function Sayfalar() {
             <TextField
                 label="Başlık"
                 value={selectedItem ? selectedItem.baslik : ''}
-                //onChange={(e) => setSelectedItem({ ...selectedItem, name: e.target.value })}
+                onChange={(e) => setSelectedItem({ ...selectedItem, baslik: e.target.value })}
                 fullWidth
                 margin="normal"
-                InputProps={{
-                  readOnly: true,
-                }}
             />
 
             <TextField
                 label="Alt Başlık"
                 value={selectedItem ? selectedItem.alt_baslik : ''}
-                //onChange={(e) => setSelectedItem({ ...selectedItem, name: e.target.value })}
+                onChange={(e) => setSelectedItem({ ...selectedItem, alt_baslik: e.target.value })}
                 fullWidth
                 margin="normal"
-                InputProps={{
-                  readOnly: true,
-                }}
+                
             />
 
             
