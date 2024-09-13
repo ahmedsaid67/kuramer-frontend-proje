@@ -226,7 +226,7 @@ const Arastirma = () => {
       <Container maxWidth="lg" style={{ marginTop: 40, marginBottom: 40 }}>
         <Paper elevation={3} style={{ padding: 20 }}>
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={6} container direction="column" justifyContent="center">
               <img
                 src={arastirma.kapak_fotografi}
                 alt={arastirma.baslik}

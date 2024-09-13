@@ -1,6 +1,8 @@
 import React from 'react';
 import { Card, CardMedia, CardContent, Typography, Button } from '@mui/material';
 import Link from 'next/link';
+import { faCalendar, faLocationDot } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 
 const cardStyle = {
@@ -145,14 +147,14 @@ const SempozyumCard= ({ data,path }) => {
             </Typography>
           </Link>   
           <div style={{ display: 'flex', alignItems: 'center', marginTop: 1 }}>
-            <img src="/icons/calendar.png" alt="Tarih" style={iconStyle} />
+          <FontAwesomeIcon icon={faCalendar} style={iconStyle} />
             <Typography sx={{...dateStyle, marginLeft: '5px'}} variant="body3">
               {formatDateWithoutTimeZone(data.tarih)}
             </Typography>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', marginTop: 1 }}>
-            <img src="/icons/location.png" alt="Yer" style={iconStyle} />
+          <FontAwesomeIcon icon={faLocationDot} style={iconStyle} />
             <Typography sx={{ ...placeStyle, marginLeft: '5px' }} variant="body3">
               {data.konum}
             </Typography>

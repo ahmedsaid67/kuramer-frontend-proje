@@ -252,7 +252,7 @@ const Calistay = () => {
       <Container maxWidth="lg" style={{ marginTop: 40, marginBottom: 40 }}>
         <Paper elevation={3} style={{ padding: 20 }}>
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={6} container direction="column" justifyContent="center">
               <img
                 src={calistay.kapak_fotografi}
                 alt={calistay.baslik}
@@ -261,7 +261,7 @@ const Calistay = () => {
             </Grid>
             <Grid item xs={12} md={6} container direction="column" justifyContent="flex-start">
               
-
+ 
               <div className={styles.content}>
                 <h1>
                   {calistay.baslik}

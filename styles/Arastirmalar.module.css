@@ -4,6 +4,7 @@
 
 .content h1{
     line-height: 2.5rem; 
+    margin-top: 0;
 }
   
   @media (max-width: 768px) {

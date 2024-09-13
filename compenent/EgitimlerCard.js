@@ -1,6 +1,8 @@
 import React from 'react';
 import { Card, CardMedia, CardContent, Typography, Button } from '@mui/material';
 import Link from 'next/link';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCalendar, faFeather } from '@fortawesome/free-solid-svg-icons';
 
 
 const cardStyle = {
@@ -124,14 +126,14 @@ const KonferansCard = ({ data, path }) => {
 
         
             <div style={{ display: 'flex', alignItems: 'center', marginTop: 1  }}>
-                <img src="/icons/speaker.png" alt="Yer" style={iconStyle} />
+            <FontAwesomeIcon icon={faFeather} style={iconStyle} />
                 <Typography sx={{ ...authorStyle, marginLeft: '5px' }} variant="body3">
                 {data.egitmen}
                 </Typography>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', marginTop: 1  }}>
-                <img src="/icons/calendar.png" alt="Tarih" style={iconStyle} />
+            <FontAwesomeIcon icon={faCalendar} style={iconStyle} />
                 <Typography sx={{ ...dateStyle, marginLeft: '5px' }} variant="body3">
                 {formatDateWithoutTimeZone(data.tarih)}
                 </Typography>

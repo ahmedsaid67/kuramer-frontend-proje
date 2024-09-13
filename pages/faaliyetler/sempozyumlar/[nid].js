@@ -282,7 +282,7 @@ const Sempozyum = () => {
           <Paper elevation={3} style={{ padding: 20 }}>
             <Grid container spacing={3}>
               {/* Sol tarafta görsel */}
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} md={6} container direction="column" justifyContent="center">
                 <img
                   src={sempozyum.kapak_fotografi}
                   alt={sempozyum.baslik}

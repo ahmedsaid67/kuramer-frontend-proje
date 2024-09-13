@@ -322,7 +322,7 @@ const Konferans = () => {
       <Paper elevation={3} style={{ padding: 20 }}>
         <Grid container spacing={3}>
           {/* Sol tarafta görsel */}
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={6} container direction="column" justifyContent="center">
             <img
               src={konferans.kapak_fotografi}
               alt={konferans.baslik}

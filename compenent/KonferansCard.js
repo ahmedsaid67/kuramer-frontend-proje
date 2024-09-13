@@ -1,6 +1,8 @@
 import React from 'react';
 import { Card, CardMedia, CardContent, Typography, Button } from '@mui/material';
 import Link from 'next/link';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCalendar, faLocationDot, faMicrophone } from '@fortawesome/free-solid-svg-icons';
 
 
 
@@ -156,14 +158,14 @@ const KonferansCard = ({ data, path, handleDownloadPDF }) => {
         
         <div style={ {display: 'flex', flexDirection:"column" }}>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom:15}}>
-                <img src="/icons/speaker.png" alt="Yer" style={iconStyle} />
+            <FontAwesomeIcon icon={faMicrophone} style={iconStyle} />
                 <Typography sx={speakerStyle} variant="body3">
                 {data.konusmaci}
                 </Typography>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center' }}>
-                <img src="/icons/calendar.png" alt="Tarih" style={iconStyle} />
+            <FontAwesomeIcon icon={faCalendar} style={iconStyle} />
                 <Typography sx={dateStyle} variant="body3">
                 {formatDateWithoutTimeZone(data.tarih)}
                 </Typography>
@@ -171,7 +173,7 @@ const KonferansCard = ({ data, path, handleDownloadPDF }) => {
         
             {data.konum && (
               <div style={{ display: 'flex', alignItems: 'center', marginTop: 1 }}>
-                <img src="/icons/location.png" alt="Yer" style={iconStyle} />
+                <FontAwesomeIcon icon={faLocationDot} style={iconStyle} />
                 <Typography sx={placeStyle} variant="body3">
                   {data.konum}
                 </Typography>

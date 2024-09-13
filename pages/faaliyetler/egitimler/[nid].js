@@ -47,6 +47,9 @@ const linkStyle = {
 const pStyle = {
   fontWeight:'bold',
 }
+const titleStyle = {
+  
+}
 
 
 
@@ -280,7 +283,7 @@ const Egitim = () => {
             <Paper elevation={3} style={{ padding: 20 }}>
               <Grid container spacing={3}>
                 {/* Sol tarafta görsel */}
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12} md={6} container direction="column" justifyContent="center">
                   <img
                     src={egitim.kapak_fotografi}
                     alt={egitim.baslik}
@@ -292,10 +295,10 @@ const Egitim = () => {
                 <Grid item xs={12} md={6} container direction="column" justifyContent="flex-start">
   
                   <div className={styles.content}>
-                  <h1>
-                    {egitim.baslik}
-                  </h1>
-                </div>
+                    <h1>
+                      {egitim.baslik}
+                    </h1>
+                  </div>
 
                   <Grid mt={2}> 
                     <div style={{ display: 'flex', alignItems: 'center' }}>
