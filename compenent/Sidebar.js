@@ -7,7 +7,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import Head from 'next/head';
 import styles from '../styles/Sidebar.module.css';
-
+import {submitLogout} from '../context/features/auth/loginSlice'
 
 const drawerWidth = 270;
 
